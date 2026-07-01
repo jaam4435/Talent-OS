@@ -1,0 +1,90 @@
+{
+  "name": "WF-02 Opportunity Broadcast",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opportunity.broadcast",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT config FROM integration_configs WHERE tenant_id = $1 AND provider = 'whatsapp' AND is_active = true",
+        "options": { "queryReplacement": "={{ $json.tenant_id }}" }
+      },
+      "id": "fetch-wa-config",
+      "name": "Fetch WhatsApp Config",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.recipients",
+        "options": {}
+      },
+      "id": "split-recipients",
+      "name": "Split Recipients",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.config.phone_number_id }}/messages",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $json.config.access_token }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone.replace('+','') }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"opportunity_alert\",\n    \"language\": { \"code\": \"en\" },\n    \"components\": [\n      {\n        \"type\": \"body\",\n        \"parameters\": [\n          { \"type\": \"text\", \"text\": \"{{ $json.full_name }}\" },\n          { \"type\": \"text\", \"text\": \"{{ $('Webhook').item.json.data.agency_name }}\" },\n          { \"type\": \"text\", \"text\": \"{{ $('Webhook').item.json.data.title }}\" }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp Template",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TALENTOS_CALLBACK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Webhook-Signature", "value": "={{ $env.TALENTOS_CALLBACK_SECRET }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"whatsapp.send_completed\",\n  \"tenant_id\": \"{{ $('Webhook').item.json.tenant_id }}\",\n  \"data\": {\n    \"wa_message_id\": \"{{ $json.messages[0].id }}\",\n    \"status\": \"sent\",\n    \"entity_id\": \"{{ $json.recipient_id }}\",\n    \"whatsapp_sent_at\": \"{{ new Date().toISOString() }}\"\n  }\n}"
+      },
+      "id": "callback-app",
+      "name": "Callback TalentOS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [880, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Fetch WhatsApp Config", "type": "main", "index": 0 }]] },
+    "Fetch WhatsApp Config": { "main": [[{ "node": "Split Recipients", "type": "main", "index": 0 }]] },
+    "Split Recipients": { "main": [[{ "node": "Send WhatsApp Template", "type": "main", "index": 0 }]] },
+    "Send WhatsApp Template": { "main": [[{ "node": "Callback TalentOS", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "talentos" }, { "name": "whatsapp" }]
+}
