@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getPermissionsForRole } from '@/lib/auth/permissions'
+import { resolveActiveTenant } from '@/lib/auth/tenant-context'
 import type { SessionContext, TenantContext } from '@/types/enums'
 
 export async function getSession(): Promise<SessionContext | null> {
@@ -15,7 +17,7 @@ export async function getSession(): Promise<SessionContext | null> {
     .eq('id', user.id)
     .single()
 
-  const tenant = await getActiveTenant(user.id)
+  const tenant = await resolveActiveTenant(user.id)
 
   return {
     user: {
@@ -24,39 +26,12 @@ export async function getSession(): Promise<SessionContext | null> {
       fullName: profile?.full_name ?? null,
     },
     tenant,
+    permissions: tenant ? getPermissionsForRole(tenant.role) : [],
   }
 }
 
 export async function getActiveTenant(userId: string): Promise<TenantContext | null> {
-  const supabase = await createClient()
-
-  const { data: membership } = await supabase
-    .from('tenant_members')
-    .select('role, tenant_id')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .order('joined_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
-  if (!membership) return null
-
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('id, slug, name, timezone, currency')
-    .eq('id', membership.tenant_id)
-    .maybeSingle()
-
-  if (!tenant) return null
-
-  return {
-    id: tenant.id,
-    slug: tenant.slug,
-    name: tenant.name,
-    role: membership.role as TenantContext['role'],
-    timezone: tenant.timezone,
-    currency: tenant.currency,
-  }
+  return resolveActiveTenant(userId)
 }
 
 export async function requireSession() {

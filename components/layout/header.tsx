@@ -1,6 +1,7 @@
 'use client'
 
 import { Bell, LogOut } from 'lucide-react'
+import { RoleBadge } from '@/components/auth/role-badge'
 import { Button } from '@/components/ui/button'
 import type { SessionContext } from '@/types/enums'
 
@@ -15,9 +16,10 @@ export function Header({ session }: HeaderProps) {
         <h1 className="text-lg font-semibold">
           Welcome{session.user.fullName ? `, ${session.user.fullName}` : ''}
         </h1>
-        <p className="text-sm text-muted-foreground capitalize">
-          {session.tenant?.role.replace('_', ' ') ?? 'No workspace'}
-        </p>
+        <div className="mt-1 flex items-center gap-2">
+          {session.tenant ? <RoleBadge role={session.tenant.role} /> : null}
+          <p className="text-sm text-muted-foreground">{session.tenant?.name ?? 'No workspace'}</p>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" aria-label="Notifications">

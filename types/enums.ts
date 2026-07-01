@@ -61,4 +61,5 @@ export interface SessionUser {
 export interface SessionContext {
   user: SessionUser
   tenant: TenantContext | null
+  permissions: string[]
 }

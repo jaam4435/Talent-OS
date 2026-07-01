@@ -6,6 +6,8 @@ export const PUBLIC_ROUTES = [
   '/invite',
   '/forgot-password',
   '/api/auth/callback',
+  '/api/auth/signout',
+  '/api/auth/invite',
   '/api/webhooks',
 ] as const
 

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { ACTIVE_TENANT_COOKIE } from '@/lib/auth/tenant-context'
 import {
   ADMIN_ONLY_ROUTES,
   MANAGER_ONLY_ROUTES,
@@ -62,34 +63,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  if (matchesRoute(pathname, ADMIN_ONLY_ROUTES)) {
-    const { data: membership } = await supabase
-      .from('tenant_members')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .eq('role', 'admin')
-      .limit(1)
-      .maybeSingle()
+  const activeTenantId = request.cookies.get(ACTIVE_TENANT_COOKIE)?.value
 
-    if (!membership) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
+  let membershipQuery = supabase
+    .from('tenant_members')
+    .select('role, tenant_id')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+
+  if (activeTenantId) {
+    membershipQuery = membershipQuery.eq('tenant_id', activeTenantId)
   }
 
-  if (matchesRoute(pathname, MANAGER_ONLY_ROUTES)) {
-    const { data: membership } = await supabase
-      .from('tenant_members')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .in('role', ['admin', 'talent_manager'])
-      .limit(1)
-      .maybeSingle()
+  const { data: membership } = await membershipQuery.limit(1).maybeSingle()
 
-    if (!membership) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
+  if (membership?.tenant_id) {
+    response.headers.set('X-Tenant-ID', membership.tenant_id)
+    response.headers.set('X-User-Role', membership.role)
+  }
+
+  if (matchesRoute(pathname, ADMIN_ONLY_ROUTES) && membership?.role !== 'admin') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  if (
+    matchesRoute(pathname, MANAGER_ONLY_ROUTES) &&
+    membership?.role !== 'admin' &&
+    membership?.role !== 'talent_manager'
+  ) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return response

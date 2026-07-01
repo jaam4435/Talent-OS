@@ -63,6 +63,10 @@ export function hasPermission(role: UserRole, permission: string) {
   return PERMISSION_MAP[role]?.includes(permission) ?? false
 }
 
+export function getPermissionsForRole(role: UserRole): string[] {
+  return PERMISSION_MAP[role] ?? []
+}
+
 export function requirePermission(role: UserRole, permission: string) {
   if (!hasPermission(role, permission)) {
     throw new Error(`FORBIDDEN: missing permission ${permission}`)

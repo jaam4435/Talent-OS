@@ -256,6 +256,26 @@ export interface Database {
         }
         Returns: string
       }
+      get_invite_preview: {
+        Args: { p_token_hash: string }
+        Returns: Array<{
+          invite_id: string
+          tenant_id: string
+          tenant_name: string
+          email: string
+          role: string
+          expires_at: string
+          is_valid: boolean
+        }>
+      }
+      accept_member_invite: {
+        Args: { p_token_hash: string; p_user_id: string }
+        Returns: string
+      }
+      revoke_member_invite: {
+        Args: { p_invite_id: string; p_actor_id: string }
+        Returns: void
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
