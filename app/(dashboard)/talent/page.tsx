@@ -1,52 +1,64 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { EmptyState, PageHeader } from '@/components/shared/page-header'
+import { TalentSearchFilters } from '@/components/talent/talent-search-filters'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenant } from '@/lib/auth/session'
 import { isManager } from '@/lib/auth/permissions'
+import { searchTalentRoster } from '@/lib/talent/queries'
 import { formatCurrency } from '@/lib/utils/format'
-import { Badge } from '@/components/ui/badge'
+import { notFound } from 'next/navigation'
 
 export const metadata = { title: 'Talent' }
 
-export default async function TalentPage() {
+export default async function TalentPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   const { tenant } = await requireTenant()
-  const supabase = await createClient()
+  if (!isManager(tenant.role)) notFound()
 
-  const { data: freelancers } = await supabase
-    .from('freelancers')
-    .select('id, full_name, email, discipline, day_rate, currency, availability, internal_rating')
-    .eq('tenant_id', tenant.id)
-    .order('full_name')
-    .limit(50)
+  const params = await searchParams
+  const page = Math.max(1, Number(params.page ?? 1))
+  const limit = 20
+  const offset = (page - 1) * limit
+
+  const freelancers = await searchTalentRoster(tenant.id, {
+    query: typeof params.q === 'string' ? params.q : undefined,
+    discipline: typeof params.discipline === 'string' ? params.discipline : undefined,
+    availability: typeof params.availability === 'string' ? params.availability : undefined,
+    sort: typeof params.sort === 'string' ? params.sort : 'rating',
+    limit,
+    offset,
+  })
 
   return (
     <div>
-      <PageHeader
-        title="Talent"
-        description="Manage your freelancer roster"
-      >
-        {isManager(tenant.role) ? (
-          <Button asChild>
-            <Link href="/talent/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Add talent
-            </Link>
-          </Button>
-        ) : null}
+      <PageHeader title="Talent" description="Manage your freelancer roster">
+        <Button asChild>
+          <Link href="/talent/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Add talent
+          </Link>
+        </Button>
       </PageHeader>
 
-      {!freelancers?.length ? (
+      <Suspense fallback={null}>
+        <TalentSearchFilters />
+      </Suspense>
+
+      {!freelancers.length ? (
         <EmptyState
-          title="No freelancers yet"
-          description="Add your first freelancer to start building your talent roster."
+          title="No freelancers found"
+          description="Try adjusting filters or add your first freelancer."
           action={
-            isManager(tenant.role) ? (
-              <Button asChild>
-                <Link href="/talent/new">Add talent</Link>
-              </Button>
-            ) : undefined
+            <Button asChild>
+              <Link href="/talent/new">Add talent</Link>
+            </Button>
           }
         />
       ) : (
@@ -55,6 +67,7 @@ export default async function TalentPage() {
             <thead>
               <tr className="border-b bg-muted/50 text-left">
                 <th className="p-4 font-medium">Name</th>
+                <th className="p-4 font-medium">Skills</th>
                 <th className="p-4 font-medium">Discipline</th>
                 <th className="p-4 font-medium">Rate</th>
                 <th className="p-4 font-medium">Availability</th>
@@ -69,6 +82,15 @@ export default async function TalentPage() {
                       {f.full_name}
                     </Link>
                     <p className="text-muted-foreground">{f.email}</p>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex max-w-xs flex-wrap gap-1">
+                      {(f.skills ?? []).slice(0, 4).map((skill: string) => (
+                        <Badge key={skill} variant="outline" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
                   </td>
                   <td className="p-4 capitalize">{f.discipline}</td>
                   <td className="p-4">

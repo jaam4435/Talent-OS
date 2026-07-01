@@ -215,6 +215,27 @@ export interface Database {
         rank: number | null
         created_at: string
       }>
+      freelancer_portfolio_items: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        title: string
+        description: string | null
+        project_url: string | null
+        image_path: string | null
+        sort_order: number
+        created_at: string
+        updated_at: string
+      }>
+      freelancer_rating_history: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        rated_by: string
+        rating: number
+        note: string | null
+        created_at: string
+      }>
     }
     Views: {
       v_dashboard_summary: TableDef<{
@@ -292,6 +313,21 @@ export interface Database {
           p_status?: string
         }
         Returns: string
+      }
+      search_freelancers: {
+        Args: {
+          p_tenant_id: string
+          p_query?: string | null
+          p_discipline?: string | null
+          p_availability?: string | null
+          p_min_rate?: number | null
+          p_max_rate?: number | null
+          p_min_rating?: number | null
+          p_sort?: string | null
+          p_limit?: number | null
+          p_offset?: number | null
+        }
+        Returns: Tables<'freelancers'>[]
       }
     }
     Enums: Record<string, never>

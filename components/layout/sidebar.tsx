@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Settings,
+  UserCircle,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -22,6 +23,7 @@ const navItems: Array<{
   roles: UserRole[]
 }> = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'talent_manager', 'freelancer'] },
+  { href: '/profile', label: 'My profile', icon: UserCircle, roles: ['freelancer'] },
   { href: '/talent', label: 'Talent', icon: Users, roles: ['admin', 'talent_manager'] },
   { href: '/opportunities', label: 'Opportunities', icon: Megaphone, roles: ['admin', 'talent_manager', 'freelancer'] },
   { href: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'talent_manager', 'freelancer'] },
