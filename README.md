@@ -45,6 +45,22 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 8 | [Multi-Tenant Architecture](docs/08-multi-tenant-architecture.md) | RLS isolation, subdomain routing, scaling |
 | 9 | [n8n Workflows](docs/09-n8n-workflows.md) | 12 workflow specifications with payloads |
 | 10 | [WhatsApp Integration](docs/10-whatsapp-integration.md) | Templates, webhooks, inbound parsing |
+| 11 | [Enterprise System Architecture](docs/11-enterprise-system-architecture.md) | HLD, components, events, webhooks, security, scale |
+
+## Enterprise Architecture Highlights
+
+The [enterprise architecture document](docs/11-enterprise-system-architecture.md) covers:
+
+1. **High-Level Architecture** — C4 context, layered design, bounded contexts
+2. **Component Diagram** — Next.js, Supabase, n8n, AI gateway, shadcn/ui
+3. **Service Diagram** — Vercel, Supabase, n8n cluster, external providers
+4. **Database Architecture** — Schema layers, indexing, read/write separation
+5. **Event-Driven Architecture** — Transactional outbox, 16-event catalog, retry policy
+6. **Webhook Architecture** — Inbound gateway, HMAC verification, idempotency
+7. **Workflow Engine Design** — 14 n8n workflows, AI + email orchestration
+8. **Multi-Tenant Design** — RLS isolation, subdomain routing, tier enforcement
+9. **Security Model** — STRIDE threat model, RBAC, compliance, encryption
+10. **Scalability Model** — Capacity planning, caching, DR, cost model
 
 ## Database Migrations
 
@@ -57,6 +73,7 @@ psql -f supabase/migrations/001_initial_schema.sql
 psql -f supabase/migrations/002_rls_policies.sql
 psql -f supabase/migrations/003_functions_triggers.sql
 psql -f supabase/migrations/004_views_analytics.sql
+psql -f supabase/migrations/005_event_infrastructure.sql
 ```
 
 ## Quick Start (Development)

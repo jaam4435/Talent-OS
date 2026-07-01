@@ -368,7 +368,41 @@ Outbound/inbound WhatsApp message log.
 
 ---
 
-### 2.15 `integration_configs`
+### 2.15 `domain_events`
+
+Transactional outbox for event-driven architecture. See [Enterprise System Architecture](11-enterprise-system-architecture.md).
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | `uuid` | PK | |
+| `tenant_id` | `uuid` | FK → `tenants(id)` | |
+| `event_type` | `text` | NOT NULL | e.g. `opportunity.broadcast` |
+| `aggregate_type` | `text` | NOT NULL | e.g. `opportunity` |
+| `aggregate_id` | `uuid` | NOT NULL | |
+| `idempotency_key` | `text` | UNIQUE per tenant | Dedup key |
+| `correlation_id` | `uuid` | NOT NULL | Trace chain |
+| `payload` | `jsonb` | | Event data |
+| `status` | `event_status` | default `'pending'` | pending → delivered / dead_letter |
+| `retry_count` | `integer` | default 0 | |
+| `scheduled_at` | `timestamptz` | | Delayed dispatch |
+
+---
+
+### 2.16 `ai_requests`
+
+AI governance and cost tracking for OpenAI and Claude.
+
+| Column | Type | Description |
+|---|---|---|
+| `provider` | `ai_provider` | openai, claude |
+| `request_type` | `text` | talent_match, brief_parse, shortlist_summary |
+| `prompt_hash` | `text` | SHA-256 (no raw prompts stored) |
+| `result` | `jsonb` | Structured AI output |
+| `estimated_cost` | `numeric` | Per-request cost |
+
+---
+
+### 2.17 `integration_configs`
 
 Per-tenant integration credentials (encrypted at app layer).
 
