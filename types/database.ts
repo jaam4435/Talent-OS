@@ -183,6 +183,38 @@ export interface Database {
         created_at: string
         processed_at: string | null
       }>
+      ai_requests: TableDef<{
+        id: string
+        tenant_id: string
+        correlation_id: string | null
+        provider: 'openai' | 'claude'
+        model: string
+        request_type: string
+        entity_type: string | null
+        entity_id: string | null
+        prompt_hash: string | null
+        input_tokens: number | null
+        output_tokens: number | null
+        estimated_cost: number | null
+        status: string
+        result: Json | null
+        error_message: string | null
+        duration_ms: number | null
+        created_at: string
+        completed_at: string | null
+      }>
+      talent_match_scores: TableDef<{
+        id: string
+        tenant_id: string
+        opportunity_id: string
+        freelancer_id: string
+        ai_request_id: string | null
+        score: number
+        rationale: string | null
+        skill_overlap: string[]
+        rank: number | null
+        created_at: string
+      }>
     }
     Views: {
       v_dashboard_summary: TableDef<{
@@ -197,6 +229,31 @@ export interface Database {
     Functions: {
       create_tenant_with_admin: {
         Args: { p_name: string; p_slug: string; p_user_id: string }
+        Returns: string
+      }
+      suggest_talent_for_opportunity: {
+        Args: { p_opportunity_id: string }
+        Returns: Array<{
+          freelancer_id: string
+          full_name: string
+          discipline: string
+          day_rate: number | null
+          internal_rating: number | null
+          skill_match_count: number
+        }>
+      }
+      emit_domain_event: {
+        Args: {
+          p_tenant_id: string
+          p_event_type: string
+          p_aggregate_type: string
+          p_aggregate_id: string
+          p_idempotency_key: string
+          p_payload?: Json
+          p_actor_id?: string | null
+          p_correlation_id?: string | null
+          p_scheduled_at?: string
+        }
         Returns: string
       }
     }

@@ -3,9 +3,11 @@ import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/shared/page-header'
+import { AiMatchPanel } from '@/components/opportunities/ai-match-panel'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenant } from '@/lib/auth/session'
 import { isManager } from '@/lib/auth/permissions'
+import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
 import type { Tables } from '@/types/database'
 
 export default async function OpportunityDetailPage({
@@ -43,6 +45,10 @@ export default async function OpportunityDetailPage({
 
   const freelancerMap = new Map(freelancers?.map((f) => [f.id, f]) ?? [])
 
+  const matchResults = isManager(tenant.role)
+    ? await getTalentMatchResults(id, tenant.id)
+    : null
+
   return (
     <div>
       <PageHeader title={opportunity.title} description={opportunity.description ?? undefined}>
@@ -59,6 +65,16 @@ export default async function OpportunityDetailPage({
           <Badge variant="outline">{opportunity.client_name}</Badge>
         ) : null}
       </div>
+
+      {matchResults ? (
+        <div className="mb-6">
+          <AiMatchPanel
+            opportunityId={id}
+            initialScores={matchResults.scores}
+            initialRequest={matchResults.latestRequest}
+          />
+        </div>
+      ) : null}
 
       <div className="rounded-lg border">
         <div className="border-b p-4 font-medium">Responses</div>

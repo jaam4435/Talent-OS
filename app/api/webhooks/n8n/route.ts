@@ -68,6 +68,33 @@ export async function POST(request: Request) {
       })
       break
     }
+    case 'ai.match_completed': {
+      const { ai_request_id, opportunity_id, match_count } = body.data ?? {}
+      if (ai_request_id) {
+        await supabase
+          .from('ai_requests')
+          .update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            result: {
+              match_count: match_count ?? 0,
+              callback: true,
+            },
+          })
+          .eq('id', ai_request_id)
+      }
+      if (body.data?.notification_user_id && opportunity_id) {
+        await supabase.from('notifications').insert({
+          tenant_id: body.tenant_id,
+          user_id: body.data.notification_user_id,
+          type: 'system',
+          title: 'AI talent matches ready',
+          body: body.data.message ?? 'AI match results are available.',
+          data: { opportunity_id, kind: 'ai_match_completed' },
+        })
+      }
+      break
+    }
     default:
       break
   }

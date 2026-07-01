@@ -10,6 +10,34 @@ import {
   markEventFailed,
   markEventProcessing,
 } from '@/lib/integrations/events'
+import { executeTalentMatch } from '@/lib/integrations/ai/matching'
+
+const DIRECT_AI_EVENTS = new Set(['ai.match_requested'])
+
+async function processDirectAiEvent(event: {
+  event_type: string
+  payload: Record<string, unknown> | null
+  actor_id: string | null
+}): Promise<{ ok: boolean; error?: string }> {
+  if (event.event_type !== 'ai.match_requested') {
+    return { ok: false, error: 'Unsupported AI event' }
+  }
+
+  const aiRequestId = event.payload?.ai_request_id
+  if (typeof aiRequestId !== 'string') {
+    return { ok: false, error: 'Missing ai_request_id in payload' }
+  }
+
+  try {
+    await executeTalentMatch(aiRequestId, event.actor_id)
+    return { ok: true }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'AI execution failed',
+    }
+  }
+}
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -32,8 +60,27 @@ export async function GET(request: Request) {
 
   const results: Array<{ id: string; ok: boolean; error?: string }> = []
 
+  const directAiMode = process.env.AI_EXECUTION_MODE === 'direct'
+
   for (const event of events ?? []) {
     await markEventProcessing(event.id)
+
+    if (directAiMode && DIRECT_AI_EVENTS.has(event.event_type)) {
+      const result = await processDirectAiEvent({
+        event_type: event.event_type,
+        payload: (event.payload as Record<string, unknown>) ?? null,
+        actor_id: event.actor_id,
+      })
+
+      if (result.ok) {
+        await markEventDelivered(event.id)
+        results.push({ id: event.id, ok: true })
+      } else {
+        await markEventFailed(event.id, result.error ?? 'Direct AI execution failed')
+        results.push({ id: event.id, ok: false, error: result.error })
+      }
+      continue
+    }
 
     const envelope: N8nEventEnvelope = buildN8nEnvelope({
       event: event.event_type,
