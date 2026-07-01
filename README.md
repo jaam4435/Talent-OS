@@ -38,14 +38,15 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 1 | [PRD](docs/01-PRD.md) | Product requirements, scope, KPIs, release plan |
 | 2 | [User Stories](docs/02-user-stories.md) | 36 stories across 9 epics with acceptance criteria |
 | 3 | [Database Schema](docs/03-database-schema.md) | ERD, tables, enums, views, storage buckets |
-| 4 | [Supabase SQL](supabase/migrations/) | Migration files (schema, RLS, triggers, analytics) |
-| 5 | [API Architecture](docs/05-api-architecture.md) | REST endpoints, server actions, event contracts |
-| 6 | [Folder Structure](docs/06-folder-structure.md) | Next.js project tree and conventions |
-| 7 | [Authentication Design](docs/07-authentication-design.md) | Auth flows, RBAC, session management |
-| 8 | [Multi-Tenant Architecture](docs/08-multi-tenant-architecture.md) | RLS isolation, subdomain routing, scaling |
-| 9 | [n8n Workflows](docs/09-n8n-workflows.md) | 12 workflow specifications with payloads |
-| 10 | [WhatsApp Integration](docs/10-whatsapp-integration.md) | Templates, webhooks, inbound parsing |
-| 11 | [Enterprise System Architecture](docs/11-enterprise-system-architecture.md) | HLD, components, events, webhooks, security, scale |
+| 4 | [**Complete Supabase Schema**](docs/04-supabase-complete-schema.md) | Tables, FKs, RLS matrix, triggers, migrations |
+| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–006 |
+| 6 | [API Architecture](docs/05-api-architecture.md) | REST endpoints, server actions, event contracts |
+| 7 | [Folder Structure](docs/06-folder-structure.md) | Next.js project tree and conventions |
+| 8 | [Authentication Design](docs/07-authentication-design.md) | Auth flows, RBAC, session management |
+| 9 | [Multi-Tenant Architecture](docs/08-multi-tenant-architecture.md) | RLS isolation, subdomain routing, scaling |
+| 10 | [n8n Workflows](docs/09-n8n-workflows.md) | 12 workflow specifications with payloads |
+| 11 | [WhatsApp Integration](docs/10-whatsapp-integration.md) | Templates, webhooks, inbound parsing |
+| 12 | [Enterprise System Architecture](docs/11-enterprise-system-architecture.md) | HLD, components, events, webhooks, security, scale |
 
 ## Enterprise Architecture Highlights
 
