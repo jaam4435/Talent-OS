@@ -75,6 +75,7 @@ psql -f supabase/migrations/002_rls_policies.sql
 psql -f supabase/migrations/003_functions_triggers.sql
 psql -f supabase/migrations/004_views_analytics.sql
 psql -f supabase/migrations/005_event_infrastructure.sql
+psql -f supabase/migrations/006_complete_rls_and_integrity.sql
 ```
 
 ## Quick Start (Development)
@@ -88,12 +89,23 @@ npm install
 cp .env.local.example .env.local
 # Fill in Supabase URL, anon key, service role key
 
-# Run migrations
+# Run Supabase migrations
 supabase db push
 
 # Start dev server
 npm run dev
 ```
+
+Open [http://localhost:3000](http://localhost:3000) — redirects to `/login` or `/dashboard`.
+
+### Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript check |
 
 ## License
 
