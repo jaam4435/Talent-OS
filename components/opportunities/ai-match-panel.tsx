@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Sparkles, RefreshCw } from 'lucide-react'
 import { runAiTalentMatch } from '@/app/actions/ai'
+import { broadcastOpportunity } from '@/app/actions/opportunities'
+import { addToShortlist } from '@/app/actions/shortlists'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +17,7 @@ interface MatchScore {
   rationale: string | null
   skillOverlap: string[]
   rank: number | null
+  freelancerId?: string
   freelancer?: {
     id: string
     full_name: string
@@ -36,16 +40,21 @@ interface AiMatchPanelProps {
   opportunityId: string
   initialScores?: MatchScore[]
   initialRequest?: MatchStatus | null
+  showActions?: boolean
 }
 
 export function AiMatchPanel({
   opportunityId,
   initialScores = [],
   initialRequest = null,
+  showActions = true,
 }: AiMatchPanelProps) {
+  const router = useRouter()
   const [scores, setScores] = useState(initialScores)
   const [latestRequest, setLatestRequest] = useState<MatchStatus | null>(initialRequest)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const isProcessing =
@@ -73,8 +82,18 @@ export function AiMatchPanel({
     return () => clearInterval(interval)
   }, [isProcessing, refreshResults])
 
+  function toggleFreelancer(freelancerId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(freelancerId)) next.delete(freelancerId)
+      else next.add(freelancerId)
+      return next
+    })
+  }
+
   function handleRunMatch() {
     setError(null)
+    setActionMessage(null)
     startTransition(async () => {
       const result = await runAiTalentMatch(opportunityId)
       if (!result.ok) {
@@ -91,6 +110,46 @@ export function AiMatchPanel({
       })
 
       setTimeout(() => void refreshResults(), 1500)
+    })
+  }
+
+  function handleAddToShortlist() {
+    const ids = [...selected]
+    if (!ids.length) {
+      setError('Select at least one match')
+      return
+    }
+
+    setError(null)
+    startTransition(async () => {
+      const result = await addToShortlist(opportunityId, ids)
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      setActionMessage(`Added ${ids.length} candidate(s) to shortlist`)
+      setSelected(new Set())
+      router.refresh()
+    })
+  }
+
+  function handleBroadcastSelected() {
+    const ids = [...selected]
+    if (!ids.length) {
+      setError('Select at least one match')
+      return
+    }
+
+    setError(null)
+    startTransition(async () => {
+      const result = await broadcastOpportunity({ opportunityId, freelancerIds: ids })
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      setActionMessage(`Broadcast to ${result.recipientCount} freelancer(s)`)
+      setSelected(new Set())
+      router.refresh()
     })
   }
 
@@ -121,6 +180,7 @@ export function AiMatchPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         {error ? <p className="text-sm text-destructive">{formatError(error)}</p> : null}
+        {actionMessage ? <p className="text-sm text-muted-foreground">{actionMessage}</p> : null}
 
         {latestRequest ? (
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -136,46 +196,86 @@ export function AiMatchPanel({
             No AI suggestions yet. Run a match to rank available talent for this opportunity.
           </p>
         ) : (
-          <ul className="divide-y rounded-lg border">
-            {scores.map((score, index) => (
-              <li key={score.id} className="flex items-start justify-between gap-4 p-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-muted-foreground">#{index + 1}</span>
-                    {score.freelancer ? (
-                      <Link
-                        href={`/talent/${score.freelancer.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {score.freelancer.full_name}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">Freelancer</span>
-                    )}
-                    <Badge variant="outline" className="capitalize">
-                      {score.freelancer?.discipline}
-                    </Badge>
-                  </div>
-                  {score.rationale ? (
-                    <p className="mt-1 text-sm text-muted-foreground">{score.rationale}</p>
-                  ) : null}
-                  {score.skillOverlap.length ? (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {score.skillOverlap.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
+          <>
+            {showActions ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isPending || !selected.size}
+                  onClick={handleAddToShortlist}
+                >
+                  Add to shortlist ({selected.size})
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={isPending || !selected.size}
+                  onClick={handleBroadcastSelected}
+                >
+                  Broadcast selected ({selected.size})
+                </Button>
+              </div>
+            ) : null}
+
+            <ul className="divide-y rounded-lg border">
+              {scores.map((score, index) => {
+                const freelancerId = score.freelancer?.id ?? score.freelancerId
+                const canSelect = showActions && !!freelancerId
+
+                return (
+                  <li key={score.id} className="flex items-start justify-between gap-4 p-4">
+                    <div className="flex min-w-0 flex-1 gap-3">
+                      {canSelect ? (
+                        <input
+                          type="checkbox"
+                          checked={freelancerId ? selected.has(freelancerId) : false}
+                          onChange={() => freelancerId && toggleFreelancer(freelancerId)}
+                          className="mt-1 h-4 w-4 rounded border"
+                          aria-label={`Select ${score.freelancer?.full_name ?? 'freelancer'}`}
+                        />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            #{index + 1}
+                          </span>
+                          {score.freelancer ? (
+                            <Link
+                              href={`/talent/${score.freelancer.id}`}
+                              className="font-medium hover:underline"
+                            >
+                              {score.freelancer.full_name}
+                            </Link>
+                          ) : (
+                            <span className="font-medium">Freelancer</span>
+                          )}
+                          <Badge variant="outline" className="capitalize">
+                            {score.freelancer?.discipline}
+                          </Badge>
+                        </div>
+                        {score.rationale ? (
+                          <p className="mt-1 text-sm text-muted-foreground">{score.rationale}</p>
+                        ) : null}
+                        {score.skillOverlap.length ? (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {score.skillOverlap.map((skill) => (
+                              <Badge key={skill} variant="secondary" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                  ) : null}
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-semibold tabular-nums">{score.score.toFixed(0)}</p>
-                  <p className="text-xs text-muted-foreground">match</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold tabular-nums">{score.score.toFixed(0)}</p>
+                      <p className="text-xs text-muted-foreground">match</p>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
         )}
       </CardContent>
     </Card>
@@ -191,6 +291,6 @@ function formatError(code: string) {
     case 'OPPORTUNITY_NOT_FOUND':
       return 'Opportunity not found.'
     default:
-      return 'Could not run AI match. Please try again.'
+      return code.length < 80 ? code : 'Could not complete action. Please try again.'
   }
 }

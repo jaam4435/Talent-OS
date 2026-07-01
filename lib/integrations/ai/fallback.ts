@@ -24,9 +24,27 @@ export async function runRuleBasedMatching(
   }
 
   const rows = (data ?? []) as RuleBasedRow[]
-  const requiredCount = Math.max(opportunity.requiredSkills.length, 1)
+  const requiredSkills = opportunity.requiredSkills.map((s) => s.toLowerCase())
+  const requiredCount = Math.max(requiredSkills.length, 1)
+
+  const { data: skillRows } = await supabase
+    .from('freelancers')
+    .select('id, skills')
+    .in(
+      'id',
+      rows.map((r) => r.freelancer_id)
+    )
+
+  const skillMap = new Map(
+    (skillRows ?? []).map((f) => [
+      f.id,
+      (f.skills ?? []).map((s: string) => s.toLowerCase()),
+    ])
+  )
 
   const matches = rows.map((row, index) => {
+    const freelancerSkills = skillMap.get(row.freelancer_id) ?? []
+    const skillOverlap = requiredSkills.filter((s) => freelancerSkills.includes(s))
     const skillRatio = row.skill_match_count / requiredCount
     const ratingBoost = row.internal_rating ? (row.internal_rating - 3) * 5 : 0
     const score = Math.min(100, Math.max(0, skillRatio * 70 + 20 + ratingBoost))
@@ -35,7 +53,7 @@ export async function runRuleBasedMatching(
       freelancerId: row.freelancer_id,
       score: Math.round(score * 100) / 100,
       rationale: `Rule-based match: ${row.skill_match_count} overlapping skill(s), ${row.discipline} discipline.`,
-      skillOverlap: [],
+      skillOverlap,
       rank: index + 1,
     }
   })

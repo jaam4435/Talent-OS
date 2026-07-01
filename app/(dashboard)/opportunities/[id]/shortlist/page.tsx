@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { PageHeader } from '@/components/shared/page-header'
 import { AiMatchPanel } from '@/components/opportunities/ai-match-panel'
+import { ShortlistBoard } from '@/components/opportunities/shortlist-board'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +10,8 @@ import { createClient } from '@/lib/supabase/server'
 import { requireTenant } from '@/lib/auth/session'
 import { isManager } from '@/lib/auth/permissions'
 import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
+import { getShortlistItems } from '@/lib/shortlists/queries'
+import { AddRespondentsButton } from '@/components/opportunities/add-respondents-button'
 
 export default async function ShortlistPage({
   params,
@@ -32,28 +35,14 @@ export default async function ShortlistPage({
 
   if (!opportunity) notFound()
 
-  const { data: recipients } = await supabase
-    .from('opportunity_recipients')
-    .select('id, response, freelancer_id')
-    .eq('opportunity_id', id)
-    .in('response', ['interested', 'pending'])
-
-  const freelancerIds = recipients?.map((r) => r.freelancer_id) ?? []
-  const { data: freelancers } = freelancerIds.length
-    ? await supabase
-        .from('freelancers')
-        .select('id, full_name, email, discipline, availability')
-        .in('id', freelancerIds)
-    : { data: [] }
-
-  const freelancerMap = new Map(freelancers?.map((f) => [f.id, f]) ?? [])
   const matchResults = await getTalentMatchResults(id, tenant.id)
+  const { shortlistId, items } = await getShortlistItems(id, tenant.id)
 
-  const { data: shortlist } = await supabase
-    .from('shortlists')
-    .select('id, status')
+  const { count: interestedCount } = await supabase
+    .from('opportunity_recipients')
+    .select('id', { count: 'exact', head: true })
     .eq('opportunity_id', id)
-    .maybeSingle()
+    .eq('response', 'interested')
 
   return (
     <div>
@@ -68,9 +57,12 @@ export default async function ShortlistPage({
         </div>
       </PageHeader>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         <Badge className="capitalize">{opportunity.status}</Badge>
-        {shortlist ? <Badge variant="outline">Shortlist {shortlist.status}</Badge> : null}
+        {shortlistId ? <Badge variant="outline">Shortlist active</Badge> : null}
+        {(interestedCount ?? 0) > 0 ? (
+          <AddRespondentsButton opportunityId={id} count={interestedCount ?? 0} />
+        ) : null}
       </div>
 
       <div className="mb-6">
@@ -83,46 +75,10 @@ export default async function ShortlistPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Candidates</CardTitle>
+          <CardTitle>Compare candidates</CardTitle>
         </CardHeader>
         <CardContent>
-          {!recipients?.length ? (
-            <p className="text-sm text-muted-foreground">
-              No recipients yet. Broadcast this opportunity to collect responses.
-            </p>
-          ) : (
-            <ul className="divide-y rounded-lg border">
-              {recipients.map((recipient) => {
-                const freelancer = freelancerMap.get(recipient.freelancer_id)
-                if (!freelancer) return null
-
-                const assignUrl = `/projects/new?opportunityId=${id}&freelancerId=${freelancer.id}`
-
-                return (
-                  <li
-                    key={recipient.id}
-                    className="flex flex-wrap items-center justify-between gap-4 p-4"
-                  >
-                    <div>
-                      <p className="font-medium">{freelancer.full_name}</p>
-                      <p className="text-sm text-muted-foreground">{freelancer.email}</p>
-                      <div className="mt-2 flex gap-2">
-                        <Badge variant="outline" className="capitalize">
-                          {freelancer.discipline}
-                        </Badge>
-                        <Badge variant="secondary" className="capitalize">
-                          {recipient.response}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Button asChild size="sm">
-                      <Link href={assignUrl}>Assign project</Link>
-                    </Button>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
+          <ShortlistBoard opportunityId={id} items={items} />
         </CardContent>
       </Card>
     </div>

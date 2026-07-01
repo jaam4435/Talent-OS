@@ -236,6 +236,27 @@ export interface Database {
         note: string | null
         created_at: string
       }>
+      shortlists: TableDef<{
+        id: string
+        tenant_id: string
+        opportunity_id: string
+        created_by: string
+        status: string
+        created_at: string
+        updated_at: string
+      }>
+      shortlist_items: TableDef<{
+        id: string
+        shortlist_id: string
+        freelancer_id: string
+        tenant_id: string
+        rank: number
+        notes: string | null
+        status: string
+        rejection_reason: string | null
+        created_at: string
+        updated_at: string
+      }>
     }
     Views: {
       v_dashboard_summary: TableDef<{

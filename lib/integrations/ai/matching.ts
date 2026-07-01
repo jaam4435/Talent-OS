@@ -44,26 +44,32 @@ async function fetchOpportunityContext(opportunityId: string): Promise<Opportuni
   }
 }
 
-async function fetchMatchCandidates(opportunityId: string, tenantId: string): Promise<TalentMatchCandidate[]> {
+async function fetchMatchCandidates(
+  opportunity: OpportunityMatchContext
+): Promise<TalentMatchCandidate[]> {
   const supabase = createAdminClient()
 
   const { data: recipients } = await supabase
     .from('opportunity_recipients')
     .select('freelancer_id')
-    .eq('opportunity_id', opportunityId)
+    .eq('opportunity_id', opportunity.id)
 
-  const excludedIds = recipients?.map((r) => r.freelancer_id) ?? []
+  const excludedSet = new Set(recipients?.map((r) => r.freelancer_id) ?? [])
 
-  const excludedSet = new Set(excludedIds)
-
-  const { data: freelancers } = await supabase
+  let query = supabase
     .from('freelancers')
     .select(
       'id, full_name, discipline, skills, day_rate, availability, internal_rating, bio, tags'
     )
-    .eq('tenant_id', tenantId)
-    .in('availability', ['available', 'busy'])
+    .eq('tenant_id', opportunity.tenantId)
+    .eq('availability', 'available')
     .limit(50)
+
+  if (opportunity.discipline) {
+    query = query.eq('discipline', opportunity.discipline)
+  }
+
+  const { data: freelancers } = await query
 
   return (freelancers ?? [])
     .filter((f) => !excludedSet.has(f.id))
@@ -163,7 +169,7 @@ export async function executeTalentMatch(aiRequestId: string, actorId?: string |
     throw new Error('OPPORTUNITY_NOT_FOUND')
   }
 
-  const candidates = await fetchMatchCandidates(opportunityId, opportunity.tenantId)
+  const candidates = await fetchMatchCandidates(opportunity)
 
   let result: AiMatchResult & { promptHash?: string }
   try {
