@@ -1,8 +1,12 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { ProjectKanban } from '@/components/projects/project-kanban'
 import { EmptyState, PageHeader } from '@/components/shared/page-header'
 import { createClient } from '@/lib/supabase/server'
 import { requireTenant } from '@/lib/auth/session'
+import { isManager } from '@/lib/auth/permissions'
+import type { ProjectStatus } from '@/types/enums'
 
 export const metadata = { title: 'Projects' }
 
@@ -12,20 +16,26 @@ export default async function ProjectsPage() {
 
   let query = supabase
     .from('projects')
-    .select('id, title, status, client_name, freelancer_id')
+    .select('id, title, status, client_name, freelancer_id, created_at')
     .eq('tenant_id', tenant.id)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(100)
 
   if (tenant.role === 'freelancer') {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
     const { data: freelancer } = await supabase
       .from('freelancers')
       .select('id')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
+      .eq('user_id', user?.id ?? '')
       .maybeSingle()
 
     if (freelancer) {
       query = query.eq('freelancer_id', freelancer.id)
+    } else {
+      query = query.eq('freelancer_id', '00000000-0000-0000-0000-000000000000')
     }
   }
 
@@ -37,15 +47,39 @@ export default async function ProjectsPage() {
     : { data: [] }
   const freelancerMap = new Map(freelancers?.map((f) => [f.id, f]) ?? [])
 
+  const kanbanProjects =
+    projects?.map((project) => ({
+      id: project.id,
+      title: project.title,
+      status: project.status as ProjectStatus,
+      clientName: project.client_name,
+      freelancerName: freelancerMap.get(project.freelancer_id)?.full_name ?? null,
+    })) ?? []
+
   return (
     <div>
-      <PageHeader title="Projects" description="Track active engagements and milestones" />
+      <PageHeader title="Projects" description="Track active engagements and milestones">
+        {isManager(tenant.role) ? (
+          <Button asChild>
+            <Link href="/projects/new">New project</Link>
+          </Button>
+        ) : null}
+      </PageHeader>
 
       {!projects?.length ? (
         <EmptyState
           title="No projects"
-          description="Assign talent from a shortlist to create your first project."
+          description="Assign talent from a shortlist or create a project manually."
+          action={
+            isManager(tenant.role) ? (
+              <Button asChild>
+                <Link href="/projects/new">Create project</Link>
+              </Button>
+            ) : undefined
+          }
         />
+      ) : isManager(tenant.role) ? (
+        <ProjectKanban projects={kanbanProjects} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => {

@@ -276,6 +276,23 @@ export interface Database {
         Args: { p_invite_id: string; p_actor_id: string }
         Returns: void
       }
+      create_project_with_milestones: {
+        Args: {
+          p_tenant_id: string
+          p_assigned_by: string
+          p_freelancer_id: string
+          p_title: string
+          p_milestones: Json
+          p_opportunity_id?: string | null
+          p_shortlist_id?: string | null
+          p_description?: string | null
+          p_client_name?: string | null
+          p_budget?: number | null
+          p_currency?: string
+          p_status?: string
+        }
+        Returns: string
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
