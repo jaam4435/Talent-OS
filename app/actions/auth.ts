@@ -115,7 +115,7 @@ export async function inviteTeamMember(input: { email: string; role: UserRole })
   const { tenant, user } = await requireAdmin()
 
   if (!isAssignableTeamRole(input.role)) {
-    return { success: false as const, error: 'Only talent_manager or freelancer roles can be invited.' }
+    return { success: false as const, error: 'Invalid invite role.' }
   }
 
   const email = input.email.trim().toLowerCase()

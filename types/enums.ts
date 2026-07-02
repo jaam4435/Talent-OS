@@ -1,4 +1,7 @@
-export type UserRole = 'admin' | 'talent_manager' | 'freelancer'
+export type UserRole = 'admin' | 'talent_manager' | 'freelancer' | 'client'
+
+/** Simplified product roles for RBAC documentation */
+export type CoreUserRole = 'admin' | 'talent' | 'client'
 
 export type MemberStatus = 'invited' | 'active' | 'suspended'
 

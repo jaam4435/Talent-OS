@@ -29,4 +29,14 @@ export const DISCIPLINES = [
   'other',
 ] as const
 
-export const USER_ROLES = ['admin', 'talent_manager', 'freelancer'] as const
+export const USER_ROLES = ['admin', 'talent_manager', 'freelancer', 'client'] as const
+
+/** Routes blocked for client users (agency-only features) */
+export const CLIENT_RESTRICTED_ROUTES = [
+  '/talent',
+  '/analytics',
+  '/settings',
+  '/opportunities/new',
+  '/projects/new',
+  '/payments',
+] as const

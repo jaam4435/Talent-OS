@@ -15,9 +15,10 @@ import type { ParsedRequirements } from '@/lib/integrations/ai/types'
 
 interface OpportunityFormProps {
   defaultCurrency: string
+  companies?: Array<{ id: string; name: string }>
 }
 
-export function OpportunityForm({ defaultCurrency }: OpportunityFormProps) {
+export function OpportunityForm({ defaultCurrency, companies = [] }: OpportunityFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -28,6 +29,7 @@ export function OpportunityForm({ defaultCurrency }: OpportunityFormProps) {
   const [skills, setSkills] = useState('')
   const [discipline, setDiscipline] = useState<DisciplineType>('design')
   const [clientName, setClientName] = useState('')
+  const [companyId, setCompanyId] = useState('')
   const [deadline, setDeadline] = useState('')
   const [responseDeadline, setResponseDeadline] = useState('')
 
@@ -43,6 +45,7 @@ export function OpportunityForm({ defaultCurrency }: OpportunityFormProps) {
         requiredSkills: skills.split(',').map((s) => s.trim()).filter(Boolean),
         discipline,
         clientName: clientName || undefined,
+        companyId: companyId || undefined,
         deadline: deadline || undefined,
         responseDeadline: responseDeadline || undefined,
         status,
@@ -76,8 +79,28 @@ export function OpportunityForm({ defaultCurrency }: OpportunityFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="client">Client name</Label>
-          <Input id="client" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+          <Label htmlFor="company">Company</Label>
+          {companies.length ? (
+            <select
+              id="company"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={companyId}
+              onChange={(e) => {
+                setCompanyId(e.target.value)
+                const selected = companies.find((c) => c.id === e.target.value)
+                if (selected) setClientName(selected.name)
+              }}
+            >
+              <option value="">Select company (optional)</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Input id="client" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Client name" />
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="discipline">Discipline</Label>

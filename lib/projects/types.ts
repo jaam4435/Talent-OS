@@ -12,6 +12,7 @@ export interface CreateProjectInput {
   title: string
   description?: string
   clientName?: string
+  companyId?: string
   budget?: number
   currency?: string
   opportunityId?: string

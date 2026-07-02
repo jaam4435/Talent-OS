@@ -11,6 +11,7 @@ export const createOpportunitySchema = z.object({
   requiredSkills: z.array(skillSchema).min(1, 'At least one skill is required'),
   discipline: z.enum(DISCIPLINES).optional(),
   clientName: z.string().max(200).optional(),
+  companyId: z.string().uuid().optional(),
   deadline: z.string().optional(),
   responseDeadline: z.string().optional(),
   status: z.enum(['draft', 'open']).optional(),

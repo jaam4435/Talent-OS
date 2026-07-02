@@ -29,6 +29,9 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'payments:approve',
     'payments:pay',
     'analytics:read',
+    'companies:create',
+    'companies:read',
+    'companies:update',
   ],
   talent_manager: [
     'tenant:read',
@@ -51,6 +54,7 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'milestones:review',
     'payments:read',
     'analytics:read',
+    'companies:read',
   ],
   freelancer: [
     'tenant:read',
@@ -62,6 +66,12 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'projects:update',
     'milestones:submit',
     'payments:read',
+  ],
+  client: [
+    'tenant:read',
+    'companies:read',
+    'projects:read',
+    'opportunities:read',
   ],
 }
 
@@ -81,6 +91,14 @@ export function requirePermission(role: UserRole, permission: string) {
 
 export function isManager(role: UserRole) {
   return role === 'admin' || role === 'talent_manager'
+}
+
+export function isTalentRole(role: UserRole) {
+  return role === 'freelancer'
+}
+
+export function isClientRole(role: UserRole) {
+  return role === 'client'
 }
 
 export function isAdmin(role: UserRole) {

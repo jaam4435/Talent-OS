@@ -12,6 +12,7 @@ export const createProjectSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   clientName: z.string().optional(),
+  companyId: z.string().uuid().optional(),
   budget: z.number().min(0).optional(),
   currency: z.string().length(3).optional(),
   opportunityId: z.string().uuid().optional(),

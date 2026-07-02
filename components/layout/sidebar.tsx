@@ -22,11 +22,11 @@ const navItems: Array<{
   icon: typeof LayoutDashboard
   roles: UserRole[]
 }> = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'talent_manager', 'freelancer'] },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'talent_manager', 'freelancer', 'client'] },
   { href: '/profile', label: 'My profile', icon: UserCircle, roles: ['freelancer'] },
   { href: '/talent', label: 'Talent', icon: Users, roles: ['admin', 'talent_manager'] },
-  { href: '/opportunities', label: 'Opportunities', icon: Megaphone, roles: ['admin', 'talent_manager', 'freelancer'] },
-  { href: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'talent_manager', 'freelancer'] },
+  { href: '/opportunities', label: 'Opportunities', icon: Megaphone, roles: ['admin', 'talent_manager', 'freelancer', 'client'] },
+  { href: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'talent_manager', 'freelancer', 'client'] },
   { href: '/payments', label: 'Payments', icon: CreditCard, roles: ['admin', 'talent_manager', 'freelancer'] },
   { href: '/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin', 'talent_manager'] },
   { href: '/settings', label: 'Settings', icon: Settings, roles: ['admin'] },

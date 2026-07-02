@@ -29,6 +29,17 @@ export async function createOpportunity(input: CreateOpportunityInput) {
   const supabase = await createClient()
   const status = parsed.data.status ?? 'draft'
 
+  let clientName = parsed.data.clientName ?? null
+  if (parsed.data.companyId) {
+    const { data: company } = await supabase
+      .from('companies')
+      .select('name')
+      .eq('id', parsed.data.companyId)
+      .eq('tenant_id', tenant.id)
+      .maybeSingle()
+    if (company) clientName = company.name
+  }
+
   const { data, error } = await supabase
     .from('opportunities')
     .insert({
@@ -40,7 +51,8 @@ export async function createOpportunity(input: CreateOpportunityInput) {
       currency: parsed.data.currency ?? tenant.currency,
       required_skills: parsed.data.requiredSkills,
       discipline: parsed.data.discipline ?? null,
-      client_name: parsed.data.clientName ?? null,
+      client_name: clientName,
+      company_id: parsed.data.companyId ?? null,
       deadline: parsed.data.deadline || null,
       response_deadline: parsed.data.responseDeadline || null,
       status,

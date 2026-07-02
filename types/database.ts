@@ -42,11 +42,25 @@ export interface Database {
         id: string
         tenant_id: string
         user_id: string
-        role: 'admin' | 'talent_manager' | 'freelancer'
+        role: 'admin' | 'talent_manager' | 'freelancer' | 'client'
         status: 'invited' | 'active' | 'suspended'
         invited_at: string | null
         joined_at: string | null
+        company_id: string | null
         created_at: string
+      }>
+      companies: TableDef<{
+        id: string
+        tenant_id: string
+        name: string
+        slug: string
+        logo_url: string | null
+        contact_email: string | null
+        contact_name: string | null
+        website: string | null
+        notes: string | null
+        created_at: string
+        updated_at: string
       }>
       freelancers: TableDef<{
         id: string
@@ -81,6 +95,7 @@ export interface Database {
         required_skills: string[]
         discipline: string | null
         client_name: string | null
+        company_id: string | null
         deadline: string | null
         response_deadline: string | null
         status: string
@@ -110,6 +125,7 @@ export interface Database {
         title: string
         description: string | null
         client_name: string | null
+        company_id: string | null
         budget: number | null
         currency: string
         status: string

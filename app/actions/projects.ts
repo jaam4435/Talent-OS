@@ -66,6 +66,23 @@ export async function createProject(input: CreateProjectInput) {
     return { ok: false as const, error: mapRpcError(error.message) }
   }
 
+  if (parsed.data.companyId) {
+    const { data: company } = await supabase
+      .from('companies')
+      .select('name')
+      .eq('id', parsed.data.companyId)
+      .eq('tenant_id', tenant.id)
+      .maybeSingle()
+
+    await supabase
+      .from('projects')
+      .update({
+        company_id: parsed.data.companyId,
+        client_name: company?.name ?? parsed.data.clientName ?? null,
+      })
+      .eq('id', projectId as string)
+  }
+
   const { data: freelancer } = await supabase
     .from('freelancers')
     .select('full_name, email, phone, user_id')

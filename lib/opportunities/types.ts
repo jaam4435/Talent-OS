@@ -8,6 +8,7 @@ export interface CreateOpportunityInput {
   requiredSkills: string[]
   discipline?: DisciplineType
   clientName?: string
+  companyId?: string
   deadline?: string
   responseDeadline?: string
   status?: 'draft' | 'open'

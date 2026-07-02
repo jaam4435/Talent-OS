@@ -3,6 +3,7 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { ACTIVE_TENANT_COOKIE } from '@/lib/auth/tenant-context'
 import {
   ADMIN_ONLY_ROUTES,
+  CLIENT_RESTRICTED_ROUTES,
   MANAGER_ONLY_ROUTES,
   PUBLIC_ROUTES,
 } from '@/lib/utils/constants'
@@ -91,6 +92,17 @@ export async function middleware(request: NextRequest) {
     membership?.role !== 'admin' &&
     membership?.role !== 'talent_manager'
   ) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  if (
+    membership?.role === 'client' &&
+    matchesRoute(pathname, CLIENT_RESTRICTED_ROUTES)
+  ) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  if (membership?.role === 'freelancer' && pathname.startsWith('/settings')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
