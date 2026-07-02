@@ -11,7 +11,9 @@ import { requireTenant } from '@/lib/auth/session'
 import { isManager } from '@/lib/auth/permissions'
 import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
 import { getShortlistItems } from '@/lib/shortlists/queries'
+import { getShortlistSummaryResult } from '@/lib/integrations/ai/summary'
 import { AddRespondentsButton } from '@/components/opportunities/add-respondents-button'
+import { ShortlistSummarySection } from '@/components/opportunities/shortlist-summary-section'
 
 export default async function ShortlistPage({
   params,
@@ -37,6 +39,7 @@ export default async function ShortlistPage({
 
   const matchResults = await getTalentMatchResults(id, tenant.id)
   const { shortlistId, items } = await getShortlistItems(id, tenant.id)
+  const shortlistSummary = await getShortlistSummaryResult(id, tenant.id)
 
   const { count: interestedCount } = await supabase
     .from('opportunity_recipients')
@@ -65,11 +68,18 @@ export default async function ShortlistPage({
         ) : null}
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <AiMatchPanel
           opportunityId={id}
           initialScores={matchResults.scores}
           initialRequest={matchResults.latestRequest}
+        />
+        <ShortlistSummarySection
+          opportunityId={id}
+          initialSummary={
+            (shortlistSummary.latestRequest?.result as Record<string, unknown> | null) ?? null
+          }
+          initialRequest={shortlistSummary.latestRequest}
         />
       </div>
 

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/shared/page-header'
+import { OpportunityRequirementsCard } from '@/components/opportunities/opportunity-requirements-card'
 import { AiMatchPanel } from '@/components/opportunities/ai-match-panel'
 import { BroadcastPanel } from '@/components/opportunities/broadcast-panel'
 import { OpportunityResponseForm } from '@/components/opportunities/opportunity-response-form'
@@ -12,6 +13,7 @@ import { isManager } from '@/lib/auth/permissions'
 import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
 import { formatCurrency } from '@/lib/utils/format'
 import type { Tables } from '@/types/database'
+import type { ParsedRequirements } from '@/lib/integrations/ai/types'
 
 export default async function OpportunityDetailPage({
   params,
@@ -104,6 +106,21 @@ export default async function OpportunityDetailPage({
               {skill}
             </Badge>
           ))}
+        </div>
+      ) : null}
+
+      {manager ? (
+        <div className="mb-6">
+          <OpportunityRequirementsCard
+            opportunityId={id}
+            requirements={
+              opportunity.requirements &&
+              typeof opportunity.requirements === 'object' &&
+              Object.keys(opportunity.requirements).length > 0
+                ? (opportunity.requirements as unknown as ParsedRequirements)
+                : null
+            }
+          />
         </div>
       ) : null}
 

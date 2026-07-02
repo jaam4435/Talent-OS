@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createOpportunity } from '@/app/actions/opportunities'
+import { RequirementGatheringPanel } from '@/components/ai/requirement-gathering-panel'
 import { SkillsInput } from '@/components/talent/skills-input'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { DISCIPLINES } from '@/lib/utils/constants'
 import { formatSkillsForInput } from '@/lib/opportunities/validation'
 import type { DisciplineType } from '@/types/enums'
+import type { ParsedRequirements } from '@/lib/integrations/ai/types'
 
 interface OpportunityFormProps {
   defaultCurrency: string
@@ -57,7 +59,8 @@ export function OpportunityForm({ defaultCurrency }: OpportunityFormProps) {
   }
 
   return (
-    <form className="space-y-6">
+    <div className="grid gap-6 lg:grid-cols-2">
+      <form className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="title">Title</Label>
@@ -140,5 +143,24 @@ export function OpportunityForm({ defaultCurrency }: OpportunityFormProps) {
         </Button>
       </div>
     </form>
+
+      <RequirementGatheringPanel
+        title={title}
+        description={description}
+        budget={budget}
+        currency={defaultCurrency}
+        onApply={(requirements: ParsedRequirements) => {
+          if (requirements.skills.length) {
+            setSkills(requirements.skills.join(', '))
+          }
+          if (!description && requirements.summary) {
+            setDescription(requirements.summary)
+          }
+          if (!budget && requirements.budgetHint) {
+            setBudget(String(requirements.budgetHint))
+          }
+        }}
+      />
+    </div>
   )
 }

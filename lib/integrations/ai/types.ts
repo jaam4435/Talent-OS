@@ -1,6 +1,12 @@
 export type AiProvider = 'openai' | 'claude'
 export type AiRequestStatus = 'pending' | 'processing' | 'completed' | 'failed'
-export type AiRequestType = 'talent_match' | 'brief_parse' | 'shortlist_summary' | 'digest'
+export type AiRequestType =
+  | 'talent_match'
+  | 'brief_parse'
+  | 'shortlist_summary'
+  | 'digest'
+  | 'project_summary'
+  | 'status_assessment'
 
 export interface TalentMatchCandidate {
   id: string
@@ -78,4 +84,44 @@ export interface TalentMatchScoreRow {
     availability: string
     internal_rating: number | null
   }
+}
+
+export interface ParsedRequirements {
+  skills: string[]
+  deliverables: string[]
+  suggestedMilestones: Array<{ title: string; description?: string }>
+  budgetHint: number | null
+  timelineHint: string | null
+  risks: string[]
+  summary: string
+}
+
+export interface BriefParseResult {
+  requirements: ParsedRequirements
+  provider: AiProvider
+  model: string
+  inputTokens?: number
+  outputTokens?: number
+  estimatedCost?: number
+  usedFallback: boolean
+}
+
+export interface ProjectSummaryResult {
+  summaryText: string
+  highlights: string[]
+  blockers: string[]
+  nextActions: string[]
+  provider: AiProvider
+  model: string
+  usedFallback: boolean
+}
+
+export interface StatusAssessmentResult {
+  riskLevel: 'on_track' | 'at_risk' | 'blocked'
+  suggestedStatus: string | null
+  narrative: string
+  reasons: string[]
+  provider: AiProvider
+  model: string
+  usedFallback: boolean
 }

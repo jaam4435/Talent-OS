@@ -3,6 +3,7 @@ import type { AiProvider, AiRequestType } from '@/lib/integrations/ai/types'
 
 interface TenantAiSettings {
   aiMatchingEnabled: boolean
+  aiPmEnabled: boolean
   maxAiRequestsMonthly: number
 }
 
@@ -28,6 +29,7 @@ export async function getTenantAiSettings(tenantId: string): Promise<TenantAiSet
 
   return {
     aiMatchingEnabled: features.ai_matching !== false,
+    aiPmEnabled: features.ai_pm !== false,
     maxAiRequestsMonthly:
       typeof limits.max_ai_requests_monthly === 'number'
         ? limits.max_ai_requests_monthly
@@ -35,11 +37,18 @@ export async function getTenantAiSettings(tenantId: string): Promise<TenantAiSet
   }
 }
 
-export async function assertAiMatchingAllowed(tenantId: string): Promise<void> {
+export async function assertAiFeatureAllowed(
+  tenantId: string,
+  feature: 'talent_match' | 'brief_parse' | 'project_summary' | 'shortlist_summary' | 'status_assessment'
+): Promise<void> {
   const settings = await getTenantAiSettings(tenantId)
 
-  if (!settings.aiMatchingEnabled) {
+  if (feature === 'talent_match' && !settings.aiMatchingEnabled) {
     throw new Error('AI_MATCHING_DISABLED')
+  }
+
+  if (feature !== 'talent_match' && !settings.aiPmEnabled) {
+    throw new Error('AI_PM_DISABLED')
   }
 
   const supabase = createAdminClient()
@@ -56,6 +65,10 @@ export async function assertAiMatchingAllowed(tenantId: string): Promise<void> {
   if ((count ?? 0) >= settings.maxAiRequestsMonthly) {
     throw new Error('AI_MONTHLY_LIMIT_EXCEEDED')
   }
+}
+
+export async function assertAiMatchingAllowed(tenantId: string): Promise<void> {
+  await assertAiFeatureAllowed(tenantId, 'talent_match')
 }
 
 export async function createAiRequest(input: {

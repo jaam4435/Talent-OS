@@ -120,6 +120,18 @@ export async function submitMilestone(milestoneId: string, submissionNote?: stri
 
   await supabase.from('projects').update({ status: 'in_review' }).eq('id', milestone.project_id)
 
+  await supabase.from('activity_logs').insert({
+    tenant_id: tenant.id,
+    actor_id: user.id,
+    entity_type: 'project',
+    entity_id: milestone.project_id,
+    action: 'milestone_submitted',
+    metadata: {
+      milestone_id: milestoneId,
+      milestone_title: milestone.title,
+    },
+  })
+
   if (project?.assigned_by) {
     await supabase.from('notifications').insert({
       tenant_id: tenant.id,
@@ -194,6 +206,19 @@ export async function reviewMilestone(
   if (error) {
     return { ok: false as const, error: error.message }
   }
+
+  await supabase.from('activity_logs').insert({
+    tenant_id: tenant.id,
+    actor_id: user.id,
+    entity_type: 'project',
+    entity_id: milestone.project_id,
+    action: action === 'approve' ? 'milestone_approved' : 'milestone_revision_requested',
+    metadata: {
+      milestone_id: milestoneId,
+      milestone_title: milestone.title,
+      review_note: reviewNote ?? null,
+    },
+  })
 
   const { data: project } = await supabase
     .from('projects')

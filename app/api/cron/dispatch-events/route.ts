@@ -10,26 +10,31 @@ import {
   markEventFailed,
   markEventProcessing,
 } from '@/lib/integrations/events'
-import { executeTalentMatch } from '@/lib/integrations/ai/matching'
+import { executeAiRequest } from '@/lib/integrations/ai/executor'
 
-const DIRECT_AI_EVENTS = new Set(['ai.match_requested'])
+const DIRECT_AI_EVENTS = new Set([
+  'ai.match_requested',
+  'ai.brief_parse_requested',
+  'ai.summary_requested',
+  'ai.status_assessment_requested',
+])
 
 async function processDirectAiEvent(event: {
   event_type: string
   payload: Record<string, unknown> | null
   actor_id: string | null
 }): Promise<{ ok: boolean; error?: string }> {
-  if (event.event_type !== 'ai.match_requested') {
-    return { ok: false, error: 'Unsupported AI event' }
-  }
-
   const aiRequestId = event.payload?.ai_request_id
   if (typeof aiRequestId !== 'string') {
     return { ok: false, error: 'Missing ai_request_id in payload' }
   }
 
+  if (!DIRECT_AI_EVENTS.has(event.event_type)) {
+    return { ok: false, error: 'Unsupported AI event' }
+  }
+
   try {
-    await executeTalentMatch(aiRequestId, event.actor_id)
+    await executeAiRequest(aiRequestId, event.actor_id)
     return { ok: true }
   } catch (error) {
     return {

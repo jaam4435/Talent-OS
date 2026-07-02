@@ -84,6 +84,7 @@ export interface Database {
         deadline: string | null
         response_deadline: string | null
         status: string
+        requirements: Record<string, unknown>
         created_at: string
         updated_at: string
       }>
@@ -112,6 +113,9 @@ export interface Database {
         budget: number | null
         currency: string
         status: string
+        requirements: Record<string, unknown>
+        ai_summary: Record<string, unknown> | null
+        ai_status_assessment: Record<string, unknown> | null
         started_at: string | null
         completed_at: string | null
         created_at: string
