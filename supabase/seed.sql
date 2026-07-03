@@ -146,7 +146,7 @@ SELECT
   m.title,
   m.amount,
   m.sort_order,
-  m.status,
+  m.status::milestone_status,
   m.due_date
 FROM (
   VALUES

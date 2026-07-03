@@ -19,9 +19,12 @@ fi
 
 # Percent-encode password for connection URL (basic handling)
 ENCODED_PW="$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$SUPABASE_DB_PASSWORD")"
-DB_URL="postgresql://postgres:${ENCODED_PW}@db.${PROJECT_REF}.supabase.co:5432/postgres"
+# Pooler host (IPv4) — ap-southeast-1 session pooler
+POOLER_HOST="${SUPABASE_POOLER_HOST:-aws-1-ap-southeast-1.pooler.supabase.com}"
+POOLER_PORT="${SUPABASE_POOLER_PORT:-5432}"
+DB_URL="postgresql://postgres.${PROJECT_REF}:${ENCODED_PW}@${POOLER_HOST}:${POOLER_PORT}/postgres"
 
-echo "Pushing migrations to db.${PROJECT_REF}.supabase.co ..."
+echo "Pushing migrations to ${POOLER_HOST}:${POOLER_PORT} ..."
 npx supabase db push --db-url "$DB_URL" --yes
 
 if [[ "${RUN_SEED:-}" == "1" ]]; then

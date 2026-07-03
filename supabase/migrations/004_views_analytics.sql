@@ -90,15 +90,15 @@ CREATE POLICY "tenant_logos_read" ON storage.objects FOR SELECT
 CREATE POLICY "tenant_logos_write" ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'tenant-logos'
-    AND (storage.foldername(name))[1]::uuid IN (SELECT auth.admin_tenant_ids())
+    AND (storage.foldername(name))[1]::uuid IN (SELECT public.admin_tenant_ids())
   );
 
 CREATE POLICY "deliverables_read" ON storage.objects FOR SELECT
   USING (
     bucket_id = 'deliverables'
     AND (
-      (storage.foldername(name))[1]::uuid IN (SELECT auth.manager_tenant_ids())
-      OR (storage.foldername(name))[2]::uuid IN (SELECT auth.user_freelancer_ids())
+      (storage.foldername(name))[1]::uuid IN (SELECT public.manager_tenant_ids())
+      OR (storage.foldername(name))[2]::uuid IN (SELECT public.user_freelancer_ids())
     )
   );
 
@@ -106,8 +106,8 @@ CREATE POLICY "deliverables_write" ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'deliverables'
     AND (
-      (storage.foldername(name))[1]::uuid IN (SELECT auth.manager_tenant_ids())
-      OR (storage.foldername(name))[2]::uuid IN (SELECT auth.user_freelancer_ids())
+      (storage.foldername(name))[1]::uuid IN (SELECT public.manager_tenant_ids())
+      OR (storage.foldername(name))[2]::uuid IN (SELECT public.user_freelancer_ids())
     )
   );
 

@@ -229,23 +229,23 @@ ALTER TABLE talent_match_scores ENABLE ROW LEVEL SECURITY;
 
 -- Domain events: managers can read their tenant's events
 CREATE POLICY "domain_events_select" ON domain_events FOR SELECT
-  USING (tenant_id IN (SELECT auth.manager_tenant_ids()));
+  USING (tenant_id IN (SELECT public.manager_tenant_ids()));
 
 -- Email logs: managers read, service role writes
 CREATE POLICY "email_logs_select" ON email_logs FOR SELECT
-  USING (tenant_id IN (SELECT auth.manager_tenant_ids()));
+  USING (tenant_id IN (SELECT public.manager_tenant_ids()));
 
 -- AI requests: managers read
 CREATE POLICY "ai_requests_select" ON ai_requests FOR SELECT
-  USING (tenant_id IN (SELECT auth.manager_tenant_ids()));
+  USING (tenant_id IN (SELECT public.manager_tenant_ids()));
 
 -- Match scores: managers read
 CREATE POLICY "match_scores_select" ON talent_match_scores FOR SELECT
-  USING (tenant_id IN (SELECT auth.manager_tenant_ids()));
+  USING (tenant_id IN (SELECT public.manager_tenant_ids()));
 
 -- Webhook deliveries: admin only
 CREATE POLICY "webhook_deliveries_select" ON webhook_deliveries FOR SELECT
-  USING (tenant_id IN (SELECT auth.admin_tenant_ids()));
+  USING (tenant_id IN (SELECT public.admin_tenant_ids()));
 
 -- =============================================================================
 -- ANALYTICS VIEWS

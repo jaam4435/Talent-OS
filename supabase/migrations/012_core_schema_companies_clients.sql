@@ -1,10 +1,5 @@
 -- Core schema alignment: companies, client role, canonical views (users, talent_profiles)
--- Maps product concepts: users → profiles, talent_profiles → freelancers, companies → new table
-
--- =============================================================================
--- CLIENT ROLE
--- =============================================================================
-ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'client';
+-- Depends on: 011_add_client_role.sql
 
 -- =============================================================================
 -- COMPANIES (end-client organizations)
@@ -204,7 +199,7 @@ COMMENT ON TABLE companies IS 'End-client organizations (maps to product concept
 COMMENT ON VIEW users IS 'Canonical user records (maps to profiles + auth.users)';
 COMMENT ON VIEW talent_profiles IS 'Canonical talent profiles (maps to freelancers)';
 
--- Allow client role on tenant_members (extends enum from above)
+-- Allow client role on tenant_members (extends enum from 011)
 ALTER TABLE tenant_members DROP CONSTRAINT IF EXISTS tenant_members_role_check;
 ALTER TABLE tenant_members ADD CONSTRAINT tenant_members_role_check
   CHECK (role::text = ANY (ARRAY['admin', 'talent_manager', 'freelancer', 'client']));
