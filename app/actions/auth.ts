@@ -111,11 +111,19 @@ export async function requestPasswordReset(email: string) {
   return { success: true as const }
 }
 
-export async function inviteTeamMember(input: { email: string; role: UserRole }) {
+export async function inviteTeamMember(input: {
+  email: string
+  role: UserRole
+  companyId?: string
+}) {
   const { tenant, user } = await requireAdmin()
 
   if (!isAssignableTeamRole(input.role)) {
     return { success: false as const, error: 'Invalid invite role.' }
+  }
+
+  if (input.role === 'client' && !input.companyId) {
+    return { success: false as const, error: 'Select a company for client invites.' }
   }
 
   const email = input.email.trim().toLowerCase()
@@ -134,6 +142,7 @@ export async function inviteTeamMember(input: { email: string; role: UserRole })
       tenant_id: tenant.id,
       email,
       role: input.role,
+      company_id: input.role === 'client' ? input.companyId ?? null : null,
       invited_by: user.id,
       token_hash: tokenHash,
       expires_at: expiresAt,

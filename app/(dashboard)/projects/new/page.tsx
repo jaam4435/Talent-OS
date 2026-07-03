@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { CreateProjectForm } from '@/components/projects/create-project-form'
 import { PageHeader } from '@/components/shared/page-header'
 import { Button } from '@/components/ui/button'
+import { listCompanies } from '@/lib/companies/queries'
 import { createClient } from '@/lib/supabase/server'
 import { requireManager } from '@/lib/auth/guards'
 
@@ -27,6 +28,7 @@ export default async function NewProjectPage({
     title?: string
     description?: string
     clientName?: string
+    companyId?: string
     budget?: number
     currency?: string
     opportunityId?: string
@@ -40,7 +42,7 @@ export default async function NewProjectPage({
   if (opportunityId) {
     const { data: opportunity } = await supabase
       .from('opportunities')
-      .select('id, title, description, client_name, budget, currency')
+      .select('id, title, description, client_name, company_id, budget, currency')
       .eq('id', opportunityId)
       .eq('tenant_id', tenant.id)
       .maybeSingle()
@@ -58,17 +60,21 @@ export default async function NewProjectPage({
       title: opportunity.title,
       description: opportunity.description ?? undefined,
       clientName: opportunity.client_name ?? undefined,
+      companyId: opportunity.company_id ?? undefined,
       budget: opportunity.budget ?? undefined,
       currency: opportunity.currency,
       shortlistId: shortlist?.id,
     }
   }
 
-  const { data: freelancers } = await supabase
-    .from('freelancers')
-    .select('id, full_name, email')
-    .eq('tenant_id', tenant.id)
-    .order('full_name')
+  const [freelancersResult, companies] = await Promise.all([
+    supabase
+      .from('freelancers')
+      .select('id, full_name, email')
+      .eq('tenant_id', tenant.id)
+      .order('full_name'),
+    listCompanies(tenant.id),
+  ])
 
   return (
     <div>
@@ -78,7 +84,21 @@ export default async function NewProjectPage({
         </Button>
       </PageHeader>
 
-      <CreateProjectForm freelancers={freelancers ?? []} defaults={defaults} />
+      {freelancersResult.data?.length === 0 ? (
+        <div className="mb-6 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+          Add at least one freelancer in{' '}
+          <Link href="/talent/new" className="font-medium text-foreground underline">
+            Talent roster
+          </Link>{' '}
+          before creating a project.
+        </div>
+      ) : null}
+
+      <CreateProjectForm
+        freelancers={freelancersResult.data ?? []}
+        companies={companies.map((c) => ({ id: c.id, name: c.name }))}
+        defaults={defaults}
+      />
     </div>
   )
 }

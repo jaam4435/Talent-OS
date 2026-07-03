@@ -12,11 +12,13 @@ import type { MilestoneInput } from '@/lib/projects/types'
 
 interface CreateProjectFormProps {
   freelancers: Array<{ id: string; full_name: string; email: string }>
+  companies?: Array<{ id: string; name: string }>
   defaults?: {
     freelancerId?: string
     title?: string
     description?: string
     clientName?: string
+    companyId?: string
     budget?: number
     currency?: string
     opportunityId?: string
@@ -28,11 +30,12 @@ function emptyMilestone(): MilestoneInput {
   return { title: '', amount: 0, description: '', dueDate: '' }
 }
 
-export function CreateProjectForm({ freelancers, defaults }: CreateProjectFormProps) {
+export function CreateProjectForm({ freelancers, companies = [], defaults }: CreateProjectFormProps) {
   const router = useRouter()
   const [freelancerId, setFreelancerId] = useState(defaults?.freelancerId ?? '')
   const [title, setTitle] = useState(defaults?.title ?? '')
   const [description, setDescription] = useState(defaults?.description ?? '')
+  const [companyId, setCompanyId] = useState(defaults?.companyId ?? '')
   const [clientName, setClientName] = useState(defaults?.clientName ?? '')
   const [budget, setBudget] = useState(defaults?.budget?.toString() ?? '')
   const [milestones, setMilestones] = useState<MilestoneInput[]>([emptyMilestone()])
@@ -77,6 +80,7 @@ export function CreateProjectForm({ freelancers, defaults }: CreateProjectFormPr
         title,
         description: description || undefined,
         clientName: clientName || undefined,
+        companyId: companyId || undefined,
         budget: budgetNumber,
         currency: defaults?.currency,
         opportunityId: defaults?.opportunityId,
@@ -124,8 +128,34 @@ export function CreateProjectForm({ freelancers, defaults }: CreateProjectFormPr
           </select>
         </div>
         <div className="space-y-2">
+          <Label htmlFor="company">Company</Label>
+          <select
+            id="company"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={companyId}
+            onChange={(e) => {
+              const id = e.target.value
+              setCompanyId(id)
+              const company = companies.find((c) => c.id === id)
+              if (company) setClientName(company.name)
+            }}
+          >
+            <option value="">Select company (optional)</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="client">Client name</Label>
-          <Input id="client" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+          <Input
+            id="client"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            placeholder={companyId ? 'Synced from company' : 'Or enter manually'}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="budget">Budget</Label>

@@ -20,6 +20,7 @@ function mapRpcError(message: string): string {
   if (message.includes('OPPORTUNITY_NOT_FOUND')) return 'Opportunity not found.'
   if (message.includes('FREELANCER_NOT_FOUND')) return 'Freelancer not found.'
   if (message.includes('FORBIDDEN')) return 'You do not have permission to create projects.'
+  if (message.includes('COMPANY_NOT_FOUND')) return 'Company not found.'
   return message
 }
 
@@ -60,27 +61,11 @@ export async function createProject(input: CreateProjectInput) {
     p_budget: parsed.data.budget ?? null,
     p_currency: parsed.data.currency ?? tenant.currency,
     p_status: parsed.data.status ?? 'active',
+    p_company_id: parsed.data.companyId ?? null,
   })
 
   if (error) {
     return { ok: false as const, error: mapRpcError(error.message) }
-  }
-
-  if (parsed.data.companyId) {
-    const { data: company } = await supabase
-      .from('companies')
-      .select('name')
-      .eq('id', parsed.data.companyId)
-      .eq('tenant_id', tenant.id)
-      .maybeSingle()
-
-    await supabase
-      .from('projects')
-      .update({
-        company_id: parsed.data.companyId,
-        client_name: company?.name ?? parsed.data.clientName ?? null,
-      })
-      .eq('id', projectId as string)
   }
 
   const { data: freelancer } = await supabase

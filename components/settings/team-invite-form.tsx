@@ -8,9 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { UserRole } from '@/types/enums'
 
-export function TeamInviteForm() {
+interface TeamInviteFormProps {
+  companies?: Array<{ id: string; name: string }>
+}
+
+export function TeamInviteForm({ companies = [] }: TeamInviteFormProps) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<UserRole>('talent_manager')
+  const [companyId, setCompanyId] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [inviteUrl, setInviteUrl] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -21,7 +26,11 @@ export function TeamInviteForm() {
     setInviteUrl(null)
 
     startTransition(async () => {
-      const result = await inviteTeamMember({ email, role })
+      const result = await inviteTeamMember({
+        email,
+        role,
+        companyId: role === 'client' ? companyId || undefined : undefined,
+      })
       if (!result.success) {
         setError(result.error)
         return
@@ -29,6 +38,7 @@ export function TeamInviteForm() {
 
       setInviteUrl(result.inviteUrl)
       setEmail('')
+      setCompanyId('')
     })
   }
 
@@ -61,10 +71,30 @@ export function TeamInviteForm() {
             onChange={(e) => setRole(e.target.value as UserRole)}
           >
             <option value="talent_manager">Talent Manager</option>
-            <option value="freelancer">Freelancer</option>
+            <option value="freelancer">Talent</option>
+            <option value="client">Client</option>
           </select>
           <p className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
         </div>
+        {role === 'client' ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="invite-company">Company</Label>
+            <select
+              id="invite-company"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              required
+            >
+              <option value="">Select company</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
