@@ -235,6 +235,20 @@ talent-os/
 │       └── activity-feed.tsx
 │
 ├── lib/
+│   ├── core/                         # Shared domain foundation
+│   │   ├── context.ts                # Supabase client + RepositoryContext
+│   │   ├── errors.ts                 # DomainError, ErrorCodes
+│   │   ├── result.ts                 # ActionResult helpers
+│   │   ├── supabase-errors.ts        # PostgrestError mapping
+│   │   └── validation.ts             # Zod parse helpers
+│   ├── domains/                      # Domain-driven modules
+│   │   └── talent/                   # Freelancers, portfolio, ratings
+│   │       ├── factory.ts            # createTalentServices()
+│   │       ├── types/
+│   │       ├── validation/
+│   │       ├── mappers/
+│   │       ├── repositories/
+│   │       └── services/
 │   ├── supabase/
 │   │   ├── client.ts                 # Browser client
 │   │   ├── server.ts                 # Server component client
@@ -245,7 +259,7 @@ talent-os/
 │   │   ├── permissions.ts            # Role checks
 │   │   └── tenant-context.ts         # Resolve active tenant
 │   ├── validations/
-│   │   ├── freelancer.ts             # Zod schemas
+│   │   ├── freelancer.ts             # Zod schemas (legacy; talent uses lib/domains/talent)
 │   │   ├── opportunity.ts
 │   │   ├── project.ts
 │   │   ├── milestone.ts
@@ -295,7 +309,8 @@ talent-os/
 │   ├── 07-authentication-design.md
 │   ├── 08-multi-tenant-architecture.md
 │   ├── 09-n8n-workflows.md
-│   └── 10-whatsapp-integration.md
+│   ├── 10-whatsapp-integration.md
+│   └── 25-talent-domain-refactor.md  # Architecture refactor log
 │
 ├── n8n/                              # n8n workflow exports (JSON)
 │   ├── opportunity-broadcast.json
