@@ -39,8 +39,10 @@ This folder is the **authoritative architectural blueprint** for evolving Talent
 | 16 | [Event Catalog](16%20Event%20Catalog.md) | Domain events, payloads, lifecycle |
 | 17 | [API Standards](17%20API%20Standards.md) | REST, actions, MCP, versioning |
 | 18 | [Data Model](18%20Data%20Model.md) | Schema, migrations, RLS, indexes |
-| 19 | [Roadmap](19%20Roadmap.md) | Phased delivery plan |
+| 19 | [Roadmap](19%20Roadmap.md) | Executive phased delivery summary |
 | 20 | [Technical Decisions](20%20Technical%20Decisions.md) | ADRs and decision log |
+
+**Detailed engineering plan:** [Engineering Roadmap](Engineering%20Roadmap.md)
 
 ### Analysis
 
