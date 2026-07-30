@@ -9,9 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/compone
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
 import { getShortlistPageHeader } from '@/lib/queries/opportunities.queries'
-import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
 import { getShortlistItems } from '@/lib/shortlists/queries'
-import { getShortlistSummaryResult } from '@/lib/integrations/ai/summary'
+import { getTalentMatchResults, getShortlistSummaryResult } from '@/lib/queries/ai.queries'
 import { AddRespondentsButton } from '@/components/opportunities/add-respondents-button'
 import { ShortlistSummarySection } from '@/components/opportunities/shortlist-summary-section'
 

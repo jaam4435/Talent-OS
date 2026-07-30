@@ -4,13 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { requireTenant } from '@/modules/core/services/session'
 import { requirePermission } from '@/modules/core/services/permissions'
 import { isManager } from '@/modules/core/services/permissions'
-import { parseBriefText, requestBriefParse } from '@/lib/integrations/ai/brief-parse'
-import {
-  requestProjectSummary,
-  requestShortlistSummary,
-} from '@/lib/integrations/ai/summary'
-import { requestStatusAssessment } from '@/lib/integrations/ai/status-assessment'
-import type { ParsedRequirements } from '@/lib/integrations/ai/types'
+import { createServices } from '@/lib/services/factory'
+import type { ParsedRequirements } from '@/lib/services/ai.service'
 
 export async function parseRequirementsFromText(input: {
   title: string
@@ -25,7 +20,8 @@ export async function parseRequirementsFromText(input: {
   requirePermission(tenant.role, 'ai:brief_parse')
 
   try {
-    const result = await parseBriefText({
+    const services = await createServices()
+    const result = await services.ai.parseBriefText({
       title: input.title,
       description: input.description ?? null,
       budget: input.budget ?? null,
@@ -44,7 +40,8 @@ export async function runBriefParse(opportunityId: string) {
   requirePermission(tenant.role, 'ai:brief_parse')
 
   try {
-    const result = await requestBriefParse({
+    const services = await createServices()
+    const result = await services.ai.requestBriefParse({
       tenantId: tenant.id,
       opportunityId,
       actorId: user.id,
@@ -63,7 +60,8 @@ export async function runProjectSummary(projectId: string) {
   requirePermission(tenant.role, 'ai:summary')
 
   try {
-    const result = await requestProjectSummary({
+    const services = await createServices()
+    const result = await services.ai.requestProjectSummary({
       tenantId: tenant.id,
       projectId,
       actorId: user.id,
@@ -82,7 +80,8 @@ export async function runShortlistSummary(opportunityId: string) {
   requirePermission(tenant.role, 'ai:summary')
 
   try {
-    const result = await requestShortlistSummary({
+    const services = await createServices()
+    const result = await services.ai.requestShortlistSummary({
       tenantId: tenant.id,
       opportunityId,
       actorId: user.id,
@@ -101,7 +100,8 @@ export async function runStatusAssessment(projectId: string) {
   requirePermission(tenant.role, 'ai:status')
 
   try {
-    const result = await requestStatusAssessment({
+    const services = await createServices()
+    const result = await services.ai.requestStatusAssessment({
       tenantId: tenant.id,
       projectId,
       actorId: user.id,

@@ -9,8 +9,7 @@ import {
   markEventFailed,
   markEventProcessing,
 } from '@/lib/integrations/events'
-import { executeAiRequest } from '@/lib/integrations/ai/executor'
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createServices } from '@/lib/services/factory'
 
 const DIRECT_AI_EVENTS = new Set([
   'ai.match_requested',
@@ -34,7 +33,8 @@ async function processDirectAiEvent(event: {
   }
 
   try {
-    await executeAiRequest(aiRequestId, event.actor_id)
+    const services = await createServices()
+    await services.ai.executeRequest(aiRequestId, event.actor_id)
     return { ok: true }
   } catch (error) {
     return {
@@ -50,8 +50,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const repos = await createAdminRepositories()
-  const events = await repos.domainEvent.listPendingForDispatch(50)
+  const services = await createServices()
+  const events = await services.workflow.listPendingForDispatch(50)
   const results: Array<{ id: string; ok: boolean; error?: string }> = []
   const directAiMode = process.env.AI_EXECUTION_MODE === 'direct'
 

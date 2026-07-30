@@ -1,24 +1,19 @@
-import { createRepositories } from '@/lib/repositories/factory'
-import type { Tables } from '@/modules/core/types/database'
+import { createServices } from '@/lib/services/factory'
+export type { TalentRow } from '@/lib/services/talent.service'
 
-export type TalentRow = Tables<'freelancers'>
-
-export async function getTalentName(freelancerId: string): Promise<string | null> {
-  const repos = await createRepositories()
-  return repos.talent.findNameById(freelancerId)
+export async function getTalentName(freelancerId: string) {
+  const services = await createServices()
+  return services.talent.getTalentName(freelancerId)
 }
 
-export async function getTalentProfile(
-  freelancerId: string,
-  tenantId: string
-): Promise<TalentRow | null> {
-  const repos = await createRepositories()
-  return repos.talent.findById(freelancerId, tenantId)
+export async function getTalentProfile(freelancerId: string, tenantId: string) {
+  const services = await createServices()
+  return services.talent.getTalentProfile(freelancerId, tenantId)
 }
 
 export async function getTalentActivity(freelancerId: string, limit = 10) {
-  const repos = await createRepositories()
-  return repos.activityLog.listByEntity('freelancer', freelancerId, limit)
+  const services = await createServices()
+  return services.talent.getTalentActivity(freelancerId, limit)
 }
 
 export async function searchTalentRoster(
@@ -35,6 +30,6 @@ export async function searchTalentRoster(
     offset?: number
   }
 ) {
-  const repos = await createRepositories()
-  return repos.talent.search(tenantId, params)
+  const services = await createServices()
+  return services.talent.searchRosterQuery(tenantId, params)
 }

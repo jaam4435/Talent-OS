@@ -3,14 +3,15 @@
 import { revalidatePath } from 'next/cache'
 import { requireTenant } from '@/modules/core/services/session'
 import { requirePermission } from '@/modules/core/services/permissions'
-import { requestTalentMatch } from '@/lib/integrations/ai/matching'
+import { createServices } from '@/lib/services/factory'
 
 export async function runAiTalentMatch(opportunityId: string) {
   const { tenant, user } = await requireTenant()
   requirePermission(tenant.role, 'ai:match')
 
   try {
-    const result = await requestTalentMatch({
+    const services = await createServices()
+    const result = await services.ai.requestTalentMatch({
       tenantId: tenant.id,
       opportunityId,
       actorId: user.id,

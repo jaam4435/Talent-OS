@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { requireManager } from '@/modules/core/services/guards'
 import { requirePermission } from '@/modules/core/services/permissions'
-import { getOrCreateShortlist } from '@/lib/shortlists/queries'
-import { createRepositories } from '@/lib/repositories/factory'
+import { createServices } from '@/lib/services/factory'
 
 function revalidateOpportunity(opportunityId: string) {
   revalidatePath(`/opportunities/${opportunityId}`)
@@ -15,36 +14,20 @@ export async function addToShortlist(opportunityId: string, freelancerIds: strin
   const { tenant, user } = await requireManager()
   requirePermission(tenant.role, 'shortlists:manage')
 
-  if (!freelancerIds.length) {
-    return { ok: false as const, error: 'Select at least one freelancer' }
-  }
+  const services = await createServices()
+  const result = await services.assignment.addToShortlist(
+    opportunityId,
+    tenant.id,
+    user.id,
+    freelancerIds
+  )
 
-  const repos = await createRepositories()
-  const exists = await repos.lead.existsInTenant(opportunityId, tenant.id)
-  if (!exists) {
-    return { ok: false as const, error: 'Opportunity not found' }
-  }
-
-  const shortlistId = await getOrCreateShortlist(opportunityId, tenant.id, user.id)
-  const maxRank = await repos.shortlist.findMaxRank(shortlistId)
-  let nextRank = maxRank + 1
-
-  const rows = freelancerIds.map((freelancerId) => ({
-    shortlist_id: shortlistId,
-    freelancer_id: freelancerId,
-    tenant_id: tenant.id,
-    rank: nextRank++,
-    status: 'active' as const,
-  }))
-
-  try {
-    await repos.shortlist.upsertItems(rows)
-  } catch (error) {
-    return { ok: false as const, error: error instanceof Error ? error.message : 'Add failed' }
+  if (!result.ok) {
+    return { ok: false as const, error: result.error }
   }
 
   revalidateOpportunity(opportunityId)
-  return { ok: true as const, shortlistId }
+  return { ok: true as const, shortlistId: result.shortlistId }
 }
 
 export async function updateShortlistItem(
@@ -55,15 +38,11 @@ export async function updateShortlistItem(
   const { tenant } = await requireManager()
   requirePermission(tenant.role, 'shortlists:manage')
 
-  const repos = await createRepositories()
-  const patch: Record<string, unknown> = {}
-  if (input.rank !== undefined) patch.rank = input.rank
-  if (input.notes !== undefined) patch.notes = input.notes || null
+  const services = await createServices()
+  const result = await services.assignment.updateShortlistItem(itemId, tenant.id, input)
 
-  try {
-    await repos.shortlist.updateItem(itemId, tenant.id, patch)
-  } catch (error) {
-    return { ok: false as const, error: error instanceof Error ? error.message : 'Update failed' }
+  if (!result.ok) {
+    return { ok: false as const, error: result.error }
   }
 
   revalidateOpportunity(opportunityId)
@@ -78,15 +57,11 @@ export async function rejectShortlistCandidate(
   const { tenant } = await requireManager()
   requirePermission(tenant.role, 'shortlists:manage')
 
-  if (!reason.trim()) {
-    return { ok: false as const, error: 'Rejection reason is required' }
-  }
+  const services = await createServices()
+  const result = await services.assignment.rejectShortlistCandidate(itemId, tenant.id, reason)
 
-  const repos = await createRepositories()
-  try {
-    await repos.shortlist.rejectItem(itemId, tenant.id, reason)
-  } catch (error) {
-    return { ok: false as const, error: error instanceof Error ? error.message : 'Reject failed' }
+  if (!result.ok) {
+    return { ok: false as const, error: result.error }
   }
 
   revalidateOpportunity(opportunityId)
@@ -94,15 +69,20 @@ export async function rejectShortlistCandidate(
 }
 
 export async function addRespondentsToShortlist(opportunityId: string) {
-  const { tenant } = await requireManager()
+  const { tenant, user } = await requireManager()
   requirePermission(tenant.role, 'shortlists:manage')
 
-  const repos = await createRepositories()
-  const freelancerIds = await repos.lead.listInterestedFreelancerIds(opportunityId)
+  const services = await createServices()
+  const result = await services.assignment.addRespondentsToShortlist(
+    opportunityId,
+    tenant.id,
+    user.id
+  )
 
-  if (!freelancerIds.length) {
-    return { ok: false as const, error: 'No interested responses to add' }
+  if (!result.ok) {
+    return { ok: false as const, error: result.error }
   }
 
-  return addToShortlist(opportunityId, freelancerIds)
+  revalidateOpportunity(opportunityId)
+  return { ok: true as const, shortlistId: result.shortlistId }
 }

@@ -10,8 +10,7 @@ import { runProjectSummary } from '@/app/actions/ai-pm'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
 import { getProjectDetail, mapProjectMilestones } from '@/lib/queries/projects.queries'
-import { getProjectSummaryResult } from '@/lib/integrations/ai/summary'
-import { getStatusAssessmentResult } from '@/lib/integrations/ai/status-assessment'
+import { getProjectSummaryResult, getStatusAssessmentResult } from '@/lib/queries/ai.queries'
 import type { ProjectStatus } from '@/modules/core/types/enums'
 
 export default async function ProjectDetailPage({

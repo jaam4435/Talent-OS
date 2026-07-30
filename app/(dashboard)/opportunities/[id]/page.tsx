@@ -10,7 +10,7 @@ import { OpportunityResponseForm } from '@/components/opportunities/opportunity-
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
 import { getOpportunityPageData } from '@/lib/queries/opportunities.queries'
-import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
+import { getTalentMatchResults } from '@/lib/queries/ai.queries'
 import { formatCurrency } from '@/modules/core/utils/format'
 import type { ParsedRequirements } from '@/lib/integrations/ai/types'
 

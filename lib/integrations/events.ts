@@ -1,24 +1,24 @@
-import { createAdminRepositories } from '@/lib/repositories/factory'
-import type { EmitDomainEventInput } from '@/lib/repositories/domain-event.repository'
+import { createAdminServices } from '@/lib/services/factory'
+import type { EmitEventInput } from '@/lib/services/workflow.service'
 
-export type EmitEventInput = EmitDomainEventInput
+export type { EmitEventInput }
 
 export async function emitEvent(input: EmitEventInput): Promise<string | null> {
-  const repos = await createAdminRepositories()
-  return repos.domainEvent.emit(input)
+  const services = await createAdminServices()
+  return services.workflow.emitEvent(input)
 }
 
 export async function markEventProcessing(eventId: string) {
-  const repos = await createAdminRepositories()
-  await repos.domainEvent.markProcessing(eventId)
+  const services = await createAdminServices()
+  await services.workflow.markEventProcessing(eventId)
 }
 
 export async function markEventDelivered(eventId: string) {
-  const repos = await createAdminRepositories()
-  await repos.domainEvent.markDelivered(eventId)
+  const services = await createAdminServices()
+  await services.workflow.markEventDelivered(eventId)
 }
 
 export async function markEventFailed(eventId: string, error: string) {
-  const repos = await createAdminRepositories()
-  await repos.domainEvent.markFailed(eventId, error)
+  const services = await createAdminServices()
+  await services.workflow.markEventFailed(eventId, error)
 }
