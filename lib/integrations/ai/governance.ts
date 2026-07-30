@@ -1,44 +1,22 @@
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import type { AiProvider, AiRequestType } from '@/lib/integrations/ai/types'
 
-interface TenantAiSettings {
-  aiMatchingEnabled: boolean
-  aiPmEnabled: boolean
-  maxAiRequestsMonthly: number
-}
-
-export async function getTenantAiSettings(tenantId: string): Promise<TenantAiSettings> {
-  const repos = await createAdminRepositories()
-  return repos.tenant.getAiSettings(tenantId)
+export async function getTenantAiSettings(tenantId: string) {
+  const services = await createAdminServices()
+  return services.ai.getTenantAiSettings(tenantId)
 }
 
 export async function assertAiFeatureAllowed(
   tenantId: string,
   feature: 'talent_match' | 'brief_parse' | 'project_summary' | 'shortlist_summary' | 'status_assessment'
 ): Promise<void> {
-  const repos = await createAdminRepositories()
-  const settings = await repos.tenant.getAiSettings(tenantId)
-
-  if (feature === 'talent_match' && !settings.aiMatchingEnabled) {
-    throw new Error('AI_MATCHING_DISABLED')
-  }
-
-  if (feature !== 'talent_match' && !settings.aiPmEnabled) {
-    throw new Error('AI_PM_DISABLED')
-  }
-
-  const monthStart = new Date()
-  monthStart.setUTCDate(1)
-  monthStart.setUTCHours(0, 0, 0, 0)
-
-  const count = await repos.aiRequest.countMonthlyByTenant(tenantId, monthStart)
-  if (count >= settings.maxAiRequestsMonthly) {
-    throw new Error('AI_MONTHLY_LIMIT_EXCEEDED')
-  }
+  const services = await createAdminServices()
+  return services.ai.assertAiFeatureAllowed(tenantId, feature)
 }
 
 export async function assertAiMatchingAllowed(tenantId: string): Promise<void> {
-  await assertAiFeatureAllowed(tenantId, 'talent_match')
+  const services = await createAdminServices()
+  return services.ai.assertAiMatchingAllowed(tenantId)
 }
 
 export async function createAiRequest(input: {
@@ -51,8 +29,8 @@ export async function createAiRequest(input: {
   entityId?: string
   promptHash?: string
 }): Promise<string> {
-  const repos = await createAdminRepositories()
-  return repos.aiRequest.create(input)
+  const services = await createAdminServices()
+  return services.ai.createAiRequest(input)
 }
 
 export async function updateAiRequest(
@@ -68,6 +46,6 @@ export async function updateAiRequest(
     promptHash?: string
   }
 ) {
-  const repos = await createAdminRepositories()
-  await repos.aiRequest.update(aiRequestId, patch)
+  const services = await createAdminServices()
+  await services.ai.updateAiRequest(aiRequestId, patch)
 }

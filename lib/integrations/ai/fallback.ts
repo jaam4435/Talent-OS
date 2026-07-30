@@ -1,4 +1,4 @@
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import type { AiMatchResult, OpportunityMatchContext } from '@/lib/integrations/ai/types'
 
 interface RuleBasedRow {
@@ -13,12 +13,12 @@ interface RuleBasedRow {
 export async function runRuleBasedMatching(
   opportunity: OpportunityMatchContext
 ): Promise<AiMatchResult> {
-  const repos = await createAdminRepositories()
-  const rows = (await repos.talent.suggestForOpportunity(opportunity.id)) as RuleBasedRow[]
+  const services = await createAdminServices()
+  const rows = (await services.talent.suggestForOpportunity(opportunity.id)) as RuleBasedRow[]
   const requiredSkills = opportunity.requiredSkills.map((s) => s.toLowerCase())
   const requiredCount = Math.max(requiredSkills.length, 1)
 
-  const skillRows = await repos.talent.findSkillsByIds(rows.map((r) => r.freelancer_id))
+  const skillRows = await services.talent.findSkillsByIds(rows.map((r) => r.freelancer_id))
   const skillMap = new Map(
     skillRows.map((f) => [f.id, (f.skills ?? []).map((s: string) => s.toLowerCase())])
   )

@@ -195,6 +195,25 @@ export class WorkflowService {
 
     return { ok: true, projectId: milestone.project_id }
   }
+
+  async listOverdueMilestones(now: string) {
+    return this.repos.task.listOverdue(now)
+  }
+
+  async findEventByIdempotencyKey(idempotencyKey: string) {
+    return this.repos.domainEvent.findByIdempotencyKey(idempotencyKey)
+  }
+
+  async logActivity(input: {
+    tenant_id: string
+    actor_id: string | null
+    entity_type: string
+    entity_id: string
+    action: string
+    metadata?: Record<string, unknown>
+  }) {
+    await this.repos.activityLog.create(input)
+  }
 }
 
 export type EmitEventInput = import('@/lib/repositories/domain-event.repository').EmitDomainEventInput

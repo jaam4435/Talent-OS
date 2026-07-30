@@ -244,4 +244,27 @@ export class AssignmentService {
 
     return this.addToShortlist(opportunityId, tenantId, userId, freelancerIds)
   }
+
+  async upsertMatchScores(
+    rows: Array<{
+      tenant_id: string
+      opportunity_id: string
+      freelancer_id: string
+      ai_request_id: string
+      score: number
+      rationale: string
+      skill_overlap: string[]
+      rank: number
+    }>
+  ) {
+    await this.repos.matchScore.upsertScores(rows)
+  }
+
+  async listDetailedMatchScores(opportunityId: string, tenantId: string) {
+    return this.repos.matchScore.listDetailedByOpportunity(opportunityId, tenantId)
+  }
+
+  async listTopMatchScores(opportunityId: string) {
+    return this.repos.matchScore.listTopScoresByOpportunity(opportunityId)
+  }
 }

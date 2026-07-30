@@ -5,11 +5,11 @@ import {
   executeShortlistSummary,
 } from '@/lib/integrations/ai/summary'
 import { executeStatusAssessment } from '@/lib/integrations/ai/status-assessment'
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 
 export async function executeAiRequest(aiRequestId: string, actorId?: string | null) {
-  const repos = await createAdminRepositories()
-  const requestType = await repos.aiRequest.findRequestType(aiRequestId)
+  const services = await createAdminServices()
+  const requestType = await services.ai.findRequestType(aiRequestId)
 
   if (!requestType) {
     throw new Error('AI_REQUEST_NOT_FOUND')

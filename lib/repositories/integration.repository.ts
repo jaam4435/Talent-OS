@@ -62,6 +62,7 @@ export class WebhookDeliveryRepository extends BaseRepository {
     tenant_id?: string
     source: string
     idempotency_key: string
+    correlation_id?: string
     event_type?: string
     payload: Json
     status: string
@@ -69,6 +70,37 @@ export class WebhookDeliveryRepository extends BaseRepository {
     processed_at?: string
   }): Promise<void> {
     const { error } = await this.ctx.supabase.from('webhook_deliveries').insert(input)
+    this.throwIfError(error)
+  }
+
+  async markProcessed(source: string, idempotencyKey: string): Promise<void> {
+    const { error } = await this.ctx.supabase
+      .from('webhook_deliveries')
+      .update({ status: 'processed', processed_at: new Date().toISOString() })
+      .eq('source', source)
+      .eq('idempotency_key', idempotencyKey)
+    this.throwIfError(error)
+  }
+
+  async createEmailLog(input: {
+    tenant_id: string
+    to_email?: string
+    template_name?: string
+    subject?: string
+    provider_id?: string
+    entity_type?: string
+    entity_id?: string
+  }): Promise<void> {
+    const { error } = await this.ctx.supabase.from('email_logs').insert({
+      tenant_id: input.tenant_id,
+      to_email: input.to_email,
+      template_name: input.template_name,
+      subject: input.subject,
+      status: 'sent',
+      provider_id: input.provider_id,
+      entity_type: input.entity_type,
+      entity_id: input.entity_id,
+    })
     this.throwIfError(error)
   }
 }

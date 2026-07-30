@@ -1,5 +1,5 @@
 import { getAiGateway } from '@/lib/ai'
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiFeatureAllowed,
@@ -12,7 +12,6 @@ import {
   buildBriefParsePrompt,
 } from '@/lib/integrations/ai/prompt-pm'
 import type { BriefParseResult, ParsedRequirements } from '@/lib/integrations/ai/types'
-import type { Json } from '@/modules/core/types/database'
 
 const SKILL_KEYWORDS = [
   'figma',
@@ -140,14 +139,14 @@ export async function parseBriefText(input: {
 }
 
 async function persistOpportunityRequirements(opportunityId: string, requirements: ParsedRequirements) {
-  const repos = await createAdminRepositories()
-  await repos.lead.updateRequirements(opportunityId, requirements as unknown as Json)
+  const services = await createAdminServices()
+  await services.crm.updateRequirements(opportunityId, requirements)
 }
 
 export async function executeBriefParse(aiRequestId: string) {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const startedAt = Date.now()
-  const aiRequest = await repos.aiRequest.findById(aiRequestId)
+  const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
   if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
@@ -157,7 +156,7 @@ export async function executeBriefParse(aiRequestId: string) {
 
   await updateAiRequest(aiRequestId, { status: 'processing' })
 
-  const opportunity = await repos.lead.findBriefContext(opportunityId)
+  const opportunity = await services.crm.findBriefContext(opportunityId)
 
   if (!opportunity) {
     await updateAiRequest(aiRequestId, { status: 'failed', errorMessage: 'Opportunity not found' })
@@ -197,8 +196,8 @@ export async function requestBriefParse(input: {
 }) {
   await assertAiFeatureAllowed(input.tenantId, 'brief_parse')
 
-  const repos = await createAdminRepositories()
-  const exists = await repos.lead.existsInTenant(input.opportunityId, input.tenantId)
+  const services = await createAdminServices()
+  const exists = await services.crm.existsInTenant(input.opportunityId, input.tenantId)
   if (!exists) throw new Error('OPPORTUNITY_NOT_FOUND')
 
   const correlationId = crypto.randomUUID()
@@ -232,9 +231,9 @@ export async function requestBriefParse(input: {
 }
 
 export async function getBriefParseResult(opportunityId: string, tenantId: string) {
-  const repos = await createAdminRepositories()
-  const requirementsRaw = await repos.lead.findRequirements(opportunityId, tenantId)
-  const latestRequest = await repos.aiRequest.findLatestByEntity({
+  const services = await createAdminServices()
+  const requirementsRaw = await services.crm.findRequirements(opportunityId, tenantId)
+  const latestRequest = await services.ai.findLatestByEntity({
     tenantId,
     entityType: 'opportunity',
     entityId: opportunityId,

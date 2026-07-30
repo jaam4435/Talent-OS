@@ -53,6 +53,18 @@ talent-os/
 │   │   ├── projects.queries.ts
 │   │   ├── opportunities.queries.ts
 │   │   └── ...
+│   ├── services/                     # Business logic orchestrating repositories
+│   │   ├── factory.ts                # createServices / createAdminServices
+│   │   ├── project.service.ts
+│   │   ├── talent.service.ts
+│   │   ├── assignment.service.ts
+│   │   ├── crm.service.ts
+│   │   ├── workflow.service.ts
+│   │   ├── finance.service.ts
+│   │   ├── analytics.service.ts
+│   │   ├── notification.service.ts
+│   │   ├── ai.service.ts
+│   │   └── integration.service.ts
 │   ├── domains/
 │
 ├── app/                              # Next.js App Router

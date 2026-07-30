@@ -1,5 +1,5 @@
 import { getAiGateway } from '@/lib/ai'
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiMatchingAllowed,
@@ -21,8 +21,8 @@ function redactDisplayName(fullName: string): string {
 }
 
 async function fetchOpportunityContext(opportunityId: string): Promise<OpportunityMatchContext | null> {
-  const repos = await createAdminRepositories()
-  const data = await repos.lead.findMatchContext(opportunityId)
+  const services = await createAdminServices()
+  const data = await services.crm.getMatchContext(opportunityId)
   if (!data) return null
 
   return {
@@ -41,9 +41,9 @@ async function fetchOpportunityContext(opportunityId: string): Promise<Opportuni
 async function fetchMatchCandidates(
   opportunity: OpportunityMatchContext
 ): Promise<TalentMatchCandidate[]> {
-  const repos = await createAdminRepositories()
-  const excludedIds = await repos.lead.listRecipientFreelancerIds(opportunity.id)
-  const freelancers = await repos.talent.listMatchCandidates(opportunity.tenantId, {
+  const services = await createAdminServices()
+  const excludedIds = await services.crm.listRecipientFreelancerIds(opportunity.id)
+  const freelancers = await services.talent.listMatchCandidates(opportunity.tenantId, {
     discipline: opportunity.discipline,
     excludedIds,
   })
@@ -67,7 +67,7 @@ export async function persistMatchScores(
   aiRequestId: string,
   result: AiMatchResult
 ) {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const rows = result.matches.map((match, index) => ({
     tenant_id: tenantId,
     opportunity_id: opportunityId,
@@ -79,7 +79,7 @@ export async function persistMatchScores(
     rank: match.rank ?? index + 1,
   }))
 
-  await repos.matchScore.upsertScores(rows)
+  await services.assignment.upsertMatchScores(rows)
 }
 
 async function notifyMatchCompleted(
@@ -91,8 +91,8 @@ async function notifyMatchCompleted(
 ) {
   if (!actorId) return
 
-  const repos = await createAdminRepositories()
-  await repos.notification.create({
+  const services = await createAdminServices()
+  await services.notification.create({
     tenant_id: tenantId,
     user_id: actorId,
     type: 'system',
@@ -106,9 +106,9 @@ async function notifyMatchCompleted(
 }
 
 export async function executeTalentMatch(aiRequestId: string, actorId?: string | null) {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const startedAt = Date.now()
-  const aiRequest = await repos.aiRequest.findById(aiRequestId)
+  const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) {
     throw new Error('AI_REQUEST_NOT_FOUND')
@@ -253,18 +253,18 @@ export async function getTalentMatchResults(
   scores: TalentMatchScoreRow[]
   latestRequest: ReturnType<typeof mapLatestRequest>
 }> {
-  const repos = await createAdminRepositories()
-  const scores = await repos.matchScore.listDetailedByOpportunity(opportunityId, tenantId)
+  const services = await createAdminServices()
+  const scores = await services.assignment.listDetailedMatchScores(opportunityId, tenantId)
   const freelancerIds = [...new Set(scores.map((s) => s.freelancer_id))]
   const freelancers = freelancerIds.length
-    ? await repos.talent.findByIds(
+    ? await services.talent.findByIds(
         freelancerIds,
         'id, full_name, discipline, day_rate, availability, internal_rating'
       )
     : []
 
   const freelancerMap = new Map(freelancers.map((f) => [f.id as string, f]))
-  const latestRequest = await repos.aiRequest.findLatestByEntity({
+  const latestRequest = await services.ai.findLatestByEntity({
     tenantId,
     entityType: 'opportunity',
     entityId: opportunityId,

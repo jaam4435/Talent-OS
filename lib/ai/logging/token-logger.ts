@@ -1,5 +1,5 @@
-import { createAdminRepositories } from '@/lib/repositories/factory'
 import { mapProviderToDb } from '@/lib/ai/config'
+import { createAdminServices } from '@/lib/services/factory'
 import type { AiFeature, AiUsageMetrics, DbAiProvider, ProviderId } from '@/lib/ai/types'
 
 export interface TokenLogEntry {
@@ -29,10 +29,10 @@ export class TokenUsageLogger {
     entityId?: string
     promptHash?: string
   }): Promise<string> {
-    const repos = await createAdminRepositories()
+    const services = await createAdminServices()
     const dbProvider = mapProviderToDb(input.provider) as DbAiProvider
 
-    return repos.aiRequest.create({
+    return services.ai.createAiRequest({
       tenantId: input.tenantId,
       correlationId: input.correlationId,
       provider: dbProvider,
@@ -47,10 +47,10 @@ export class TokenUsageLogger {
   async log(entry: TokenLogEntry & { aiRequestId?: string }): Promise<string | undefined> {
     if (!entry.tenantId) return entry.aiRequestId
 
-    const repos = await createAdminRepositories()
+    const services = await createAdminServices()
 
     if (entry.aiRequestId) {
-      await repos.aiRequest.update(entry.aiRequestId, {
+      await services.ai.updateAiRequest(entry.aiRequestId, {
         status: entry.status,
         inputTokens: entry.usage.inputTokens,
         outputTokens: entry.usage.outputTokens,
@@ -65,7 +65,7 @@ export class TokenUsageLogger {
     }
 
     const dbProvider = mapProviderToDb(entry.provider) as DbAiProvider
-    const id = await repos.aiRequest.create({
+    const id = await services.ai.createAiRequest({
       tenantId: entry.tenantId,
       correlationId: entry.correlationId,
       provider: dbProvider,
@@ -76,7 +76,7 @@ export class TokenUsageLogger {
       promptHash: entry.promptHash,
     })
 
-    await repos.aiRequest.update(id, {
+    await services.ai.updateAiRequest(id, {
       status: entry.status,
       inputTokens: entry.usage.inputTokens,
       outputTokens: entry.usage.outputTokens,

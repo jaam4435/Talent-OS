@@ -8,7 +8,7 @@ import {
   updateDeliveryStatus,
 } from '@/lib/integrations/whatsapp'
 import { buildN8nEnvelope, dispatchToN8n } from '@/lib/integrations/n8n'
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import type { Json } from '@/modules/core/types/database'
 
 export async function GET(request: Request) {
@@ -35,18 +35,18 @@ export async function POST(request: Request) {
 
   const body = JSON.parse(rawBody)
   const { inbound, statuses } = parseMetaWebhook(body)
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
 
   for (const status of statuses) {
     const idempotencyKey = `wa-status:${status.waMessageId}:${status.status}`
-    const existing = await repos.webhookDelivery.findByIdempotency('whatsapp', idempotencyKey)
+    const existing = await services.integration.findWebhookDelivery('whatsapp', idempotencyKey)
     if (existing) continue
 
-    await repos.webhookDelivery.create({
+    await services.integration.createWebhookDelivery({
       source: 'whatsapp',
       idempotency_key: idempotencyKey,
       event_type: 'status_update',
-      payload: status,
+      payload: status as unknown as Json,
       status: 'processed',
       processed_at: new Date().toISOString(),
     })
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
   for (const message of inbound) {
     const idempotencyKey = `wa-inbound:${message.waMessageId}`
-    const existing = await repos.webhookDelivery.findByIdempotency('whatsapp', idempotencyKey)
+    const existing = await services.integration.findWebhookDelivery('whatsapp', idempotencyKey)
 
     if (existing) {
       return NextResponse.json({ status: 'duplicate' })
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
     const tenantId = await resolveTenantByPhoneNumberId(message.phoneNumberId)
     if (!tenantId) {
-      await repos.webhookDelivery.create({
+      await services.integration.createWebhookDelivery({
         source: 'whatsapp',
         idempotency_key: idempotencyKey,
         payload: message as unknown as Json,
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
     const freelancer = await findFreelancerByPhone(tenantId, message.phone)
     if (!freelancer) {
-      await repos.webhookDelivery.create({
+      await services.integration.createWebhookDelivery({
         tenant_id: tenantId,
         source: 'whatsapp',
         idempotency_key: idempotencyKey,
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       waMessageId: message.waMessageId,
     })
 
-    await repos.webhookDelivery.create({
+    await services.integration.createWebhookDelivery({
       tenant_id: tenantId,
       source: 'whatsapp',
       idempotency_key: idempotencyKey,

@@ -1,4 +1,4 @@
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 
 export interface WhatsAppIntegrationConfig {
   phone_number_id: string
@@ -93,21 +93,21 @@ export function parseMetaWebhook(body: {
 export async function resolveTenantByPhoneNumberId(
   phoneNumberId: string
 ): Promise<string | null> {
-  const repos = await createAdminRepositories()
-  return repos.integration.resolveTenantByWhatsAppPhoneNumberId(phoneNumberId)
+  const services = await createAdminServices()
+  return services.integration.resolveTenantByWhatsAppPhoneNumberId(phoneNumberId)
 }
 
 export async function findFreelancerByPhone(tenantId: string, phone: string) {
-  const repos = await createAdminRepositories()
-  return repos.talent.findByPhone(tenantId, phone)
+  const services = await createAdminServices()
+  return services.talent.findByPhone(tenantId, phone)
 }
 
 export async function findPendingOpportunityRecipient(
   tenantId: string,
   freelancerId: string
 ) {
-  const repos = await createAdminRepositories()
-  return repos.lead.findPendingRecipient(tenantId, freelancerId)
+  const services = await createAdminServices()
+  return services.crm.findPendingRecipient(tenantId, freelancerId)
 }
 
 export async function processInboundQuickReply(input: {
@@ -118,10 +118,10 @@ export async function processInboundQuickReply(input: {
   body: string
   waMessageId: string
 }) {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const response = parseQuickResponse(input.body)
 
-  await repos.whatsapp.createInbound({
+  await services.integration.createInboundWhatsApp({
     tenant_id: input.tenantId,
     freelancer_id: input.freelancerId,
     wa_message_id: input.waMessageId,
@@ -133,12 +133,12 @@ export async function processInboundQuickReply(input: {
     return { handled: false as const, reason: 'unrecognized_message' }
   }
 
-  const recipient = await repos.lead.findPendingRecipient(input.tenantId, input.freelancerId)
+  const recipient = await services.crm.findPendingRecipient(input.tenantId, input.freelancerId)
   if (!recipient) {
     return { handled: false as const, reason: 'no_pending_opportunity' }
   }
 
-  await repos.lead.updateRecipientResponse(recipient.id, {
+  await services.crm.updateRecipientResponse(recipient.id, {
     response,
     responded_at: new Date().toISOString(),
     response_note: `Via WhatsApp: ${input.body}`,
@@ -157,10 +157,6 @@ export async function updateDeliveryStatus(
   waMessageId: string,
   status: string
 ) {
-  const repos = await createAdminRepositories()
-  const recipientId = await repos.whatsapp.updateDeliveryStatus(waMessageId, status)
-
-  if (recipientId) {
-    await repos.lead.markWhatsAppDelivered(recipientId)
-  }
+  const services = await createAdminServices()
+  await services.integration.updateWhatsAppDeliveryStatus(waMessageId, status)
 }

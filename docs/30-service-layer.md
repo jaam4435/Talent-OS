@@ -14,6 +14,8 @@ Integrations / cron    →  createAdminServices()      (background)
                          Supabase
 ```
 
+Integrations (`lib/integrations/*`), webhooks, and AI executors call `createAdminServices()` — never repositories directly.
+
 ## Services
 
 | Service | Responsibility |
@@ -26,7 +28,8 @@ Integrations / cron    →  createAdminServices()      (background)
 | `FinanceService` | Payments / invoices |
 | `AnalyticsService` | Dashboard summaries, team roster reads |
 | `NotificationService` | In-app notifications |
-| `AIService` | AI match, brief parse, summaries, status assessment |
+| `AIService` | AI governance, requests, match, brief parse, summaries, status assessment |
+| `IntegrationService` | n8n/WhatsApp webhooks, webhook delivery audit |
 
 ## Factory
 

@@ -296,4 +296,15 @@ export class LeadRepository extends BaseRepository {
       .eq('id', recipientId)
     this.throwIfError(error)
   }
+
+  async updateRecipientWhatsAppSent(
+    recipientId: string,
+    patch: { whatsapp_sent_at: string; whatsapp_delivered: boolean }
+  ): Promise<void> {
+    const { error } = await this.ctx.supabase
+      .from('opportunity_recipients')
+      .update(patch)
+      .eq('id', recipientId)
+    this.throwIfError(error)
+  }
 }

@@ -137,4 +137,27 @@ export class TalentService {
   async findUserIdByFreelancerId(freelancerId: string) {
     return this.repos.talent.findUserIdByFreelancerId(freelancerId)
   }
+
+  async listMatchCandidates(
+    tenantId: string,
+    options: { discipline?: string | null; excludedIds: string[] }
+  ) {
+    return this.repos.talent.listMatchCandidates(tenantId, options)
+  }
+
+  async suggestForOpportunity(opportunityId: string) {
+    return this.repos.talent.suggestForOpportunity(opportunityId)
+  }
+
+  async findSkillsByIds(freelancerIds: string[]) {
+    return this.repos.talent.findSkillsByIds(freelancerIds)
+  }
+
+  async findByPhone(tenantId: string, phone: string) {
+    return this.repos.talent.findByPhone(tenantId, phone)
+  }
+
+  async findByIds(freelancerIds: string[], columns?: string) {
+    return this.repos.talent.findByIds(freelancerIds, columns)
+  }
 }

@@ -1,5 +1,5 @@
 import { getAiGateway } from '@/lib/ai'
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiFeatureAllowed,
@@ -43,8 +43,8 @@ function ruleBasedProjectSummary(context: {
 }
 
 async function fetchProjectSummaryContext(projectId: string) {
-  const repos = await createAdminRepositories()
-  return repos.project.findSummaryContext(projectId)
+  const services = await createAdminServices()
+  return services.project.findSummaryContext(projectId)
 }
 
 export async function generateProjectSummary(projectId: string): Promise<ProjectSummaryResult> {
@@ -97,9 +97,9 @@ export async function generateProjectSummary(projectId: string): Promise<Project
 }
 
 export async function executeProjectSummary(aiRequestId: string) {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const startedAt = Date.now()
-  const aiRequest = await repos.aiRequest.findById(aiRequestId)
+  const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
   if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
@@ -111,7 +111,7 @@ export async function executeProjectSummary(aiRequestId: string) {
 
   const result = await generateProjectSummary(projectId)
 
-  await repos.project.updateAiSummary(projectId, {
+  await services.project.updateAiSummary(projectId, {
     summary_text: result.summaryText,
     highlights: result.highlights,
     blockers: result.blockers,
@@ -143,8 +143,8 @@ export async function requestProjectSummary(input: {
 }) {
   await assertAiFeatureAllowed(input.tenantId, 'project_summary')
 
-  const repos = await createAdminRepositories()
-  const project = await repos.project.findById(input.projectId, input.tenantId)
+  const services = await createAdminServices()
+  const project = await services.project.findById(input.projectId, input.tenantId)
   if (!project) throw new Error('PROJECT_NOT_FOUND')
 
   const correlationId = crypto.randomUUID()
@@ -177,9 +177,9 @@ export async function requestProjectSummary(input: {
 }
 
 export async function executeShortlistSummary(aiRequestId: string) {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const startedAt = Date.now()
-  const aiRequest = await repos.aiRequest.findById(aiRequestId)
+  const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
   if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
@@ -189,11 +189,11 @@ export async function executeShortlistSummary(aiRequestId: string) {
 
   await updateAiRequest(aiRequestId, { status: 'processing' })
 
-  const opportunity = await repos.lead.findShortlistSummaryContext(opportunityId)
-  const scores = await repos.matchScore.listTopScoresByOpportunity(opportunityId)
+  const opportunity = await services.crm.findShortlistSummaryContext(opportunityId)
+  const scores = await services.assignment.listTopMatchScores(opportunityId)
   const freelancerIds = scores.map((s) => s.freelancer_id)
   const freelancers = freelancerIds.length
-    ? await repos.talent.findByIds(
+    ? await services.talent.findByIds(
         freelancerIds,
         'id, full_name, discipline, day_rate, internal_rating'
       )
@@ -300,9 +300,9 @@ export async function requestShortlistSummary(input: {
 }
 
 export async function getProjectSummaryResult(projectId: string, tenantId: string) {
-  const repos = await createAdminRepositories()
-  const project = await repos.project.findAiFields(projectId, tenantId)
-  const latestRequest = await repos.aiRequest.findLatestByEntity({
+  const services = await createAdminServices()
+  const project = await services.project.findAiFields(projectId, tenantId)
+  const latestRequest = await services.ai.findLatestByEntity({
     tenantId,
     entityType: 'project',
     entityId: projectId,
@@ -324,8 +324,8 @@ export async function getProjectSummaryResult(projectId: string, tenantId: strin
 }
 
 export async function getShortlistSummaryResult(opportunityId: string, tenantId: string) {
-  const repos = await createAdminRepositories()
-  const latestRequest = await repos.aiRequest.findLatestByEntity({
+  const services = await createAdminServices()
+  const latestRequest = await services.ai.findLatestByEntity({
     tenantId,
     entityType: 'opportunity',
     entityId: opportunityId,

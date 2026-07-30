@@ -116,4 +116,23 @@ export class AiRequestRepository extends BaseRepository {
       .maybeSingle()
     return data ?? null
   }
+
+  async completeMatchCallback(aiRequestId: string, matchCount?: number): Promise<void> {
+    const existing = await this.findById(aiRequestId)
+    if (!existing || existing.status === 'completed') return
+
+    const priorResult =
+      existing.result && typeof existing.result === 'object'
+        ? (existing.result as Record<string, unknown>)
+        : {}
+
+    await this.update(aiRequestId, {
+      status: 'completed',
+      result: {
+        ...priorResult,
+        match_count: matchCount ?? priorResult.match_count ?? 0,
+        callback: true,
+      },
+    })
+  }
 }

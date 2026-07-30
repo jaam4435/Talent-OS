@@ -1,5 +1,5 @@
 import { getAiGateway } from '@/lib/ai'
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiFeatureAllowed,
@@ -53,8 +53,8 @@ function ruleBasedStatusAssessment(context: {
 }
 
 async function fetchStatusContext(projectId: string) {
-  const repos = await createAdminRepositories()
-  return repos.project.findStatusContext(projectId)
+  const services = await createAdminServices()
+  return services.project.findStatusContext(projectId)
 }
 
 export async function generateStatusAssessment(projectId: string): Promise<StatusAssessmentResult> {
@@ -102,9 +102,9 @@ export async function generateStatusAssessment(projectId: string): Promise<Statu
 }
 
 export async function executeStatusAssessment(aiRequestId: string, actorId?: string | null) {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const startedAt = Date.now()
-  const aiRequest = await repos.aiRequest.findById(aiRequestId)
+  const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
   if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
@@ -116,7 +116,7 @@ export async function executeStatusAssessment(aiRequestId: string, actorId?: str
 
   const result = await generateStatusAssessment(projectId)
 
-  await repos.project.updateStatusAssessment(projectId, {
+  await services.project.updateStatusAssessment(projectId, {
     risk_level: result.riskLevel,
     suggested_status: result.suggestedStatus,
     narrative: result.narrative,
@@ -139,7 +139,7 @@ export async function executeStatusAssessment(aiRequestId: string, actorId?: str
   })
 
   if (result.riskLevel !== 'on_track' && actorId) {
-    await repos.notification.create({
+    await services.notification.create({
       tenant_id: aiRequest.tenant_id,
       user_id: actorId,
       type: 'system',
@@ -163,8 +163,8 @@ export async function requestStatusAssessment(input: {
 }) {
   await assertAiFeatureAllowed(input.tenantId, 'status_assessment')
 
-  const repos = await createAdminRepositories()
-  const project = await repos.project.findById(input.projectId, input.tenantId)
+  const services = await createAdminServices()
+  const project = await services.project.findById(input.projectId, input.tenantId)
   if (!project) throw new Error('PROJECT_NOT_FOUND')
 
   const correlationId = crypto.randomUUID()
@@ -196,9 +196,9 @@ export async function requestStatusAssessment(input: {
 }
 
 export async function getStatusAssessmentResult(projectId: string, tenantId: string) {
-  const repos = await createAdminRepositories()
-  const project = await repos.project.findAiFields(projectId, tenantId)
-  const latestRequest = await repos.aiRequest.findLatestByEntity({
+  const services = await createAdminServices()
+  const project = await services.project.findAiFields(projectId, tenantId)
+  const latestRequest = await services.ai.findLatestByEntity({
     tenantId,
     entityType: 'project',
     entityId: projectId,
@@ -221,21 +221,21 @@ export async function getStatusAssessmentResult(projectId: string, tenantId: str
 }
 
 export async function processOverdueMilestones() {
-  const repos = await createAdminRepositories()
+  const services = await createAdminServices()
   const now = new Date().toISOString()
-  const overdue = await repos.task.listOverdue(now)
+  const overdue = await services.workflow.listOverdueMilestones(now)
   const results: Array<{ milestoneId: string; ok: boolean }> = []
 
   for (const milestone of overdue) {
     const idempotencyKey = `milestone-overdue:${milestone.id}:${milestone.due_date}`
-    const existing = await repos.domainEvent.findByIdempotencyKey(idempotencyKey)
+    const existing = await services.workflow.findEventByIdempotencyKey(idempotencyKey)
 
     if (existing) {
       results.push({ milestoneId: milestone.id, ok: true })
       continue
     }
 
-    const project = await repos.project.findAssignedBy(milestone.project_id)
+    const project = await services.project.findAssignedBy(milestone.project_id)
 
     await emitEvent({
       tenantId: milestone.tenant_id,
@@ -251,7 +251,7 @@ export async function processOverdueMilestones() {
       },
     })
 
-    await repos.activityLog.create({
+    await services.workflow.logActivity({
       tenant_id: milestone.tenant_id,
       actor_id: null,
       entity_type: 'milestone',
@@ -264,7 +264,7 @@ export async function processOverdueMilestones() {
     })
 
     if (project?.assigned_by) {
-      await repos.notification.create({
+      await services.notification.create({
         tenant_id: milestone.tenant_id,
         user_id: project.assigned_by,
         type: 'system',

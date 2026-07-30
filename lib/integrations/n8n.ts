@@ -1,4 +1,4 @@
-import { createAdminRepositories } from '@/lib/repositories/factory'
+import { createAdminServices } from '@/lib/services/factory'
 import { signPayload } from '@/lib/integrations/encryption'
 
 export interface N8nEventEnvelope {
@@ -11,15 +11,11 @@ export interface N8nEventEnvelope {
   data: Record<string, unknown>
 }
 
-export interface N8nIntegrationConfig {
-  webhook_base_url: string
-  webhook_secret: string
-  is_active?: boolean
-}
+export type { N8nIntegrationConfig } from '@/lib/repositories/integration.repository'
 
-export async function getN8nConfig(tenantId: string): Promise<N8nIntegrationConfig | null> {
-  const repos = await createAdminRepositories()
-  return repos.integration.getN8nConfig(tenantId)
+export async function getN8nConfig(tenantId: string) {
+  const services = await createAdminServices()
+  return services.integration.getN8nConfig(tenantId)
 }
 
 export function buildN8nEnvelope(input: {
@@ -43,7 +39,7 @@ export function buildN8nEnvelope(input: {
 
 export async function dispatchToN8n(
   envelope: N8nEventEnvelope,
-  config?: N8nIntegrationConfig | null
+  config?: Awaited<ReturnType<typeof getN8nConfig>>
 ): Promise<{ ok: boolean; status: number; error?: string }> {
   const n8nConfig = config ?? (await getN8nConfig(envelope.tenant_id))
   const fallbackBase = process.env.N8N_WEBHOOK_BASE_URL

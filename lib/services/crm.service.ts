@@ -190,6 +190,56 @@ export class CRMService {
     ])
     return { opportunity, interestedCount }
   }
+
+  async getMatchContext(opportunityId: string) {
+    return this.repos.lead.findMatchContext(opportunityId)
+  }
+
+  async listRecipientFreelancerIds(opportunityId: string) {
+    return this.repos.lead.listRecipientFreelancerIds(opportunityId)
+  }
+
+  async updateRequirements(opportunityId: string, requirements: import('@/lib/integrations/ai/types').ParsedRequirements) {
+    await this.repos.lead.updateRequirements(opportunityId, requirements as unknown as import('@/modules/core/types/database').Json)
+  }
+
+  async findBriefContext(opportunityId: string) {
+    return this.repos.lead.findBriefContext(opportunityId)
+  }
+
+  async existsInTenant(opportunityId: string, tenantId: string) {
+    return this.repos.lead.existsInTenant(opportunityId, tenantId)
+  }
+
+  async findRequirements(opportunityId: string, tenantId: string) {
+    return this.repos.lead.findRequirements(opportunityId, tenantId)
+  }
+
+  async findShortlistSummaryContext(opportunityId: string) {
+    return this.repos.lead.findShortlistSummaryContext(opportunityId)
+  }
+
+  async findPendingRecipient(tenantId: string, freelancerId: string) {
+    return this.repos.lead.findPendingRecipient(tenantId, freelancerId)
+  }
+
+  async updateRecipientResponse(
+    recipientId: string,
+    patch: { response: string; responded_at: string; response_note?: string }
+  ) {
+    await this.repos.lead.updateRecipientResponse(recipientId, patch)
+  }
+
+  async markWhatsAppDelivered(recipientId: string) {
+    await this.repos.lead.markWhatsAppDelivered(recipientId)
+  }
+
+  async updateRecipientWhatsAppSent(
+    recipientId: string,
+    patch: { whatsapp_sent_at: string; whatsapp_delivered: boolean }
+  ) {
+    await this.repos.lead.updateRecipientWhatsAppSent(recipientId, patch)
+  }
 }
 
 export type { BroadcastOpportunityInput, CreateOpportunityInput }

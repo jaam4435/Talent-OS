@@ -236,4 +236,32 @@ export class ProjectService {
     )
     return result.data
   }
+
+  async findSummaryContext(projectId: string) {
+    return this.repos.project.findSummaryContext(projectId)
+  }
+
+  async findStatusContext(projectId: string) {
+    return this.repos.project.findStatusContext(projectId)
+  }
+
+  async updateAiSummary(projectId: string, summary: Record<string, unknown>) {
+    await this.repos.project.updateAiSummary(projectId, summary)
+  }
+
+  async updateStatusAssessment(projectId: string, assessment: Record<string, unknown>) {
+    await this.repos.project.updateStatusAssessment(projectId, assessment)
+  }
+
+  async findAiFields(projectId: string, tenantId: string) {
+    return this.repos.project.findAiFields(projectId, tenantId)
+  }
+
+  async findAssignedBy(projectId: string) {
+    return this.repos.project.findAssignedBy(projectId)
+  }
+
+  async findById(projectId: string, tenantId: string) {
+    return this.repos.project.findById(projectId, tenantId)
+  }
 }
