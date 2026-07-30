@@ -8,6 +8,9 @@ export const KNOWLEDGE_CATEGORIES = [
   'deliverable',
   'feedback',
   'document',
+  'brand_guide',
+  'conversation',
+  'ai_response',
 ] as const
 
 export type KnowledgeCategory = (typeof KNOWLEDGE_CATEGORIES)[number]
@@ -20,6 +23,46 @@ export const KNOWLEDGE_CATEGORY_LABELS: Record<KnowledgeCategory, string> = {
   deliverable: 'Deliverables',
   feedback: 'Feedback',
   document: 'Documents',
+  brand_guide: 'Brand Guides',
+  conversation: 'Conversations',
+  ai_response: 'AI Responses',
+}
+
+/** Organization knowledge source types stored in entry metadata. */
+export const ORG_KNOWLEDGE_SOURCE_TYPES = [
+  'meeting',
+  'deliverable',
+  'client_feedback',
+  'brand_guide',
+  'sop',
+  'conversation',
+  'ai_response',
+  'project_history',
+  'manual',
+] as const
+
+export type OrgKnowledgeSourceType = (typeof ORG_KNOWLEDGE_SOURCE_TYPES)[number]
+
+export const ORG_KNOWLEDGE_METADATA_KEYS = {
+  sourceType: 'source_type',
+  sourceId: 'source_id',
+  ingestedAt: 'ingested_at',
+  sourceModule: 'source_module',
+} as const
+
+/** Maps organization knowledge buckets to canonical knowledge categories. */
+export const ORG_KNOWLEDGE_CATEGORY_MAP: Record<
+  Exclude<OrgKnowledgeSourceType, 'manual'>,
+  KnowledgeCategory
+> = {
+  meeting: 'meeting_note',
+  deliverable: 'deliverable',
+  client_feedback: 'feedback',
+  brand_guide: 'brand_guide',
+  sop: 'sop',
+  conversation: 'conversation',
+  ai_response: 'ai_response',
+  project_history: 'project_history',
 }
 
 export type KnowledgeEmbeddingStatus = 'pending' | 'processing' | 'indexed' | 'failed' | 'skipped'
@@ -138,4 +181,32 @@ export interface KnowledgeSearchResult {
   entityType: string | null
   entityId: string | null
   rank: number
+}
+
+export interface SemanticSearchParams {
+  query: string
+  categories?: KnowledgeCategory[]
+  entityType?: string
+  entityId?: string
+  limit?: number
+  /** Weight for vector score vs FTS (0–1). Default 0.6 vector, 0.4 FTS. */
+  vectorWeight?: number
+}
+
+export interface SemanticSearchResult extends KnowledgeSearchResult {
+  score: number
+  matchSources: Array<'fts' | 'vector'>
+  chunkContent?: string | null
+  similarity?: number
+}
+
+export interface OrgKnowledgeStoreInput {
+  title: string
+  content?: string | null
+  summary?: string | null
+  tags?: string[]
+  metadata?: Record<string, unknown>
+  links?: KnowledgeEntryLinks
+  sourceId?: string
+  sourceModule?: string
 }

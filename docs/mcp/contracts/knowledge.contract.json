@@ -44,6 +44,42 @@
       "serviceLayer": true
     },
     {
+      "name": "knowledge_semantic_search",
+      "title": "Semantic Search Knowledge Base",
+      "description": "Hybrid full-text + vector search across organization knowledge (meetings, SOPs, conversations, AI responses, etc.).",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_semantic_search"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "knowledge_get_entry",
+      "title": "Get Knowledge Entry",
+      "description": "Retrieve a knowledge entry with its embedding chunks.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_get_entry"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "knowledge_create_entry",
+      "title": "Create Knowledge Entry",
+      "description": "Store organization knowledge (meetings, deliverables, SOPs, brand guides, conversations, AI responses, project history).",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_create_entry"
+      },
+      "serviceLayer": true
+    },
+    {
       "name": "knowledge_get_tenant_policies",
       "title": "Get Tenant Policies",
       "description": "Retrieve tenant settings, feature flags, and operational policies for agent guardrails.",

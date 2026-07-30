@@ -124,6 +124,22 @@ export class KnowledgeEmbeddingRepository extends BaseRepository {
     return count ?? 0
   }
 
+  async listChunksWithoutEmbedding(
+    entryId: string,
+    tenantId: string
+  ): Promise<KnowledgeEmbeddingRow[]> {
+    const { data, error } = await this.ctx.supabase
+      .from('knowledge_embeddings')
+      .select('*')
+      .eq('entry_id', entryId)
+      .eq('tenant_id', tenantId)
+      .is('embedding', null)
+      .order('chunk_index')
+
+    this.throwIfError(error)
+    return (data ?? []).map(mapEmbeddingRow)
+  }
+
   /** Vector similarity search — requires query embedding from future AI pipeline. */
   async searchVector(
     tenantId: string,

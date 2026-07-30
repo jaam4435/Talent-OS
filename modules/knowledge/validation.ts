@@ -49,6 +49,15 @@ export const knowledgeSearchSchema = z.object({
   offset: z.number().int().min(0).optional(),
 })
 
+export const semanticSearchSchema = z.object({
+  query: z.string().min(1).max(500),
+  categories: z.array(z.enum(KNOWLEDGE_CATEGORIES)).optional(),
+  entityType: z.string().optional(),
+  entityId: z.string().uuid().optional(),
+  limit: z.number().int().min(1).max(50).optional(),
+  vectorWeight: z.number().min(0).max(1).optional(),
+})
+
 export const createEmbeddingChunkSchema = z.object({
   entryId: z.string().uuid(),
   chunkIndex: z.number().int().min(0),

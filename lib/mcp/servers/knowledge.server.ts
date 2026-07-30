@@ -59,6 +59,86 @@ export const KNOWLEDGE_TOOLS = [
     requiredPermission: 'tenant:read',
   },
   {
+    name: 'knowledge_semantic_search',
+    title: 'Semantic Search Knowledge Base',
+    description:
+      'Hybrid full-text + vector search across organization knowledge (meetings, SOPs, conversations, AI responses, etc.).',
+    inputSchema: objectSchema(
+      {
+        query: { type: 'string' },
+        categories: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: [
+              'meeting_note',
+              'sop',
+              'client_preference',
+              'project_history',
+              'deliverable',
+              'feedback',
+              'document',
+              'brand_guide',
+              'conversation',
+              'ai_response',
+            ],
+          },
+        },
+        limit: { type: 'number', description: 'Max results (default 10, max 50).' },
+        ...paginationProperties,
+      },
+      ['query']
+    ),
+    requiredPermission: 'tenant:read',
+  },
+  {
+    name: 'knowledge_get_entry',
+    title: 'Get Knowledge Entry',
+    description: 'Retrieve a knowledge entry with its embedding chunks.',
+    inputSchema: objectSchema(
+      {
+        entry_id: { type: 'string' },
+      },
+      ['entry_id']
+    ),
+    requiredPermission: 'tenant:read',
+  },
+  {
+    name: 'knowledge_create_entry',
+    title: 'Create Knowledge Entry',
+    description:
+      'Store organization knowledge (meetings, deliverables, SOPs, brand guides, conversations, AI responses, project history).',
+    inputSchema: objectSchema(
+      {
+        category: {
+          type: 'string',
+          enum: [
+            'meeting_note',
+            'sop',
+            'client_preference',
+            'project_history',
+            'deliverable',
+            'feedback',
+            'document',
+            'brand_guide',
+            'conversation',
+            'ai_response',
+          ],
+        },
+        title: { type: 'string' },
+        content: { type: 'string' },
+        summary: { type: 'string' },
+        tags: { type: 'array', items: { type: 'string' } },
+        source_id: { type: 'string', description: 'External source ID for deduplication.' },
+        source_module: { type: 'string', description: 'Originating module (e.g. whatsapp, ai, events).' },
+        project_id: { type: 'string' },
+        company_id: { type: 'string' },
+      },
+      ['category', 'title']
+    ),
+    requiredPermission: 'tenant:write',
+  },
+  {
     name: 'knowledge_get_tenant_policies',
     title: 'Get Tenant Policies',
     description: 'Retrieve tenant settings, feature flags, and operational policies for agent guardrails.',
@@ -108,6 +188,24 @@ export interface KnowledgeToolInputs {
     entity_types?: string[]
     page?: number
     limit?: number
+  }
+  knowledge_semantic_search: {
+    query: string
+    categories?: string[]
+    page?: number
+    limit?: number
+  }
+  knowledge_get_entry: { entry_id: string }
+  knowledge_create_entry: {
+    category: string
+    title: string
+    content?: string
+    summary?: string
+    tags?: string[]
+    source_id?: string
+    source_module?: string
+    project_id?: string
+    company_id?: string
   }
   knowledge_get_tenant_policies: Record<string, never>
   knowledge_get_schema_reference: { entity_type: string }

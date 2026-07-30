@@ -245,4 +245,37 @@ export class KnowledgeRepository extends BaseRepository {
 
     this.throwIfError(error)
   }
+
+  async findBySource(
+    tenantId: string,
+    sourceType: string,
+    sourceId: string
+  ): Promise<KnowledgeEntryRow | null> {
+    const { data } = await this.ctx.supabase
+      .from('knowledge_entries')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('metadata->>source_type', sourceType)
+      .eq('metadata->>source_id', sourceId)
+      .maybeSingle()
+
+    return data ? mapEntryRow(data) : null
+  }
+
+  /** Claim entries with pending embedding chunks (service-role worker). */
+  async claimPendingEmbeddingJobs(limit = 20): Promise<
+    Array<{ entryId: string; tenantId: string; category: KnowledgeCategory; title: string }>
+  > {
+    const { data, error } = await this.ctx.supabase.rpc('claim_knowledge_embedding_jobs', {
+      p_limit: limit,
+    })
+
+    this.throwIfError(error)
+    return (data ?? []).map((row: Record<string, unknown>) => ({
+      entryId: row.entry_id as string,
+      tenantId: row.tenant_id as string,
+      category: row.category as KnowledgeCategory,
+      title: row.title as string,
+    }))
+  }
 }

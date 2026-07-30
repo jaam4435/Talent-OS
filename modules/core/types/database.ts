@@ -283,6 +283,9 @@ export interface Database {
           | 'deliverable'
           | 'feedback'
           | 'document'
+          | 'brand_guide'
+          | 'conversation'
+          | 'ai_response'
         title: string
         content: string | null
         summary: string | null
@@ -750,6 +753,9 @@ export interface Database {
                 | 'deliverable'
                 | 'feedback'
                 | 'document'
+                | 'brand_guide'
+                | 'conversation'
+                | 'ai_response'
               )[]
             | null
           p_entity_type?: string | null
@@ -788,6 +794,9 @@ export interface Database {
                 | 'deliverable'
                 | 'feedback'
                 | 'document'
+                | 'brand_guide'
+                | 'conversation'
+                | 'ai_response'
               )[]
             | null
           p_limit?: number
@@ -806,6 +815,25 @@ export interface Database {
           title: string
           chunk_content: string
           similarity: number
+        }>
+      }
+      claim_knowledge_embedding_jobs: {
+        Args: { p_limit?: number }
+        Returns: Array<{
+          entry_id: string
+          tenant_id: string
+          category:
+            | 'meeting_note'
+            | 'sop'
+            | 'client_preference'
+            | 'project_history'
+            | 'deliverable'
+            | 'feedback'
+            | 'document'
+            | 'brand_guide'
+            | 'conversation'
+            | 'ai_response'
+          title: string
         }>
       }
       check_talent_availability: {

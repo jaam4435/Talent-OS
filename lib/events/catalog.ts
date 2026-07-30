@@ -142,7 +142,7 @@ export const EVENT_CATALOG: readonly EventCatalogEntry[] = [
     idempotencyPattern: 'knowledge-embedding:{entry_id}',
   }),
   entry(KnowledgeEvents.EMBEDDING_COMPLETED, 'application', 'knowledge', 'Embedding indexed', 'knowledge_entry', 'Embedding worker', {
-    status: 'planned',
+    idempotencyPattern: 'knowledge-embedding:{entry_id}',
   }),
   entry(NotificationsEvents.NOTIFICATION_CREATED, 'application', 'notifications', 'In-app notification created', 'notification', 'NotificationService', {
     idempotencyPattern: 'notification:{user_id}:{type}:{ref}',

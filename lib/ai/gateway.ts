@@ -67,6 +67,13 @@ export class AiGateway {
     return globalCostTracker
   }
 
+  /** Generate a text embedding vector (OpenAI text-embedding-3-small, 1536-dim). */
+  async embed(text: string): Promise<number[]> {
+    const { embedText } = await import('@/lib/ai/embeddings')
+    const result = await embedText(text)
+    return result.embedding
+  }
+
   isConfigured(): boolean {
     return this.resolveProviderChain(undefined).some((provider) => provider.isConfigured())
   }

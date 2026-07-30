@@ -2,18 +2,22 @@ import { isDomainError } from '@/modules/core/utils/errors'
 import type { Repositories } from '@/lib/repositories/factory'
 import { KnowledgeEvents } from '@/modules/knowledge/events'
 import { IdempotencyKeys } from '@/lib/events/idempotency'
+import { embedText } from '@/lib/ai/embeddings'
+import { hybridSemanticSearch } from '@/lib/knowledge/semantic-search'
 import type { WorkflowService } from '@/lib/services/workflow.service'
 import type {
   CreateEmbeddingChunkInput,
   CreateKnowledgeEntryInput,
   KnowledgeCategory,
   KnowledgeSearchParams,
+  SemanticSearchParams,
   UpdateKnowledgeEntryInput,
 } from '@/modules/knowledge/types'
 import {
   createKnowledgeEntrySchema,
   updateKnowledgeEntrySchema,
   knowledgeSearchSchema,
+  semanticSearchSchema,
 } from '@/modules/knowledge/validation'
 import type { PaginationParams } from '@/lib/repositories/base/types'
 
@@ -211,13 +215,92 @@ export class KnowledgeService {
     }
   }
 
-  /** Vector search — requires pre-computed query embedding from future AI pipeline. */
+  /** Vector search — requires pre-computed query embedding. */
   async searchVector(
     tenantId: string,
     queryEmbedding: number[],
     options?: { categories?: KnowledgeCategory[]; limit?: number }
   ) {
     return this.repos.knowledgeEmbedding.searchVector(tenantId, queryEmbedding, options)
+  }
+
+  /** Hybrid FTS + vector semantic search over organization knowledge. */
+  async semanticSearch(tenantId: string, params: SemanticSearchParams) {
+    const parsed = semanticSearchSchema.safeParse(params)
+    if (!parsed.success) {
+      return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Invalid search' }
+    }
+
+    try {
+      const results = await hybridSemanticSearch(parsed.data, {
+        ftsSearch: async (ftsParams) => {
+          const fts = await this.search(tenantId, ftsParams)
+          if (!fts.ok) return []
+          return fts.results
+        },
+        vectorSearch: (embedding, options) =>
+          this.searchVector(tenantId, embedding, options),
+        embedQuery: (query) => embedText(query).then((r) => r.embedding),
+      })
+      return { ok: true as const, results }
+    } catch (error) {
+      return {
+        ok: false as const,
+        error: error instanceof Error ? error.message : 'Semantic search failed',
+      }
+    }
+  }
+
+  async findBySource(tenantId: string, sourceType: string, sourceId: string) {
+    return this.repos.knowledge.findBySource(tenantId, sourceType, sourceId)
+  }
+
+  async claimPendingEmbeddingJobs(limit = 20) {
+    return this.repos.knowledge.claimPendingEmbeddingJobs(limit)
+  }
+
+  async listPendingEmbeddingChunks(entryId: string, tenantId: string) {
+    return this.repos.knowledgeEmbedding.listChunksWithoutEmbedding(entryId, tenantId)
+  }
+
+  async markEmbeddingProcessing(entryId: string, tenantId: string) {
+    return this.repos.knowledge.updateEmbeddingStatus(entryId, tenantId, 'processing')
+  }
+
+  async markEmbeddingIndexed(entryId: string, tenantId: string) {
+    return this.repos.knowledge.updateEmbeddingStatus(entryId, tenantId, 'indexed')
+  }
+
+  async markEmbeddingFailed(entryId: string, tenantId: string) {
+    return this.repos.knowledge.updateEmbeddingStatus(entryId, tenantId, 'failed')
+  }
+
+  /** Generate embeddings for all pending chunks on an entry. */
+  async indexEntry(tenantId: string, entryId: string): Promise<number> {
+    const pending = await this.listPendingEmbeddingChunks(entryId, tenantId)
+    if (!pending.length) {
+      await this.markEmbeddingIndexed(entryId, tenantId)
+      return 0
+    }
+
+    await this.markEmbeddingProcessing(entryId, tenantId)
+
+    const { embedTexts, DEFAULT_EMBEDDING_MODEL } = await import('@/lib/ai/embeddings')
+    const embeddings = await embedTexts(pending.map((c) => c.content))
+
+    for (let i = 0; i < pending.length; i++) {
+      const chunk = pending[i]
+      const result = embeddings[i]
+      await this.storeEmbeddingVector(
+        chunk.id,
+        tenantId,
+        entryId,
+        result.embedding,
+        result.model ?? DEFAULT_EMBEDDING_MODEL
+      )
+    }
+
+    return pending.length
   }
 
   // Convenience creators per category (no duplicate storage logic)
@@ -272,6 +355,30 @@ export class KnowledgeService {
     input: Omit<CreateKnowledgeEntryInput, 'category'>
   ) {
     return this.createEntry(tenantId, userId, { ...input, category: 'document' })
+  }
+
+  async createBrandGuide(
+    tenantId: string,
+    userId: string | null,
+    input: Omit<CreateKnowledgeEntryInput, 'category'>
+  ) {
+    return this.createEntry(tenantId, userId, { ...input, category: 'brand_guide' })
+  }
+
+  async createConversation(
+    tenantId: string,
+    userId: string | null,
+    input: Omit<CreateKnowledgeEntryInput, 'category'>
+  ) {
+    return this.createEntry(tenantId, userId, { ...input, category: 'conversation' })
+  }
+
+  async createAiResponse(
+    tenantId: string,
+    userId: string | null,
+    input: Omit<CreateKnowledgeEntryInput, 'category'>
+  ) {
+    return this.createEntry(tenantId, userId, { ...input, category: 'ai_response' })
   }
 
   async getEntityContext(

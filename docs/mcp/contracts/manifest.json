@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T20:26:10.980Z",
+  "generatedAt": "2026-07-30T20:47:25.891Z",
   "generator": "scripts/generate-mcp-contracts.mjs",
   "servers": [
     {
@@ -29,7 +29,7 @@
     {
       "id": "knowledge",
       "name": "Talent OS Knowledge",
-      "toolCount": 6,
+      "toolCount": 9,
       "contract": "docs/mcp/contracts/knowledge.contract.json"
     },
     {
