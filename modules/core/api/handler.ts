@@ -13,6 +13,9 @@ import {
 import { checkRateLimit, rateLimitKey, type RateLimitCategory } from '@/modules/core/api/rate-limit'
 import { handleApiError, success, legacySuccess, AppError } from '@/modules/core/api/response'
 import { validateBody, validateQuery } from '@/modules/core/api/validation'
+import { createTraceIds, mergeObservabilityContext } from '@/lib/observability/context'
+import { instrumentApiRequest } from '@/lib/observability/instrumentation'
+import { mapToAppError } from '@/modules/core/api/error-mapper'
 
 export interface ApiHandlerOptions {
   auth?: ApiAuthMode
@@ -55,9 +58,19 @@ export function withApiHandler<T>(
 ) {
   return async (request: Request, routeCtx?: RouteContext): Promise<NextResponse> => {
     let ctx = createRequestContext(request)
+    const startedAt = Date.now()
+    const url = new URL(request.url)
+    const traceIds = createTraceIds()
+    mergeObservabilityContext({
+      requestId: ctx.requestId,
+      correlationId: ctx.correlationId,
+      traceId: traceIds.traceId,
+      spanId: traceIds.spanId,
+    })
 
     try {
       ctx = await authenticateRequest(request, options.auth ?? 'tenant')
+      mergeObservabilityContext({ tenantId: ctx.tenantId, userId: ctx.userId })
 
       if (options.permissions?.length) {
         authorizePermissions(ctx, options.permissions)
@@ -78,7 +91,6 @@ export function withApiHandler<T>(
         }
       }
 
-      const url = new URL(request.url)
       let body: unknown = undefined
 
       if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -147,6 +159,20 @@ export function withApiHandler<T>(
           )
           if (idemKey) storeIdempotentResponse(idemKey, 200, payload)
         }
+        instrumentApiRequest({
+          method: request.method,
+          path: url.pathname,
+          status: 200,
+          durationMs: Date.now() - startedAt,
+          context: {
+            tenantId: ctx.tenantId,
+            correlationId: ctx.correlationId,
+            requestId: ctx.requestId,
+            traceId: traceIds.traceId,
+            spanId: traceIds.spanId,
+            userId: ctx.userId,
+          },
+        })
         return response
       }
 
@@ -164,8 +190,39 @@ export function withApiHandler<T>(
         }
       }
 
+      instrumentApiRequest({
+        method: request.method,
+        path: url.pathname,
+        status: 200,
+        durationMs: Date.now() - startedAt,
+        context: {
+          tenantId: ctx.tenantId,
+          correlationId: ctx.correlationId,
+          requestId: ctx.requestId,
+          traceId: traceIds.traceId,
+          spanId: traceIds.spanId,
+          userId: ctx.userId,
+        },
+      })
+
       return response
     } catch (err) {
+      const mapped = mapToAppError(err)
+      instrumentApiRequest({
+        method: request.method,
+        path: url.pathname,
+        status: mapped.status,
+        durationMs: Date.now() - startedAt,
+        context: {
+          tenantId: ctx.tenantId,
+          correlationId: ctx.correlationId,
+          requestId: ctx.requestId,
+          traceId: traceIds.traceId,
+          spanId: traceIds.spanId,
+          userId: ctx.userId,
+        },
+        errorCode: mapped.code,
+      })
       return handleApiError(err, ctx)
     }
   }

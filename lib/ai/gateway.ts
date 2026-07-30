@@ -12,6 +12,7 @@ import { registerAgentPrompts } from '@/lib/ai/agent/instructions'
 import { getProviderChain } from '@/lib/ai/providers'
 import type { AiProviderInterface } from '@/lib/ai/providers/interface'
 import { estimateTokenCost } from '@/lib/ai/logging/cost-tracker'
+import { instrumentAiRequest } from '@/lib/observability/instrumentation'
 import type {
   AiCompletionRequest,
   AiCompletionResponse,
@@ -162,73 +163,125 @@ export class AiGateway {
     const promptHash = this.buildPromptHash(request)
     let usedFallback = false
 
-    const providerResult = await withRetry(
-      () =>
-        executeWithFallback(providers, params, (from, to) => {
-          usedFallback = true
-          console.warn(`[AiGateway] Provider fallback ${from} → ${to}`)
-        }),
-      {
-        maxRetries: this.config.maxRetries,
-        baseDelayMs: this.config.retryBaseDelayMs,
-      }
-    )
+    try {
+      const providerResult = await withRetry(
+        () =>
+          executeWithFallback(providers, params, (from, to) => {
+            usedFallback = true
+            console.warn(`[AiGateway] Provider fallback ${from} → ${to}`)
+          }),
+        {
+          maxRetries: this.config.maxRetries,
+          baseDelayMs: this.config.retryBaseDelayMs,
+        }
+      )
 
-    const estimatedCost = this.config.enableCostTracking
-      ? estimateTokenCost(
-          providerResult.provider,
-          providerResult.model,
-          providerResult.inputTokens,
-          providerResult.outputTokens
-        )
-      : 0
+      const estimatedCost = this.config.enableCostTracking
+        ? estimateTokenCost(
+            providerResult.provider,
+            providerResult.model,
+            providerResult.inputTokens,
+            providerResult.outputTokens
+          )
+        : 0
 
-    const usage = {
-      inputTokens: providerResult.inputTokens,
-      outputTokens: providerResult.outputTokens,
-      totalTokens: providerResult.inputTokens + providerResult.outputTokens,
-      estimatedCost,
-    }
-
-    if (this.config.enableCostTracking) {
-      globalCostTracker.record({
-        provider: providerResult.provider,
-        model: providerResult.model,
+      const usage = {
         inputTokens: providerResult.inputTokens,
         outputTokens: providerResult.outputTokens,
-        tenantId: request.tenantId,
-        feature: request.feature,
-      })
-    }
+        totalTokens: providerResult.inputTokens + providerResult.outputTokens,
+        estimatedCost,
+      }
 
-    let aiRequestId: string | undefined
-    if (this.config.enableTokenLogging && request.tenantId && request.feature) {
-      aiRequestId = await globalTokenLogger.log({
-        tenantId: request.tenantId,
-        correlationId: request.correlationId,
+      if (this.config.enableCostTracking) {
+        globalCostTracker.record({
+          provider: providerResult.provider,
+          model: providerResult.model,
+          inputTokens: providerResult.inputTokens,
+          outputTokens: providerResult.outputTokens,
+          tenantId: request.tenantId,
+          feature: request.feature,
+        })
+      }
+
+      let aiRequestId: string | undefined
+      if (this.config.enableTokenLogging && request.tenantId && request.feature) {
+        aiRequestId = await globalTokenLogger.log({
+          tenantId: request.tenantId,
+          correlationId: request.correlationId,
+          provider: providerResult.provider,
+          model: providerResult.model,
+          requestType: request.feature,
+          entityType: request.entityType,
+          entityId: request.entityId,
+          promptHash,
+          usage,
+          latencyMs: Date.now() - startedAt,
+          status: 'completed',
+        })
+      }
+
+      instrumentAiRequest({
+        feature: request.feature,
+        durationMs: Date.now() - startedAt,
+        cost: estimatedCost,
+        status: 'completed',
+        context: {
+          tenantId: request.tenantId,
+          correlationId: request.correlationId,
+        },
+      })
+
+      return {
+        content: providerResult.content,
         provider: providerResult.provider,
         model: providerResult.model,
-        requestType: request.feature,
-        entityType: request.entityType,
-        entityId: request.entityId,
-        promptHash,
         usage,
+        promptHash,
+        promptId: request.promptId,
+        promptVersion: request.promptVersion,
         latencyMs: Date.now() - startedAt,
-        status: 'completed',
-      })
-    }
+        usedFallback,
+        aiRequestId,
+      }
+    } catch (error) {
+      const latencyMs = Date.now() - startedAt
+      const message = error instanceof Error ? error.message : 'AI request failed'
 
-    return {
-      content: providerResult.content,
-      provider: providerResult.provider,
-      model: providerResult.model,
-      usage,
-      promptHash,
-      promptId: request.promptId,
-      promptVersion: request.promptVersion,
-      latencyMs: Date.now() - startedAt,
-      usedFallback,
-      aiRequestId,
+      if (this.config.enableTokenLogging && request.tenantId && request.feature) {
+        await globalTokenLogger.log({
+          tenantId: request.tenantId,
+          correlationId: request.correlationId,
+          provider: request.provider ?? this.config.primaryProvider,
+          model: params.model,
+          requestType: request.feature,
+          entityType: request.entityType,
+          entityId: request.entityId,
+          promptHash,
+          usage: {
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
+            estimatedCost: 0,
+          },
+          latencyMs,
+          status: 'failed',
+          errorMessage: message,
+        })
+      }
+
+      instrumentAiRequest({
+        feature: request.feature,
+        durationMs: latencyMs,
+        cost: 0,
+        status: 'failed',
+        context: {
+          tenantId: request.tenantId,
+          correlationId: request.correlationId,
+        },
+        errorMessage: message,
+      })
+
+      throw error
     }
   }
 

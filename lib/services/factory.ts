@@ -17,6 +17,7 @@ import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
 import { WhatsAppService } from '@/lib/services/whatsapp.service'
 import { KnowledgeService } from '@/lib/services/knowledge.service'
 import { AgentService } from '@/lib/services/agent.service'
+import { ObservabilityService } from '@/lib/services/observability.service'
 
 export interface Services {
   project: ProjectService
@@ -28,6 +29,7 @@ export interface Services {
   whatsapp: WhatsAppService
   knowledge: KnowledgeService
   agent: AgentService
+  observability: ObservabilityService
   finance: FinanceService
   analytics: AnalyticsService
   notification: NotificationService
@@ -46,6 +48,7 @@ function buildServices(repos: Repositories): Services {
   const whatsapp = new WhatsAppService(repos, integration, crm, talent, workflow, project)
   const knowledge = new KnowledgeService(repos)
   const agent = new AgentService(repos)
+  const observability = new ObservabilityService(repos)
 
   let services!: Services
   const workflowEngine = new WorkflowEngineService(repos, async () => services)
@@ -57,6 +60,7 @@ function buildServices(repos: Repositories): Services {
     whatsapp,
     knowledge,
     agent,
+    observability,
     ai,
     crm,
     talent,

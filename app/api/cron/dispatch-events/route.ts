@@ -1,4 +1,5 @@
 import { withApiHandler } from '@/modules/core/api/handler'
+import { instrumentQueueProcessing } from '@/lib/observability/instrumentation'
 import { findWorkflowsForEvent } from '@/lib/workflows/registry'
 import {
   buildN8nEnvelope,
@@ -66,6 +67,7 @@ async function legacyDispatch(event: {
 export const GET = withApiHandler(
   { auth: 'cron', rateLimit: 'cron', legacyEnvelope: true },
   async () => {
+    const startedAt = Date.now()
     const services = await createAdminServices()
     const events = await services.workflow.listPendingForDispatch(50)
     const results: Array<{ id: string; ok: boolean; workflows?: number; error?: string }> = []
@@ -117,11 +119,20 @@ export const GET = withApiHandler(
       }
     }
 
-    return {
+    const result = {
       processed: results.length,
       delivered: results.filter((r) => r.ok).length,
       failed: results.filter((r) => !r.ok).length,
       results,
     }
+
+    instrumentQueueProcessing({
+      queue: 'domain_events',
+      processed: result.processed,
+      failed: result.failed,
+      durationMs: Date.now() - startedAt,
+    })
+
+    return result
   }
 )

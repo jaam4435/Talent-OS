@@ -126,6 +126,27 @@ export class TalentOsClient {
   getTeamMembers() {
     return this.request<unknown>('GET', '/api/team/members')
   }
+
+  getObservabilityDashboard() {
+    return this.request<unknown>('GET', '/api/observability/dashboard')
+  }
+
+  getObservabilityAlerts(status?: string) {
+    const query = status ? `?status=${status}` : ''
+    return this.request<unknown>('GET', `/api/observability/alerts${query}`)
+  }
+
+  getObservabilityLogs(params?: { level?: string; category?: string; limit?: number }) {
+    const query = new URLSearchParams()
+    if (params?.level) query.set('level', params.level)
+    if (params?.category) query.set('category', params.category)
+    if (params?.limit) query.set('limit', String(params.limit))
+    return this.request<unknown>('GET', `/api/observability/logs?${query}`)
+  }
+
+  getObservabilityTrace(correlationId: string) {
+    return this.request<unknown>('GET', `/api/observability/traces/${correlationId}`)
+  }
 }
 
 export function createTalentOsClient(options?: TalentOsClientOptions) {

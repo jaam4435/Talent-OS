@@ -415,6 +415,62 @@ export interface Database {
         metadata: Json
         created_at: string
       }>
+      platform_log_entries: TableDef<{
+        id: string
+        tenant_id: string | null
+        level: 'debug' | 'info' | 'warn' | 'error'
+        message: string
+        category: string
+        correlation_id: string | null
+        request_id: string | null
+        trace_id: string | null
+        span_id: string | null
+        metadata: Json
+        error_code: string | null
+        duration_ms: number | null
+        created_at: string
+      }>
+      platform_metric_points: TableDef<{
+        id: string
+        tenant_id: string | null
+        name: string
+        metric_type: 'counter' | 'gauge' | 'histogram'
+        value: number
+        unit: string | null
+        tags: Json
+        recorded_at: string
+      }>
+      platform_trace_spans: TableDef<{
+        id: string
+        tenant_id: string | null
+        trace_id: string
+        span_id: string
+        parent_span_id: string | null
+        operation: string
+        service: string
+        status: string
+        correlation_id: string | null
+        request_id: string | null
+        metadata: Json
+        started_at: string
+        ended_at: string | null
+        duration_ms: number | null
+      }>
+      platform_alerts: TableDef<{
+        id: string
+        tenant_id: string | null
+        rule_id: string
+        severity: 'info' | 'warning' | 'critical'
+        status: 'open' | 'acknowledged' | 'resolved'
+        title: string
+        message: string
+        metric_value: number | null
+        threshold_value: number | null
+        metadata: Json
+        fired_at: string
+        acknowledged_at: string | null
+        resolved_at: string | null
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string

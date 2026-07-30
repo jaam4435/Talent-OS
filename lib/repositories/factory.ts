@@ -37,6 +37,7 @@ import {
   AgentMemoryRepository,
   AgentMessageRepository,
 } from '@/lib/repositories/agent-session.repository'
+import { ObservabilityRepository } from '@/lib/repositories/observability.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -69,6 +70,7 @@ export interface Repositories {
   agentSession: AgentSessionRepository
   agentMemory: AgentMemoryRepository
   agentMessage: AgentMessageRepository
+  observability: ObservabilityRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -103,6 +105,7 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     agentSession: new AgentSessionRepository(ctx),
     agentMemory: new AgentMemoryRepository(ctx),
     agentMessage: new AgentMessageRepository(ctx),
+    observability: new ObservabilityRepository(ctx),
   }
 }
 
