@@ -1,0 +1,71 @@
+{
+  "server": {
+    "id": "crm",
+    "name": "Talent OS CRM",
+    "version": "1.0.0",
+    "description": "Client company management — contacts, accounts, and CRM search.",
+    "resourcePrefix": "talentos://crm"
+  },
+  "tools": [
+    {
+      "name": "crm_list_companies",
+      "title": "List Companies",
+      "description": "List client companies for the tenant with optional search and pagination.",
+      "requiredPermission": "companies:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/crm.server.ts#crm_list_companies"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "crm_get_company",
+      "title": "Get Company",
+      "description": "Retrieve a single company by ID including contact details.",
+      "requiredPermission": "companies:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/crm.server.ts#crm_get_company"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "crm_create_company",
+      "title": "Create Company",
+      "description": "Create a new client company record.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/crm.server.ts#crm_create_company"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "crm_update_company",
+      "title": "Update Company",
+      "description": "Update an existing company record.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/crm.server.ts#crm_update_company"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "crm_search_companies",
+      "title": "Search Companies",
+      "description": "Full-text search across company names, contacts, and notes.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/crm.server.ts#crm_search_companies"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

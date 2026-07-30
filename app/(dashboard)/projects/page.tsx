@@ -1,60 +1,26 @@
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Button } from '@/modules/core/components/ui/button'
 import { ProjectKanban } from '@/components/projects/project-kanban'
-import { EmptyState, PageHeader } from '@/components/shared/page-header'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { isManager } from '@/lib/auth/permissions'
-import type { ProjectStatus } from '@/types/enums'
+import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
+import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
+import { getProjectsForPage } from '@/lib/queries/projects.queries'
+import type { ProjectStatus } from '@/modules/core/types/enums'
 
 export const metadata = { title: 'Projects' }
 
 export default async function ProjectsPage() {
-  const { tenant } = await requireTenant()
-  const supabase = await createClient()
+  const { tenant, user } = await requireTenant()
+  const { projects, freelancerMap } = await getProjectsForPage(tenant.id, tenant.role, user.id)
 
-  let query = supabase
-    .from('projects')
-    .select('id, title, status, client_name, freelancer_id, created_at')
-    .eq('tenant_id', tenant.id)
-    .order('created_at', { ascending: false })
-    .limit(100)
-
-  if (tenant.role === 'freelancer') {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    const { data: freelancer } = await supabase
-      .from('freelancers')
-      .select('id')
-      .eq('user_id', user?.id ?? '')
-      .maybeSingle()
-
-    if (freelancer) {
-      query = query.eq('freelancer_id', freelancer.id)
-    } else {
-      query = query.eq('freelancer_id', '00000000-0000-0000-0000-000000000000')
-    }
-  }
-
-  const { data: projects } = await query
-
-  const freelancerIds = [...new Set(projects?.map((p) => p.freelancer_id) ?? [])]
-  const { data: freelancers } = freelancerIds.length
-    ? await supabase.from('freelancers').select('id, full_name').in('id', freelancerIds)
-    : { data: [] }
-  const freelancerMap = new Map(freelancers?.map((f) => [f.id, f]) ?? [])
-
-  const kanbanProjects =
-    projects?.map((project) => ({
-      id: project.id,
-      title: project.title,
-      status: project.status as ProjectStatus,
-      clientName: project.client_name,
-      freelancerName: freelancerMap.get(project.freelancer_id)?.full_name ?? null,
-    })) ?? []
+  const kanbanProjects = projects.map((project) => ({
+    id: project.id,
+    title: project.title,
+    status: project.status as ProjectStatus,
+    clientName: project.client_name,
+    freelancerName: freelancerMap.get(project.freelancer_id)?.full_name ?? null,
+  }))
 
   return (
     <div>
@@ -66,7 +32,7 @@ export default async function ProjectsPage() {
         ) : null}
       </PageHeader>
 
-      {!projects?.length ? (
+      {!projects.length ? (
         <EmptyState
           title="No projects"
           description="Assign talent from a shortlist or create a project manually."

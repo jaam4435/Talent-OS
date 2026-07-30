@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
-import { AppError, handleApiError, success } from '@/lib/api/response'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { AppError, handleApiError, success } from '@/modules/core/api/response'
 import { requestTalentMatch } from '@/lib/integrations/ai/matching'
 
 export async function POST(request: Request) {

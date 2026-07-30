@@ -1,0 +1,83 @@
+{
+  "server": {
+    "id": "notification",
+    "name": "Talent OS Notifications",
+    "version": "1.0.0",
+    "description": "In-app notifications, read state, and Realtime delivery.",
+    "resourcePrefix": "talentos://notifications"
+  },
+  "tools": [
+    {
+      "name": "notification_list",
+      "title": "List Notifications",
+      "description": "List in-app notifications for the current user with read/unread filter.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/notification.server.ts#notification_list"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "notification_get",
+      "title": "Get Notification",
+      "description": "Retrieve a single notification by ID.",
+      "requiredPermission": "tenant:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/notification.server.ts#notification_get"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "notification_mark_read",
+      "title": "Mark Notification Read",
+      "description": "Mark a notification as read.",
+      "requiredPermission": "tenant:read",
+      "destructive": true,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/notification.server.ts#notification_mark_read"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "notification_mark_all_read",
+      "title": "Mark All Read",
+      "description": "Mark all notifications as read for the current user.",
+      "requiredPermission": "tenant:read",
+      "destructive": true,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/notification.server.ts#notification_mark_all_read"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "notification_send",
+      "title": "Send Notification",
+      "description": "Create and deliver an in-app notification to a user.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/notification.server.ts#notification_send"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "notification_subscribe_realtime",
+      "title": "Subscribe Realtime Channel",
+      "description": "Return Realtime channel configuration for live notification streaming.",
+      "requiredPermission": "tenant:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/notification.server.ts#notification_subscribe_realtime"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

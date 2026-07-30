@@ -3,10 +3,10 @@
 import { useTransition } from 'react'
 import Link from 'next/link'
 import { updateProjectStatus } from '@/app/actions/projects'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Button } from '@/modules/core/components/ui/button'
 import { PROJECT_KANBAN_COLUMNS } from '@/lib/projects/types'
-import type { ProjectStatus } from '@/types/enums'
+import type { ProjectStatus } from '@/modules/core/types/enums'
 
 interface KanbanProject {
   id: string
