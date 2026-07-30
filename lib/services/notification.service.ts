@@ -20,4 +20,22 @@ export class NotificationService {
   async markRead(notificationId: string, userId: string): Promise<void> {
     await this.repos.notification.markRead(notificationId, userId)
   }
+
+  async getById(notificationId: string, userId: string, tenantId: string) {
+    return this.repos.notification.findById(notificationId, userId, tenantId)
+  }
+
+  async markAllRead(userId: string, tenantId: string) {
+    const count = await this.repos.notification.markAllRead(userId, tenantId)
+    return { marked: count }
+  }
+
+  getRealtimeConfig(tenantId: string, userId: string) {
+    return {
+      channel: `notifications:${tenantId}:${userId}`,
+      event: 'notification',
+      tenant_id: tenantId,
+      user_id: userId,
+    }
+  }
 }

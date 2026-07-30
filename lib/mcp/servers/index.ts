@@ -32,6 +32,13 @@ export type { StorageMcpServerInterface, StorageToolName, StorageToolInputs } fr
 export { AI_TOOLS, AI_SERVER_DEFINITION } from '@/lib/mcp/servers/ai.server'
 export type { AiMcpServerInterface, AiToolName, AiToolInputs } from '@/lib/mcp/servers/ai.server'
 
+export { MARKETPLACE_TOOLS, MARKETPLACE_SERVER_DEFINITION } from '@/lib/mcp/servers/marketplace.server'
+export type {
+  MarketplaceMcpServerInterface,
+  MarketplaceToolName,
+  MarketplaceToolInputs,
+} from '@/lib/mcp/servers/marketplace.server'
+
 import { CRM_SERVER_DEFINITION } from '@/lib/mcp/servers/crm.server'
 import { TALENT_SERVER_DEFINITION } from '@/lib/mcp/servers/talent.server'
 import { PROJECTS_SERVER_DEFINITION } from '@/lib/mcp/servers/projects.server'
@@ -42,6 +49,7 @@ import { KNOWLEDGE_SERVER_DEFINITION } from '@/lib/mcp/servers/knowledge.server'
 import { NOTIFICATION_SERVER_DEFINITION } from '@/lib/mcp/servers/notification.server'
 import { STORAGE_SERVER_DEFINITION } from '@/lib/mcp/servers/storage.server'
 import { AI_SERVER_DEFINITION } from '@/lib/mcp/servers/ai.server'
+import { MARKETPLACE_SERVER_DEFINITION } from '@/lib/mcp/servers/marketplace.server'
 import type { McpServerDefinition } from '@/lib/mcp/types'
 
 /** All MCP server definitions for discovery and documentation generation. */
@@ -54,6 +62,7 @@ export const ALL_MCP_SERVER_DEFINITIONS: readonly McpServerDefinition[] = [
   ANALYTICS_SERVER_DEFINITION,
   KNOWLEDGE_SERVER_DEFINITION,
   NOTIFICATION_SERVER_DEFINITION,
+  MARKETPLACE_SERVER_DEFINITION,
   STORAGE_SERVER_DEFINITION,
   AI_SERVER_DEFINITION,
 ] as const

@@ -1,0 +1,83 @@
+{
+  "server": {
+    "id": "knowledge",
+    "name": "Talent OS Knowledge",
+    "version": "1.0.0",
+    "description": "Entity context assembly, schema reference, and cross-domain search for AI agents.",
+    "resourcePrefix": "talentos://knowledge"
+  },
+  "tools": [
+    {
+      "name": "knowledge_get_entity_context",
+      "title": "Get Entity Context",
+      "description": "Assemble a structured context bundle for an entity (project, opportunity, talent) for agent reasoning.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_get_entity_context"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "knowledge_list_related_records",
+      "title": "List Related Records",
+      "description": "Find records related to an entity via foreign keys and activity logs.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_list_related_records"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "knowledge_search",
+      "title": "Search Knowledge Base",
+      "description": "Full-text search across entity summaries, notes, and indexed documentation.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_search"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "knowledge_get_tenant_policies",
+      "title": "Get Tenant Policies",
+      "description": "Retrieve tenant settings, feature flags, and operational policies for agent guardrails.",
+      "requiredPermission": "tenant:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_get_tenant_policies"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "knowledge_get_schema_reference",
+      "title": "Get Schema Reference",
+      "description": "Return a simplified schema reference for a domain entity type.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#knowledge_get_schema_reference"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "entity_summary",
+      "title": "entity_summary",
+      "description": "Generate a concise summary of an entity for agent context.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/knowledge.server.ts#entity_summary"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

@@ -19,10 +19,11 @@
 | `notification` | [`lib/repositories/notification.repository.ts`](../../lib/repositories/notification.repository.ts) |
 | `project` | [`lib/repositories/project.repository.ts`](../../lib/repositories/project.repository.ts) |
 | `shortlist` | [`lib/repositories/shortlist.repository.ts`](../../lib/repositories/shortlist.repository.ts) |
+| `storage` | [`lib/repositories/storage.repository.ts`](../../lib/repositories/storage.repository.ts) |
 | `talent` | [`lib/repositories/talent.repository.ts`](../../lib/repositories/talent.repository.ts) |
 | `task` | [`lib/repositories/task.repository.ts`](../../lib/repositories/task.repository.ts) |
 | `tenant` | [`lib/repositories/tenant.repository.ts`](../../lib/repositories/tenant.repository.ts) |
 | `whatsapp-conversation` | [`lib/repositories/whatsapp-conversation.repository.ts`](../../lib/repositories/whatsapp-conversation.repository.ts) |
 | `workflow` | [`lib/repositories/workflow.repository.ts`](../../lib/repositories/workflow.repository.ts) |
 
-**Total:** 21 repositories
+**Total:** 22 repositories

@@ -25,6 +25,8 @@ jobs:
 
       - run: npm run check:ai-gateway
 
+      - run: npm run check:mcp-services
+
       - run: npm run test:coverage
 
       - run: npm run docs:check

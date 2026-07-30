@@ -18,6 +18,9 @@ import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
 import { WhatsAppService } from '@/lib/services/whatsapp.service'
 import { KnowledgeService } from '@/lib/services/knowledge.service'
 import { AgentService } from '@/lib/services/agent.service'
+import { MarketplaceService } from '@/lib/services/marketplace.service'
+import { StorageService } from '@/lib/services/storage.service'
+import type { McpExecutionContext } from '@/lib/mcp/types'
 
 export interface Services {
   project: ProjectService
@@ -35,6 +38,8 @@ export interface Services {
   notification: NotificationService
   ai: AIService
   integration: IntegrationService
+  marketplace: MarketplaceService
+  storage: StorageService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -49,6 +54,7 @@ function buildServices(repos: Repositories): Services {
   const whatsapp = new WhatsAppService(repos, integration, crm, talent, workflow, project)
   const knowledge = new KnowledgeService(repos)
   const agent = new AgentService(repos)
+  const storage = new StorageService(repos)
 
   let services!: Services
   const workflowEngine = new WorkflowEngineService(repos, async () => services)
@@ -69,7 +75,11 @@ function buildServices(repos: Repositories): Services {
     finance: new FinanceService(repos, workflow),
     analytics: new AnalyticsService(repos),
     integration,
+    storage,
+    marketplace: null as unknown as MarketplaceService,
   }
+
+  services.marketplace = new MarketplaceService(repos, talent, ai, services.assignment)
 
   return services
 }
@@ -80,4 +90,9 @@ export async function createServices(): Promise<Services> {
 
 export async function createAdminServices(): Promise<Services> {
   return buildServices(await createAdminRepositories())
+}
+
+/** Service graph for MCP tool adapters — uses admin context with tenant scoping in handlers. */
+export async function createMcpServices(_context?: McpExecutionContext): Promise<Services> {
+  return createAdminServices()
 }

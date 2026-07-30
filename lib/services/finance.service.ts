@@ -94,4 +94,72 @@ export class FinanceService {
 
     return { ok: true }
   }
+
+  async getPaymentById(paymentId: string, tenantId: string) {
+    return this.repos.invoice.findById(paymentId, tenantId)
+  }
+
+  async listPayments(
+    tenantId: string,
+    filters?: { status?: string; freelancerId?: string; page?: number; limit?: number }
+  ) {
+    return this.repos.invoice.listByTenant(
+      tenantId,
+      {
+        status: filters?.status as never,
+        freelancerId: filters?.freelancerId,
+      },
+      { page: filters?.page, limit: filters?.limit }
+    )
+  }
+
+  async disputePayment(
+    tenantId: string,
+    userId: string,
+    input: { paymentId: string; disputeReason: string }
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    const payment = await this.repos.invoice.findById(input.paymentId, tenantId)
+    if (!payment) return { ok: false, error: 'Payment not found' }
+    await this.repos.invoice.dispute(input.paymentId, tenantId, input.disputeReason)
+    await this.workflow.emitEvent({
+      tenantId,
+      eventType: FinanceEvents.PAYMENT_DISPUTED,
+      aggregateType: 'payment',
+      aggregateId: input.paymentId,
+      idempotencyKey: `payment-disputed:${input.paymentId}`,
+      actorId: userId,
+      payload: { payment_id: input.paymentId, reason: input.disputeReason },
+    })
+    return { ok: true }
+  }
+
+  async exportPayments(
+    tenantId: string,
+    input: { fromDate: string; toDate: string; status?: string }
+  ) {
+    const rows = await this.repos.invoice.listForExport(
+      tenantId,
+      input.fromDate,
+      input.toDate,
+      input.status as never
+    )
+    const header = 'id,amount,currency,status,created_at,paid_at,freelancer_id,payment_reference'
+    const lines = rows.map((r) =>
+      [
+        r.id,
+        r.amount,
+        r.currency,
+        r.status,
+        r.created_at,
+        r.paid_at ?? '',
+        r.freelancer_id,
+        r.payment_reference ?? '',
+      ].join(',')
+    )
+    return { csv: [header, ...lines].join('\n'), row_count: rows.length }
+  }
+
+  async getPaymentAging(tenantId: string) {
+    return this.repos.invoice.getAgingSummary(tenantId)
+  }
 }

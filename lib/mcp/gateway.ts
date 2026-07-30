@@ -1,6 +1,7 @@
 import { findToolDefinition } from '@/lib/ai/agent/tool-filter'
 import { hasPermission } from '@/modules/core/services/permissions'
 import type { UserRole } from '@/modules/core/types/enums'
+import { getMcpToolHandler } from '@/lib/mcp/adapters'
 import type {
   McpExecutionContext,
   McpGatewayInterface,
@@ -8,6 +9,7 @@ import type {
   McpToolCallResult,
 } from '@/lib/mcp/types'
 import { ALL_MCP_SERVER_DEFINITIONS } from '@/lib/mcp/servers'
+import { createMcpServices } from '@/lib/services/factory'
 
 class DefaultToolAuthorizer {
   async authorize(
@@ -22,10 +24,7 @@ class DefaultToolAuthorizer {
   }
 }
 
-/**
- * MCP gateway — routes tool calls with authorization.
- * Domain adapters will be wired in a future iteration; invoke returns not-implemented for now.
- */
+/** MCP gateway — routes tool calls through service-backed adapters with authorization. */
 export class McpGateway implements McpGatewayInterface {
   private readonly authorizer = new DefaultToolAuthorizer()
 
@@ -34,6 +33,7 @@ export class McpGateway implements McpGatewayInterface {
   }
 
   async invoke<TOutput = unknown>(request: McpToolCallRequest): Promise<McpToolCallResult<TOutput>> {
+    const started = Date.now()
     const tool = findToolDefinition(request.toolName)
     if (!tool) {
       return { content: { error: `Unknown tool: ${request.toolName}` } as TOutput, isError: true }
@@ -48,14 +48,40 @@ export class McpGateway implements McpGatewayInterface {
 
     await this.authorizer.authorize(request.toolName, tool.requiredPermission, request.context)
 
-    return {
-      content: {
-        error: 'Tool adapter not implemented',
-        tool: request.toolName,
-        message: 'MCP tool adapters will be wired in a future iteration',
-      } as TOutput,
-      isError: true,
-      _meta: { serverId: request.serverId, toolName: request.toolName },
+    const handler = getMcpToolHandler(request.toolName)
+    if (!handler) {
+      return {
+        content: { error: 'Tool adapter not registered', tool: request.toolName } as TOutput,
+        isError: true,
+      }
+    }
+
+    try {
+      const services = await createMcpServices(request.context)
+      const result = await handler(request.input, {
+        execution: request.context,
+        services,
+      })
+      return {
+        ...result,
+        _meta: {
+          ...result._meta,
+          latencyMs: Date.now() - started,
+          serverId: request.serverId,
+          toolName: request.toolName,
+        },
+      } as McpToolCallResult<TOutput>
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Tool execution failed'
+      return {
+        content: { error: message, tool: request.toolName } as TOutput,
+        isError: true,
+        _meta: {
+          latencyMs: Date.now() - started,
+          serverId: request.serverId,
+          toolName: request.toolName,
+        },
+      }
     }
   }
 }

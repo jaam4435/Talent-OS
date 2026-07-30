@@ -20,6 +20,8 @@
     "test:integration": "vitest run tests/integration",
     "test:coverage": "vitest run --coverage",
     "check:ai-gateway": "node scripts/check-ai-gateway-usage.mjs",
+    "check:mcp-services": "node scripts/check-mcp-services.mjs",
+    "mcp:contracts": "node scripts/generate-mcp-contracts.mjs",
     "docs:generate": "node scripts/generate-docs.mjs",
     "docs:check": "node scripts/generate-docs.mjs && git diff --exit-code docs/generated/"
   },

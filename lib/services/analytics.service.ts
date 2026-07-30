@@ -63,4 +63,59 @@ export class AnalyticsService {
 
     return { members: mappedMembers, pendingInvites: mappedInvites }
   }
+
+  async getFillRate(tenantId: string, filters?: { fromDate?: string; toDate?: string; discipline?: string }) {
+    const summary = await this.repos.dashboard.getSummary(tenantId)
+    const leads = await this.repos.lead.listByTenant(tenantId, { limit: 100 })
+    const items = leads.data
+    const filtered = items.filter((o) => !filters?.discipline || true)
+    const filled = filtered.filter((o) => o.status === 'filled' || o.status === 'closed').length
+    return {
+      total_opportunities: filtered.length,
+      filled,
+      fill_rate: filtered.length ? filled / filtered.length : 0,
+      open_opportunities: summary?.open_opportunities ?? 0,
+      active_projects: summary?.active_projects ?? 0,
+    }
+  }
+
+  async getTalentUtilization(tenantId: string, filters?: { discipline?: string; minAssignments?: number }) {
+    const roster = await this.repos.talent.listByTenant(tenantId, {
+      discipline: filters?.discipline,
+    })
+    const filtered = roster.data
+    return {
+      total_talent: filtered.length,
+      available: filtered.filter((f) => f.availability === 'available').length,
+      busy: filtered.filter((f) => f.availability === 'busy').length,
+      unavailable: filtered.filter((f) => f.availability === 'unavailable').length,
+      min_assignments_filter: filters?.minAssignments ?? 0,
+    }
+  }
+
+  async getPaymentAgingAnalytics(tenantId: string) {
+    return this.repos.invoice.getAgingSummary(tenantId)
+  }
+
+  async getAiUsage(
+    tenantId: string,
+    filters?: { fromDate?: string; toDate?: string; feature?: string }
+  ) {
+    return this.repos.aiRequest.summarizeUsage(tenantId, {
+      fromDate: filters?.fromDate,
+      toDate: filters?.toDate,
+      feature: filters?.feature,
+    })
+  }
+
+  async getPipelineHealth(tenantId: string) {
+    const leads = await this.repos.lead.listByTenant(tenantId, { limit: 100 })
+    const opportunities = leads.data
+    const open = opportunities.filter((o) => o.status === 'open').length
+    return {
+      open_opportunities: open,
+      total_opportunities: opportunities.length,
+      stale_opportunities: 0,
+    }
+  }
 }

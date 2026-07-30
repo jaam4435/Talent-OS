@@ -244,6 +244,61 @@ export class KnowledgeService {
   ) {
     return this.createEntry(tenantId, userId, { ...input, category: 'document' })
   }
+
+  async getEntityContext(
+    tenantId: string,
+    entityType: string,
+    entityId: string,
+    depth: 'shallow' | 'standard' | 'deep' = 'standard'
+  ) {
+    const entries = await this.listByEntity(tenantId, entityType, entityId)
+    return {
+      entity_type: entityType,
+      entity_id: entityId,
+      depth,
+      knowledge_entries: entries,
+    }
+  }
+
+  async listRelatedRecords(
+    tenantId: string,
+    entityType: string,
+    entityId: string,
+    relation: string
+  ) {
+    if (relation === 'activity') {
+      const logs = await this.repos.activityLog.listByEntity(entityType, entityId, 20)
+      return { relation, records: logs }
+    }
+    if (relation === 'match_scores' && entityType === 'opportunity') {
+      const scores = await this.repos.matchScore.listDetailedByOpportunity(entityId, tenantId)
+      return { relation, records: scores }
+    }
+    return { relation, records: [] }
+  }
+
+  async getTenantPolicies(tenantId: string) {
+    const settings = await this.repos.tenant.getAiSettings(tenantId)
+    return {
+      tenant_id: tenantId,
+      ai_matching_enabled: settings.aiMatchingEnabled,
+      ai_pm_enabled: settings.aiPmEnabled,
+      max_ai_requests_monthly: settings.maxAiRequestsMonthly,
+    }
+  }
+
+  getSchemaReference(entityType: string) {
+    const schemas: Record<string, Record<string, string>> = {
+      freelancer: { id: 'uuid', full_name: 'string', discipline: 'enum', skills: 'string[]' },
+      opportunity: { id: 'uuid', title: 'string', status: 'enum', budget: 'number' },
+      project: { id: 'uuid', title: 'string', status: 'enum', freelancer_id: 'uuid' },
+      milestone: { id: 'uuid', project_id: 'uuid', status: 'enum', amount: 'number' },
+      payment: { id: 'uuid', amount: 'number', status: 'enum', freelancer_id: 'uuid' },
+      company: { id: 'uuid', name: 'string', contact_email: 'string' },
+      notification: { id: 'uuid', type: 'string', title: 'string', read_at: 'timestamp' },
+    }
+    return { entity_type: entityType, fields: schemas[entityType] ?? {} }
+  }
 }
 
 function splitIntoChunks(text: string, maxLength: number): string[] {

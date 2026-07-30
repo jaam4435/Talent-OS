@@ -1,0 +1,95 @@
+{
+  "server": {
+    "id": "finance",
+    "name": "Talent OS Finance",
+    "version": "1.0.0",
+    "description": "Payment approval, disbursement tracking, and financial exports.",
+    "resourcePrefix": "talentos://finance"
+  },
+  "tools": [
+    {
+      "name": "finance_list_payments",
+      "title": "List Payments",
+      "description": "List payment records with status, project, and freelancer filters.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/finance.server.ts#finance_list_payments"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "finance_get_payment",
+      "title": "Get Payment",
+      "description": "Retrieve a single payment record with milestone and project context.",
+      "requiredPermission": "payments:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/finance.server.ts#finance_get_payment"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "finance_approve_payment",
+      "title": "Approve Payment",
+      "description": "Manager approves a pending milestone payment for payout.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/finance.server.ts#finance_approve_payment"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "finance_mark_paid",
+      "title": "Mark Payment Paid",
+      "description": "Record that an approved payment has been disbursed.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/finance.server.ts#finance_mark_paid"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "finance_dispute_payment",
+      "title": "Dispute Payment",
+      "description": "Flag a payment as disputed with a reason.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/finance.server.ts#finance_dispute_payment"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "finance_export_payments",
+      "title": "Export Payments",
+      "description": "Generate a CSV export of payments for accounting.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/finance.server.ts#finance_export_payments"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "finance_payment_aging",
+      "title": "Payment Aging Report",
+      "description": "Summarize outstanding payments by age bucket.",
+      "requiredPermission": "payments:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/finance.server.ts#finance_payment_aging"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

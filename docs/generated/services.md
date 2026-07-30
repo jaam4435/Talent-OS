@@ -11,11 +11,14 @@
 | `finance` | [`lib/services/finance.service.ts`](../../lib/services/finance.service.ts) |
 | `integration` | [`lib/services/integration.service.ts`](../../lib/services/integration.service.ts) |
 | `knowledge` | [`lib/services/knowledge.service.ts`](../../lib/services/knowledge.service.ts) |
+| `marketplace` | [`lib/services/marketplace.service.ts`](../../lib/services/marketplace.service.ts) |
 | `notification` | [`lib/services/notification.service.ts`](../../lib/services/notification.service.ts) |
+| `portfolio` | [`lib/services/portfolio.service.ts`](../../lib/services/portfolio.service.ts) |
 | `project` | [`lib/services/project.service.ts`](../../lib/services/project.service.ts) |
+| `storage` | [`lib/services/storage.service.ts`](../../lib/services/storage.service.ts) |
 | `talent` | [`lib/services/talent.service.ts`](../../lib/services/talent.service.ts) |
 | `whatsapp` | [`lib/services/whatsapp.service.ts`](../../lib/services/whatsapp.service.ts) |
 | `workflow-engine` | [`lib/services/workflow-engine.service.ts`](../../lib/services/workflow-engine.service.ts) |
 | `workflow` | [`lib/services/workflow.service.ts`](../../lib/services/workflow.service.ts) |
 
-**Total:** 14 services
+**Total:** 17 services

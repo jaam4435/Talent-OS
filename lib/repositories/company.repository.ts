@@ -92,4 +92,24 @@ export class CompanyRepository extends BaseRepository {
       .eq('tenant_id', tenantId)
     return count ?? 0
   }
+
+  async update(
+    companyId: string,
+    tenantId: string,
+    patch: {
+      name?: string
+      contact_email?: string | null
+      contact_name?: string | null
+      website?: string | null
+      notes?: string | null
+    }
+  ): Promise<void> {
+    const { error } = await this.ctx.supabase
+      .from('companies')
+      .update(patch)
+      .eq('id', companyId)
+      .eq('tenant_id', tenantId)
+    this.throwIfError(error)
+    this.invalidateTable('companies')
+  }
 }

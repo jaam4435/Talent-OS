@@ -289,6 +289,41 @@ export class CRMService {
   ) {
     await this.repos.lead.updateRecipientWhatsAppSent(recipientId, patch)
   }
+
+  async searchCompanies(tenantId: string, query: string) {
+    const companies = await this.listCompanies(tenantId)
+    const q = query.toLowerCase()
+    return companies.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.contactName?.toLowerCase().includes(q) ?? false) ||
+        (c.contactEmail?.toLowerCase().includes(q) ?? false)
+    )
+  }
+
+  async updateCompany(
+    companyId: string,
+    tenantId: string,
+    input: {
+      name?: string
+      contactEmail?: string
+      contactName?: string
+      website?: string
+      notes?: string
+    }
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    const existing = await this.getCompanyById(companyId, tenantId)
+    if (!existing) return { ok: false, error: 'Company not found' }
+
+    await this.repos.company.update(companyId, tenantId, {
+      name: input.name,
+      contact_email: input.contactEmail ?? undefined,
+      contact_name: input.contactName ?? undefined,
+      website: input.website ?? undefined,
+      notes: input.notes ?? undefined,
+    })
+    return { ok: true }
+  }
 }
 
 export type { BroadcastOpportunityInput, CreateOpportunityInput }

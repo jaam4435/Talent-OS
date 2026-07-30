@@ -36,6 +36,8 @@ export {
 
 export { getMcpGateway, resetMcpGateway, createMcpExecutionContext, McpGateway } from '@/lib/mcp/gateway'
 
+export { getMcpToolHandler, MCP_TOOL_HANDLERS, MCP_ADAPTER_TOOL_COUNT } from '@/lib/mcp/adapters'
+
 export {
   CRM_TOOLS,
   CRM_SERVER_DEFINITION,
@@ -57,6 +59,8 @@ export {
   STORAGE_SERVER_DEFINITION,
   AI_TOOLS,
   AI_SERVER_DEFINITION,
+  MARKETPLACE_TOOLS,
+  MARKETPLACE_SERVER_DEFINITION,
 } from '@/lib/mcp/servers'
 
 export type {

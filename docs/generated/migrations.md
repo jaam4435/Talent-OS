@@ -21,5 +21,7 @@
 | 016 | [`016_knowledge_module.sql`](../../supabase/migrations/016_knowledge_module.sql) | Talent OS — Knowledge Module |
 | 017 | [`017_agents_module.sql`](../../supabase/migrations/017_agents_module.sql) | Talent OS — Agent Framework |
 | 018 | [`018_marketplace_architecture.sql`](../../supabase/migrations/018_marketplace_architecture.sql) | Talent OS — Marketplace Architecture (Schema Blueprint) |
+| 019 | [`019_phase1_security_fixes.sql`](../../supabase/migrations/019_phase1_security_fixes.sql) | Phase 1: Security fixes for privileged RPCs (CORE-02, CORE-03) |
+| 020 | [`020_phase2_foundation.sql`](../../supabase/migrations/020_phase2_foundation.sql) | Phase 2: Platform Foundation — indexes, integration hardening, RPC guards |
 
-**Total:** 18 migrations — apply in filename order
+**Total:** 20 migrations — apply in filename order

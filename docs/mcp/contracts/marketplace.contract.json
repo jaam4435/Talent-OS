@@ -1,0 +1,83 @@
+{
+  "server": {
+    "id": "marketplace",
+    "name": "Talent OS Marketplace",
+    "version": "1.0.0",
+    "description": "Marketplace profiles, matching, and subdomain boundary orchestration.",
+    "resourcePrefix": "talentos://marketplace"
+  },
+  "tools": [
+    {
+      "name": "marketplace_search_profiles",
+      "title": "Search Marketplace Profiles",
+      "description": "Search talent profiles available for marketplace discovery.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/marketplace.server.ts#marketplace_search_profiles"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "marketplace_get_public_profile",
+      "title": "Get Public Profile",
+      "description": "Retrieve a marketplace-visible talent profile.",
+      "requiredPermission": "freelancers:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/marketplace.server.ts#marketplace_get_public_profile"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "marketplace_get_match_scores",
+      "title": "Get Match Scores",
+      "description": "List AI match scores for an opportunity from the marketplace matching pool.",
+      "requiredPermission": "ai:match",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/marketplace.server.ts#marketplace_get_match_scores"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "marketplace_request_match",
+      "title": "Request Talent Match",
+      "description": "Queue AI talent matching for an opportunity.",
+      "requiredPermission": "ai:match",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/marketplace.server.ts#marketplace_request_match"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "marketplace_list_boundaries",
+      "title": "List Subdomain Boundaries",
+      "description": "Return the marketplace subdomain boundary map for extension planning.",
+      "requiredPermission": "tenant:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/marketplace.server.ts#marketplace_list_boundaries"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "marketplace_get_boundary",
+      "title": "Get Subdomain Boundary",
+      "description": "Return boundary details for a single marketplace subdomain.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/marketplace.server.ts#marketplace_get_boundary"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

@@ -38,6 +38,30 @@ export class NotificationRepository extends BaseRepository {
     this.throwIfError(error)
   }
 
+  async findById(notificationId: string, userId: string, tenantId: string): Promise<NotificationRow | null> {
+    const { data, error } = await this.ctx.supabase
+      .from('notifications')
+      .select('*')
+      .eq('id', notificationId)
+      .eq('user_id', userId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+    this.throwIfError(error)
+    return data
+  }
+
+  async markAllRead(userId: string, tenantId: string): Promise<number> {
+    const { data, error } = await this.ctx.supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('tenant_id', tenantId)
+      .is('read_at', null)
+      .select('id')
+    this.throwIfError(error)
+    return data?.length ?? 0
+  }
+
   async listByUser(userId: string, tenantId: string, unreadOnly = false): Promise<NotificationRow[]> {
     let query = this.ctx.supabase
       .from('notifications')

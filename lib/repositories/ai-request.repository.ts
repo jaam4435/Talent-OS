@@ -160,4 +160,35 @@ export class AiRequestRepository extends BaseRepository {
       },
     })
   }
+
+  async summarizeUsage(
+    tenantId: string,
+    filters?: { fromDate?: string; toDate?: string; feature?: string }
+  ) {
+    let query = this.ctx.supabase
+      .from('ai_requests')
+      .select('request_type, input_tokens, output_tokens, estimated_cost, status, created_at')
+      .eq('tenant_id', tenantId)
+
+    if (filters?.fromDate) query = query.gte('created_at', filters.fromDate)
+    if (filters?.toDate) query = query.lte('created_at', filters.toDate)
+    if (filters?.feature) query = query.eq('request_type', filters.feature)
+
+    const { data, error } = await query
+    this.throwIfError(error)
+
+    const rows = data ?? []
+    return {
+      total_requests: rows.length,
+      total_input_tokens: rows.reduce((sum, r) => sum + (r.input_tokens ?? 0), 0),
+      total_output_tokens: rows.reduce((sum, r) => sum + (r.output_tokens ?? 0), 0),
+      total_estimated_cost: rows.reduce((sum, r) => sum + Number(r.estimated_cost ?? 0), 0),
+      by_feature: Object.entries(
+        rows.reduce<Record<string, number>>((acc, row) => {
+          acc[row.request_type] = (acc[row.request_type] ?? 0) + 1
+          return acc
+        }, {})
+      ).map(([feature, count]) => ({ feature, count })),
+    }
+  }
 }

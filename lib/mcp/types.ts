@@ -68,6 +68,7 @@ export type McpServerId =
   | 'notification'
   | 'storage'
   | 'ai'
+  | 'marketplace'
 
 export interface McpToolCallRequest<TInput = unknown> {
   readonly serverId: McpServerId

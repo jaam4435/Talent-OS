@@ -105,28 +105,6 @@ describe('knowledge service integration', () => {
 })
 
 describe('MCP gateway integration', () => {
-  it('authorizes then returns not-implemented for valid tool', async () => {
-    const { getMcpGateway, createMcpExecutionContext } = await import('@/lib/mcp/gateway')
-
-    const gateway = getMcpGateway()
-    const context = createMcpExecutionContext({
-      tenantId: TEST_TENANT_ID,
-      userId: TEST_USER_ID,
-      role: 'admin',
-      permissions: ['freelancers:read'],
-    })
-
-    const result = await gateway.invoke({
-      serverId: 'talent',
-      toolName: 'talent_search',
-      input: { query: 'designer' },
-      context,
-    })
-
-    expect(result.isError).toBe(true)
-    expect(result.content).toMatchObject({ tool: 'talent_search' })
-  })
-
   it('rejects unknown tool', async () => {
     const { getMcpGateway, createMcpExecutionContext } = await import('@/lib/mcp/gateway')
 

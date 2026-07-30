@@ -251,6 +251,60 @@ export class WorkflowService {
   async findSubmittableMilestone(freelancerId: string, tenantId: string) {
     return this.repos.task.findSubmittableForFreelancer(freelancerId, tenantId)
   }
+
+  async listEvents(
+    tenantId: string,
+    filters?: { status?: string; aggregateType?: string; aggregateId?: string; limit?: number }
+  ) {
+    return this.repos.domainEvent.listByTenant(tenantId, {
+      status: filters?.status,
+      aggregateType: filters?.aggregateType,
+      aggregateId: filters?.aggregateId,
+      limit: filters?.limit,
+    })
+  }
+
+  async getEventById(eventId: string, tenantId: string) {
+    return this.repos.domainEvent.findById(eventId, tenantId)
+  }
+
+  async dispatchN8n(
+    tenantId: string,
+    workflow: string,
+    payload: Record<string, unknown>,
+    actorId?: string
+  ) {
+    const { buildN8nEnvelope, dispatchToN8n } = await import('@/lib/integrations/n8n')
+    const envelope = buildN8nEnvelope({
+      event: workflow,
+      tenantId,
+      data: payload,
+      idempotencyKey: `mcp-n8n:${workflow}:${crypto.randomUUID()}`,
+      actorId: actorId ?? null,
+    })
+    return dispatchToN8n(envelope)
+  }
+
+  async sendWhatsApp(
+    tenantId: string,
+    input: { to: string; template?: string; parameters?: string[]; body?: string },
+    actorId: string
+  ) {
+    return this.emitEvent({
+      tenantId,
+      eventType: 'whatsapp.send_requested',
+      aggregateType: 'whatsapp',
+      aggregateId: input.to,
+      idempotencyKey: `whatsapp-send:${input.to}:${Date.now()}`,
+      actorId,
+      payload: {
+        to: input.to,
+        template: input.template ?? null,
+        parameters: input.parameters ?? [],
+        body: input.body ?? null,
+      },
+    })
+  }
 }
 
 export type EmitEventInput = import('@/lib/repositories/domain-event.repository').EmitDomainEventInput

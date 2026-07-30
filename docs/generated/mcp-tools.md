@@ -53,6 +53,15 @@
 - `entity_type`
 - `entity_id`
 
+## Server: `marketplace` — [`marketplace.server.ts`](../../lib/mcp/servers/marketplace.server.ts)
+
+- `marketplace_search_profiles`
+- `marketplace_get_public_profile`
+- `marketplace_get_match_scores`
+- `marketplace_request_match`
+- `marketplace_list_boundaries`
+- `marketplace_get_boundary`
+
 ## Server: `notification` — [`notification.server.ts`](../../lib/mcp/servers/notification.server.ts)
 
 - `notification_list`
@@ -99,4 +108,4 @@
 - `workflow_send_whatsapp`
 - `workflow_retry_failed_events`
 
-**Total:** 68 tools across 10 servers
+**Total:** 74 tools across 11 servers

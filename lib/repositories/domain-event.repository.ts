@@ -95,6 +95,37 @@ export class DomainEventRepository extends BaseRepository {
     return claimed
   }
 
+  async findById(eventId: string, tenantId: string) {
+    const { data, error } = await this.ctx.supabase
+      .from('domain_events')
+      .select('*')
+      .eq('id', eventId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+    this.throwIfError(error)
+    return data
+  }
+
+  async listByTenant(
+    tenantId: string,
+    filters?: { status?: string; aggregateType?: string; aggregateId?: string; limit?: number }
+  ) {
+    let query = this.ctx.supabase
+      .from('domain_events')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(filters?.limit ?? 50)
+
+    if (filters?.status) query = query.eq('status', filters.status)
+    if (filters?.aggregateType) query = query.eq('aggregate_type', filters.aggregateType)
+    if (filters?.aggregateId) query = query.eq('aggregate_id', filters.aggregateId)
+
+    const { data, error } = await query
+    this.throwIfError(error)
+    return data ?? []
+  }
+
   async markFailed(eventId: string, errorMessage: string): Promise<void> {
     const { data: event } = await this.ctx.supabase
       .from('domain_events')

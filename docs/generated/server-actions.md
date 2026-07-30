@@ -62,6 +62,11 @@ _No exported async functions_
 - `broadcastOpportunity()`
 - `respondToOpportunity()`
 
+## `payments.ts`
+
+- `approvePayment()`
+- `markPaymentPaid()`
+
 ## `portfolio.ts`
 
 - `addPortfolioItem()`
@@ -81,4 +86,4 @@ _No exported async functions_
 - `rejectShortlistCandidate()`
 - `addRespondentsToShortlist()`
 
-**Total:** 13 action modules
+**Total:** 14 action modules
