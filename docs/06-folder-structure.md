@@ -35,6 +35,11 @@ talent-os/
 │   │   ├── middleware/
 │   │   ├── features/
 │   │   └── streaming/
+│   ├── mcp/                          # Model Context Protocol interfaces
+│   │   ├── types.ts
+│   │   ├── interfaces.ts
+│   │   ├── schemas/
+│   │   └── servers/                  # 10 domain MCP servers
 │   ├── domains/
 │
 ├── app/                              # Next.js App Router
@@ -334,6 +339,8 @@ talent-os/
 │   ├── 10-whatsapp-integration.md
 │   └── 25-talent-domain-refactor.md  # Architecture refactor log
 │   └── 26-business-domains-refactor.md  # Business modules refactor log
+│   └── 27-ai-gateway.md              # AI Gateway architecture
+│   └── 28-mcp-architecture.md        # Model Context Protocol design
 │
 ├── n8n/                              # n8n workflow exports (JSON)
 │   ├── opportunity-broadcast.json
