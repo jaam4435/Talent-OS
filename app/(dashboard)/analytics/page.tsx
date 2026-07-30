@@ -1,5 +1,5 @@
-import { PageHeader } from '@/components/shared/page-header'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
+import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 
 export const metadata = { title: 'Analytics' }
 

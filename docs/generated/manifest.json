@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-07-30T16:16:34.309Z",
+  "generator": "scripts/generate-docs.mjs",
+  "files": [
+    "api-routes.md",
+    "server-actions.md",
+    "migrations.md",
+    "mcp-tools.md",
+    "workflows.md",
+    "services.md",
+    "repositories.md",
+    "modules.md"
+  ],
+  "counts": {
+    "apiRoutes": 19,
+    "actionModules": 13,
+    "migrations": 18,
+    "workflows": 17
+  }
+}

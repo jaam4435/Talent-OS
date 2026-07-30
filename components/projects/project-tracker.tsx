@@ -7,12 +7,12 @@ import {
   updateMilestoneStatus,
 } from '@/app/actions/milestones'
 import { updateProjectStatus, updateProjectStatusAsFreelancer } from '@/app/actions/projects'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Button } from '@/modules/core/components/ui/button'
+import { Input } from '@/modules/core/components/ui/input'
 import { MANAGER_STATUS_TRANSITIONS } from '@/lib/projects/types'
 import type { MilestoneRow } from '@/lib/projects/types'
-import type { ProjectStatus, UserRole } from '@/types/enums'
+import type { ProjectStatus, UserRole } from '@/modules/core/types/enums'
 
 interface ProjectTrackerProps {
   projectId: string
