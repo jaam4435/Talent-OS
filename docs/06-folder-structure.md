@@ -29,12 +29,19 @@ talent-os/
 │   │   ├── types.ts
 │   │   ├── validation.ts
 │   │   └── index.ts
-│   └── agents/                       # Agent framework domain types + validation
+│   ├── agents/                       # Agent framework domain types + validation
+│   │   ├── types.ts
+│   │   ├── validation.ts
+│   │   └── index.ts
+│   └── marketplace/                  # Marketplace architecture (types + contracts)
 │       ├── types.ts
 │       ├── validation.ts
+│       ├── interfaces.ts
 │       └── index.ts
 │
 ├── lib/
+│   ├── marketplace/                  # Marketplace boundary map
+│   │   └── boundaries.ts
 │   ├── ai/                           # AI Gateway — all LLM requests go here
 │   │   ├── gateway.ts
 │   │   ├── agent/                    # Agent framework (registry, tools, memory)
