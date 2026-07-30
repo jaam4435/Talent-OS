@@ -1,7 +1,7 @@
-import { PageHeader } from '@/components/shared/page-header'
-import { TeamInviteForm } from '@/components/settings/team-invite-form'
-import { TeamMembersList } from '@/components/settings/team-members-list'
-import { requireAdmin } from '@/lib/auth/guards'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
+import { TeamInviteForm } from '@/modules/core/components/settings/team-invite-form'
+import { TeamMembersList } from '@/modules/core/components/settings/team-members-list'
+import { requireAdmin } from '@/modules/core/services/guards'
 import { listCompanies } from '@/lib/companies/queries'
 
 export const metadata = { title: 'Team' }

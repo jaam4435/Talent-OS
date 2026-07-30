@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { SignupForm } from '@/components/auth/signup-form'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { APP_NAME } from '@/lib/utils/constants'
+import { SignupForm } from '@/modules/core/components/auth/signup-form'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
+import { APP_NAME } from '@/modules/core/utils/constants'
 
 export const metadata = { title: 'Create agency' }
 

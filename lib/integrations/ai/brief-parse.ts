@@ -1,4 +1,5 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getAiGateway } from '@/lib/ai'
+import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiFeatureAllowed,
@@ -80,8 +81,8 @@ export async function parseBriefText(input: {
   currency?: string
 }): Promise<BriefParseResult> {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured')
+    if (!getAiGateway().isConfigured()) {
+      throw new Error('No AI providers configured')
     }
 
     const { system, user } = buildBriefParsePrompt({
@@ -138,22 +139,14 @@ export async function parseBriefText(input: {
 }
 
 async function persistOpportunityRequirements(opportunityId: string, requirements: ParsedRequirements) {
-  const supabase = createAdminClient()
-  await supabase
-    .from('opportunities')
-    .update({ requirements })
-    .eq('id', opportunityId)
+  const services = await createAdminServices()
+  await services.crm.updateRequirements(opportunityId, requirements)
 }
 
 export async function executeBriefParse(aiRequestId: string) {
-  const supabase = createAdminClient()
+  const services = await createAdminServices()
   const startedAt = Date.now()
-
-  const { data: aiRequest } = await supabase
-    .from('ai_requests')
-    .select('*')
-    .eq('id', aiRequestId)
-    .maybeSingle()
+  const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
   if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
@@ -163,11 +156,7 @@ export async function executeBriefParse(aiRequestId: string) {
 
   await updateAiRequest(aiRequestId, { status: 'processing' })
 
-  const { data: opportunity } = await supabase
-    .from('opportunities')
-    .select('id, tenant_id, title, description, budget, currency')
-    .eq('id', opportunityId)
-    .maybeSingle()
+  const opportunity = await services.crm.findBriefContext(opportunityId)
 
   if (!opportunity) {
     await updateAiRequest(aiRequestId, { status: 'failed', errorMessage: 'Opportunity not found' })
@@ -207,15 +196,9 @@ export async function requestBriefParse(input: {
 }) {
   await assertAiFeatureAllowed(input.tenantId, 'brief_parse')
 
-  const supabase = createAdminClient()
-  const { data: opportunity } = await supabase
-    .from('opportunities')
-    .select('id, tenant_id')
-    .eq('id', input.opportunityId)
-    .eq('tenant_id', input.tenantId)
-    .maybeSingle()
-
-  if (!opportunity) throw new Error('OPPORTUNITY_NOT_FOUND')
+  const services = await createAdminServices()
+  const exists = await services.crm.existsInTenant(input.opportunityId, input.tenantId)
+  if (!exists) throw new Error('OPPORTUNITY_NOT_FOUND')
 
   const correlationId = crypto.randomUUID()
   const model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
@@ -248,32 +231,21 @@ export async function requestBriefParse(input: {
 }
 
 export async function getBriefParseResult(opportunityId: string, tenantId: string) {
-  const supabase = createAdminClient()
-
-  const { data: opportunity } = await supabase
-    .from('opportunities')
-    .select('requirements')
-    .eq('id', opportunityId)
-    .eq('tenant_id', tenantId)
-    .maybeSingle()
-
-  const { data: latestRequest } = await supabase
-    .from('ai_requests')
-    .select('id, status, created_at, completed_at, result')
-    .eq('tenant_id', tenantId)
-    .eq('entity_type', 'opportunity')
-    .eq('entity_id', opportunityId)
-    .eq('request_type', 'brief_parse')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const services = await createAdminServices()
+  const requirementsRaw = await services.crm.findRequirements(opportunityId, tenantId)
+  const latestRequest = await services.ai.findLatestByEntity({
+    tenantId,
+    entityType: 'opportunity',
+    entityId: opportunityId,
+    requestType: 'brief_parse',
+  })
 
   return {
     requirements:
-      opportunity?.requirements &&
-      typeof opportunity.requirements === 'object' &&
-      Object.keys(opportunity.requirements as object).length
-        ? (opportunity.requirements as unknown as ParsedRequirements)
+      requirementsRaw &&
+      typeof requirementsRaw === 'object' &&
+      Object.keys(requirementsRaw as object).length
+        ? (requirementsRaw as unknown as ParsedRequirements)
         : null,
     latestRequest: latestRequest
       ? {

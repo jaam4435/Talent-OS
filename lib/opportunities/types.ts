@@ -1,4 +1,4 @@
-import type { DisciplineType, OpportunityStatus } from '@/types/enums'
+import type { DisciplineType, OpportunityStatus } from '@/modules/core/types/enums'
 
 export interface CreateOpportunityInput {
   title: string

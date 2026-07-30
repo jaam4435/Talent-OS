@@ -10,7 +10,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:repository": "vitest run tests/repository",
+    "test:service": "vitest run tests/service",
+    "test:workflow": "vitest run tests/workflow",
+    "test:integration": "vitest run tests/integration",
+    "test:coverage": "vitest run --coverage",
+    "docs:generate": "node scripts/generate-docs.mjs",
+    "docs:check": "node scripts/generate-docs.mjs && git diff --exit-code docs/generated/"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.2",
@@ -38,11 +48,14 @@
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
+    "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.1.3",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.10"
   }
 }
