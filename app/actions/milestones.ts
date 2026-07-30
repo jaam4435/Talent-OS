@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
-import { isManager } from '@/lib/auth/permissions'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { isManager } from '@/modules/core/services/permissions'
 import { emitEvent } from '@/lib/integrations/events'
-import type { MilestoneStatus } from '@/types/enums'
+import type { MilestoneStatus } from '@/modules/core/types/enums'
 
 export async function updateMilestoneStatus(
   milestoneId: string,

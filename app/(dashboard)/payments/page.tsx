@@ -1,8 +1,8 @@
-import { Badge } from '@/components/ui/badge'
-import { EmptyState, PageHeader } from '@/components/shared/page-header'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { formatCurrency } from '@/lib/utils/format'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireTenant } from '@/modules/core/services/session'
+import { formatCurrency } from '@/modules/core/utils/format'
 
 export const metadata = { title: 'Payments' }
 

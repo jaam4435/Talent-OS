@@ -1,9 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requireManager } from '@/lib/auth/guards'
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
+import { requireManager } from '@/modules/core/services/guards'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
 import { createTalentServices } from '@/lib/domains/talent/factory'
 import type { FreelancerProfileInput, FreelancerSelfProfileInput } from '@/lib/talent/types'
 

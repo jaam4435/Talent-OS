@@ -15,6 +15,17 @@ talent-os/
 │       ├── ci.yml                    # Lint, type-check, test
 │       └── deploy-preview.yml        # Vercel preview on PR
 │
+├── modules/                          # Business domain modules
+│   └── core/                         # Auth, RBAC, infra, shared UI
+│       ├── services/
+│       ├── repositories/
+│       ├── schemas/
+│       ├── types/
+│       ├── api/
+│       ├── components/
+│       ├── hooks/
+│       └── utils/
+│
 ├── app/                              # Next.js App Router
 │   ├── (auth)/                       # Auth layout group (no sidebar)
 │   │   ├── login/
@@ -311,6 +322,7 @@ talent-os/
 │   ├── 09-n8n-workflows.md
 │   ├── 10-whatsapp-integration.md
 │   └── 25-talent-domain-refactor.md  # Architecture refactor log
+│   └── 26-business-domains-refactor.md  # Business modules refactor log
 │
 ├── n8n/                              # n8n workflow exports (JSON)
 │   ├── opportunity-broadcast.json

@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Button } from '@/modules/core/components/ui/button'
 import { ProjectKanban } from '@/components/projects/project-kanban'
-import { EmptyState, PageHeader } from '@/components/shared/page-header'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { isManager } from '@/lib/auth/permissions'
-import type { ProjectStatus } from '@/types/enums'
+import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
+import type { ProjectStatus } from '@/modules/core/types/enums'
 
 export const metadata = { title: 'Projects' }
 

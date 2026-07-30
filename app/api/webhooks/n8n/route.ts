@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import { verifySignature } from '@/lib/integrations/encryption'
 import { updateDeliveryStatus } from '@/lib/integrations/whatsapp'
 

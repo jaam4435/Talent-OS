@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import type { AiMatchResult, OpportunityMatchContext } from '@/lib/integrations/ai/types'
 
 interface RuleBasedRow {

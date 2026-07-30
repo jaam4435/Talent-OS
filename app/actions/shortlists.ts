@@ -1,9 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { requireManager } from '@/lib/auth/guards'
-import { requirePermission } from '@/lib/auth/permissions'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireManager } from '@/modules/core/services/guards'
+import { requirePermission } from '@/modules/core/services/permissions'
 import { getOrCreateShortlist } from '@/lib/shortlists/queries'
 
 function revalidateOpportunity(opportunityId: string) {

@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
 import { requestTalentMatch } from '@/lib/integrations/ai/matching'
 
 export async function runAiTalentMatch(opportunityId: string) {

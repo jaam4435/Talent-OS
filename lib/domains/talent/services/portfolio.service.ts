@@ -1,7 +1,7 @@
-import { DomainError, ErrorCodes } from '@/lib/core/errors'
-import type { ActionResult } from '@/lib/core/result'
-import { actionFail, actionOk, catchToActionResult } from '@/lib/core/result'
-import { parseSchema } from '@/lib/core/validation'
+import { DomainError, ErrorCodes } from '@/modules/core/utils/errors'
+import type { ActionResult } from '@/modules/core/utils/result'
+import { actionFail, actionOk, catchToActionResult } from '@/modules/core/utils/result'
+import { parseSchema } from '@/modules/core/utils/validation'
 import { toPortfolioItemInsertRow } from '@/lib/domains/talent/mappers/freelancer.mapper'
 import type { FreelancerRepository } from '@/lib/domains/talent/repositories/freelancer.repository'
 import type { PortfolioRepository } from '@/lib/domains/talent/repositories/portfolio.repository'
@@ -11,8 +11,8 @@ import type {
   PortfolioItemInput,
 } from '@/lib/domains/talent/types'
 import { portfolioItemSchema } from '@/lib/domains/talent/validation'
-import type { SessionUser, TenantContext } from '@/types/enums'
-import { isManager } from '@/lib/auth/permissions'
+import type { SessionUser, TenantContext } from '@/modules/core/types/enums'
+import { isManager } from '@/modules/core/services/permissions'
 
 export class PortfolioService {
   constructor(

@@ -1,7 +1,7 @@
-import { parsePagination } from '@/lib/api/pagination'
-import { success, handleApiError, AppError } from '@/lib/api/response'
-import { requireTenant } from '@/lib/auth/session'
-import { isManager } from '@/lib/auth/permissions'
+import { parsePagination } from '@/modules/core/api/pagination'
+import { success, handleApiError, AppError } from '@/modules/core/api/response'
+import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
 import { createTalentServices } from '@/lib/domains/talent/factory'
 import type { TalentSearchParams } from '@/lib/talent/types'
 

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/modules/core/utils/supabase/server'
 import { FreelancerRepository } from '@/lib/domains/talent/repositories/freelancer.repository'
 import { PortfolioRepository } from '@/lib/domains/talent/repositories/portfolio.repository'
 import { RatingRepository } from '@/lib/domains/talent/repositories/rating.repository'

@@ -1,10 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { requireManager } from '@/lib/auth/guards'
-import { requirePermission } from '@/lib/auth/permissions'
-import { requireTenant } from '@/lib/auth/session'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireManager } from '@/modules/core/services/guards'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { requireTenant } from '@/modules/core/services/session'
 import { emitEvent } from '@/lib/integrations/events'
 import { createProjectSchema, validateMilestoneBudget } from '@/lib/projects/validation'
 import type { CreateProjectInput } from '@/lib/projects/types'
@@ -12,7 +12,7 @@ import {
   FREELANCER_STATUS_TRANSITIONS,
   MANAGER_STATUS_TRANSITIONS,
 } from '@/lib/projects/types'
-import type { ProjectStatus } from '@/types/enums'
+import type { ProjectStatus } from '@/modules/core/types/enums'
 
 function mapRpcError(message: string): string {
   if (message.includes('MILESTONES_REQUIRED')) return 'At least one milestone is required.'

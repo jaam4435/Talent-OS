@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { EmptyState, PageHeader } from '@/components/shared/page-header'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { isManager } from '@/lib/auth/permissions'
+import { Button } from '@/modules/core/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
 
 export const metadata = { title: 'Opportunities' }
 

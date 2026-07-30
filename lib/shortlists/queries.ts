@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
-import type { Tables } from '@/types/database'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import type { Tables } from '@/modules/core/types/database'
 
 export interface ShortlistItemView {
   id: string

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
-import { Header } from '@/components/layout/header'
-import { Sidebar } from '@/components/layout/sidebar'
-import { getSession } from '@/lib/auth/session'
+import { Header } from '@/modules/core/components/layout/header'
+import { Sidebar } from '@/modules/core/components/layout/sidebar'
+import { getSession } from '@/modules/core/services/session'
 
 export const dynamic = 'force-dynamic'
 

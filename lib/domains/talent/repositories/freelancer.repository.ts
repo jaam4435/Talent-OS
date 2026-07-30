@@ -1,13 +1,13 @@
-import type { RepositoryContext } from '@/lib/core/context'
-import { DomainError, ErrorCodes } from '@/lib/core/errors'
-import { throwIfSupabaseError } from '@/lib/core/supabase-errors'
+import type { RepositoryContext } from '@/modules/core/utils/context'
+import { DomainError, ErrorCodes } from '@/modules/core/utils/errors'
+import { throwIfSupabaseError } from '@/modules/core/utils/supabase-errors'
 import type {
   FreelancerInsertRow,
   FreelancerSelfUpdateRow,
   FreelancerUpdateRow,
 } from '@/lib/domains/talent/mappers/freelancer.mapper'
 import type { TalentSearchQuery } from '@/lib/domains/talent/types'
-import type { Tables } from '@/types/database'
+import type { Tables } from '@/modules/core/types/database'
 
 export class FreelancerRepository {
   constructor(private readonly ctx: RepositoryContext) {}

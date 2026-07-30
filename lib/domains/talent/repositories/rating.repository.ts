@@ -1,4 +1,4 @@
-import type { RepositoryContext } from '@/lib/core/context'
+import type { RepositoryContext } from '@/modules/core/utils/context'
 import type { RatingHistoryEntry } from '@/lib/domains/talent/types'
 
 export class RatingRepository {

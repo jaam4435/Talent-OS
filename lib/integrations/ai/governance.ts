@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import type { AiProvider, AiRequestType } from '@/lib/integrations/ai/types'
 
 interface TenantAiSettings {

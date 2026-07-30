@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
-import { ACTIVE_TENANT_COOKIE } from '@/lib/auth/tenant-context'
+import { updateSession } from '@/modules/core/utils/supabase/middleware'
+import { ACTIVE_TENANT_COOKIE } from '@/modules/core/services/tenant-context'
 import {
   ADMIN_ONLY_ROUTES,
   CLIENT_RESTRICTED_ROUTES,
   MANAGER_ONLY_ROUTES,
   PUBLIC_ROUTES,
-} from '@/lib/utils/constants'
+} from '@/modules/core/utils/constants'
 
 function isPublicRoute(pathname: string) {
   return PUBLIC_ROUTES.some(

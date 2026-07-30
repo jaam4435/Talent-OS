@@ -1,4 +1,4 @@
-import type { AvailabilityStatus, DisciplineType } from '@/types/enums'
+import type { AvailabilityStatus, DisciplineType } from '@/modules/core/types/enums'
 
 export interface FreelancerProfileInput {
   fullName: string

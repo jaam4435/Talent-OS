@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DISCIPLINES } from '@/lib/utils/constants'
+import { DISCIPLINES } from '@/modules/core/utils/constants'
 
 const skillSchema = z.string().trim().min(1).max(50)
 

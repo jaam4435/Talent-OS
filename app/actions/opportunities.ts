@@ -1,10 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { requireManager } from '@/lib/auth/guards'
-import { requirePermission } from '@/lib/auth/permissions'
-import { requireTenant } from '@/lib/auth/session'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireManager } from '@/modules/core/services/guards'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { requireTenant } from '@/modules/core/services/session'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   broadcastOpportunitySchema,

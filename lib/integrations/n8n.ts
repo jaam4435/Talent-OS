@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import { signPayload } from '@/lib/integrations/encryption'
 
 export interface N8nEventEnvelope {

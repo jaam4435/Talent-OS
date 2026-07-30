@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { Briefcase, Building2, Megaphone, Users } from 'lucide-react'
-import { PageHeader, StatCard } from '@/components/shared/page-header'
-import { Badge } from '@/components/ui/badge'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { isClientRole, isTalentRole } from '@/lib/auth/permissions'
+import { PageHeader, StatCard } from '@/modules/core/components/shared/page-header'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireTenant } from '@/modules/core/services/session'
+import { isClientRole, isTalentRole } from '@/modules/core/services/permissions'
 
 export const metadata = { title: 'Dashboard' }
 

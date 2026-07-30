@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CreateProjectForm } from '@/components/projects/create-project-form'
-import { PageHeader } from '@/components/shared/page-header'
-import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
+import { Button } from '@/modules/core/components/ui/button'
 import { listCompanies } from '@/lib/companies/queries'
-import { createClient } from '@/lib/supabase/server'
-import { requireManager } from '@/lib/auth/guards'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireManager } from '@/modules/core/services/guards'
 
 export const metadata = { title: 'New project' }
 

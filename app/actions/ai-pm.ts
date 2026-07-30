@@ -1,9 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
-import { isManager } from '@/lib/auth/permissions'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { isManager } from '@/modules/core/services/permissions'
 import { parseBriefText, requestBriefParse } from '@/lib/integrations/ai/brief-parse'
 import {
   requestProjectSummary,

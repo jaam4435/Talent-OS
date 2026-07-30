@@ -1,6 +1,6 @@
-import type { ActionResult } from '@/lib/core/result'
-import { actionFail, actionOk, catchToActionResult } from '@/lib/core/result'
-import { parseSchema } from '@/lib/core/validation'
+import type { ActionResult } from '@/modules/core/utils/result'
+import { actionFail, actionOk, catchToActionResult } from '@/modules/core/utils/result'
+import { parseSchema } from '@/modules/core/utils/validation'
 import {
   toFreelancerInsertRow,
   toFreelancerSelfUpdateRow,
@@ -19,8 +19,8 @@ import {
   freelancerProfileSchema,
   freelancerSelfProfileSchema,
 } from '@/lib/domains/talent/validation'
-import type { Tables } from '@/types/database'
-import type { TenantContext } from '@/types/enums'
+import type { Tables } from '@/modules/core/types/database'
+import type { TenantContext } from '@/modules/core/types/enums'
 
 export class TalentService {
   constructor(private readonly freelancers: FreelancerRepository) {}

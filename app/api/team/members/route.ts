@@ -1,8 +1,8 @@
-import { requireAdmin } from '@/lib/auth/guards'
-import { createClient } from '@/lib/supabase/server'
-import { success, handleApiError } from '@/lib/api/response'
-import { formatRole } from '@/lib/auth/roles'
-import type { UserRole } from '@/types/enums'
+import { requireAdmin } from '@/modules/core/services/guards'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { success, handleApiError } from '@/modules/core/api/response'
+import { formatRole } from '@/modules/core/services/roles'
+import type { UserRole } from '@/modules/core/types/enums'
 
 export async function GET() {
   try {

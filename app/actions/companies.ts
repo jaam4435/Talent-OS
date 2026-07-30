@@ -2,9 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
-import { requireManager } from '@/lib/auth/guards'
-import { requirePermission } from '@/lib/auth/permissions'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireManager } from '@/modules/core/services/guards'
+import { requirePermission } from '@/modules/core/services/permissions'
 
 const createCompanySchema = z.object({
   name: z.string().min(1, 'Company name is required'),

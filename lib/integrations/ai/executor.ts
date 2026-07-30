@@ -5,7 +5,7 @@ import {
   executeShortlistSummary,
 } from '@/lib/integrations/ai/summary'
 import { executeStatusAssessment } from '@/lib/integrations/ai/status-assessment'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 
 export async function executeAiRequest(aiRequestId: string, actorId?: string | null) {
   const supabase = createAdminClient()

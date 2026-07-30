@@ -1,6 +1,6 @@
-import { requireTenant } from '@/lib/auth/session'
-import { createClient } from '@/lib/supabase/server'
-import { success, handleApiError } from '@/lib/api/response'
+import { requireTenant } from '@/modules/core/services/session'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { success, handleApiError } from '@/modules/core/api/response'
 
 export async function GET() {
   try {

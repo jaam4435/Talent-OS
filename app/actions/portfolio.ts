@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requireTenant } from '@/lib/auth/session'
-import { catchToActionResult } from '@/lib/core/result'
+import { requireTenant } from '@/modules/core/services/session'
+import { catchToActionResult } from '@/modules/core/utils/result'
 import { createTalentServices } from '@/lib/domains/talent/factory'
 import type { PortfolioItemInput } from '@/lib/talent/types'
 

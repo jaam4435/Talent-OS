@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { PageHeader } from '@/components/shared/page-header'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { TalentProfileForm } from '@/components/talent/talent-profile-form'
-import { createClient } from '@/lib/supabase/server'
-import { requireManager } from '@/lib/auth/guards'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { requireManager } from '@/modules/core/services/guards'
 
 export default async function EditTalentPage({
   params,
