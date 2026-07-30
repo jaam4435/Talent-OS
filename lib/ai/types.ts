@@ -36,6 +36,16 @@ export interface AiCompletionRequest {
   promptVersion?: string
   provider?: ProviderId
   metadata?: Record<string, unknown>
+  /** Inject platform memory into the request. */
+  memory?: {
+    tenantId?: string
+    sessionId?: string
+    entityType?: string
+    entityId?: string
+    scope?: import('@/lib/ai/memory/platform-memory').MemoryScope
+    limit?: number
+  }
+  tenantTier?: 'starter' | 'pro' | 'enterprise'
 }
 
 export interface AiStructuredRequest<T = unknown> extends AiCompletionRequest {

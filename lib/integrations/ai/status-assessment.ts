@@ -1,4 +1,4 @@
-import { getAiGateway } from '@/lib/ai'
+import { callAiStructured, getAiGateway } from '@/lib/ai'
 import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
@@ -7,7 +7,6 @@ import {
   createAiRequest,
   updateAiRequest,
 } from '@/lib/integrations/ai/governance'
-import { callOpenAiStructured } from '@/lib/integrations/ai/openai-client'
 import {
   STATUS_ASSESSMENT_SCHEMA,
   buildStatusAssessmentPrompt,
@@ -72,7 +71,7 @@ export async function generateStatusAssessment(projectId: string): Promise<Statu
       overdue_count: context.overdueCount,
     })
 
-    const { data, model } = await callOpenAiStructured<{
+    const { data, model } = await callAiStructured<{
       risk_level: 'on_track' | 'at_risk' | 'blocked'
       suggested_status: string | null
       narrative: string

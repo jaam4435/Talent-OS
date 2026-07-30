@@ -6,10 +6,11 @@ import { AiFeatureDisabledError } from '@/lib/ai/errors'
 import type { AiFeature } from '@/lib/ai/types'
 
 export async function assertFeatureEnabled(tenantId: string, feature: AiFeature): Promise<void> {
-  if (feature === 'digest') return
+  const mapped: 'talent_match' | 'brief_parse' | 'project_summary' | 'shortlist_summary' | 'status_assessment' =
+    feature === 'digest' ? 'project_summary' : feature
 
   try {
-    await assertAiFeatureAllowed(tenantId, feature)
+    await assertAiFeatureAllowed(tenantId, mapped)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI feature disabled'
     if (message === 'AI_MATCHING_DISABLED') {

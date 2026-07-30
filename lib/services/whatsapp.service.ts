@@ -1,4 +1,4 @@
-import { getAiGateway } from '@/lib/ai'
+import { getAiGateway, globalPromptManager } from '@/lib/ai'
 import type { Repositories } from '@/lib/repositories/factory'
 import type { CRMService } from '@/lib/services/crm.service'
 import type { TalentService } from '@/lib/services/talent.service'
@@ -157,18 +157,35 @@ export class WhatsAppService {
       )
       const pending = await this.crm.findPendingRecipient(input.tenantId, input.freelancerId)
 
+      const userContext = {
+        freelancer_name: input.freelancerName,
+        active_projects: projects.slice(0, 3),
+        pending_opportunity_id: pending?.opportunity_id ?? null,
+        conversation_context: {
+          active_intent: input.conversation.activeIntent,
+          active_entity_type: input.conversation.activeEntityType,
+          active_entity_id: input.conversation.activeEntityId,
+        },
+        query: input.query,
+      }
+
+      const built = globalPromptManager.build('whatsapp.agent', userContext)
+
       const response = await getAiGateway().complete({
         tenantId: input.tenantId,
         feature: 'digest',
+        promptId: built.promptId,
+        promptVersion: built.promptVersion,
+        memory: {
+          tenantId: input.tenantId,
+          entityType: 'freelancer',
+          entityId: input.freelancerId,
+          scope: 'entity',
+          limit: 5,
+        },
         messages: [
-          {
-            role: 'system',
-            content: `You are a WhatsApp assistant for freelancers on Talent OS. Be concise (under 320 chars). 
-Freelancer: ${input.freelancerName}
-Active projects: ${JSON.stringify(projects.slice(0, 3))}
-Pending opportunity: ${pending ? pending.opportunity_id : 'none'}`,
-          },
-          { role: 'user', content: input.query },
+          { role: 'system', content: built.system },
+          { role: 'user', content: built.user },
         ],
       })
 

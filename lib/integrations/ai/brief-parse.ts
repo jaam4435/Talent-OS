@@ -1,4 +1,4 @@
-import { getAiGateway } from '@/lib/ai'
+import { callAiStructured, getAiGateway } from '@/lib/ai'
 import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
@@ -7,7 +7,6 @@ import {
   createAiRequest,
   updateAiRequest,
 } from '@/lib/integrations/ai/governance'
-import { callOpenAiStructured } from '@/lib/integrations/ai/openai-client'
 import {
   BRIEF_PARSE_SCHEMA,
   buildBriefParsePrompt,
@@ -94,7 +93,7 @@ export async function parseBriefText(input: {
     })
 
     const { data, model, inputTokens, outputTokens, estimatedCost, promptHash } =
-      await callOpenAiStructured<{
+      await callAiStructured<{
         skills: string[]
         deliverables: string[]
         suggested_milestones: Array<{ title: string; description: string }>
@@ -106,6 +105,9 @@ export async function parseBriefText(input: {
         system,
         user,
         schema: BRIEF_PARSE_SCHEMA,
+        promptId: 'brief_parse',
+        promptVersion: '1.0.0',
+        feature: 'brief_parse',
       })
 
     void promptHash

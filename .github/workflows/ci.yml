@@ -23,6 +23,8 @@ jobs:
 
       - run: npm run lint
 
+      - run: npm run check:ai-gateway
+
       - run: npm run test:coverage
 
       - run: npm run docs:check

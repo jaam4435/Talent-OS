@@ -68,4 +68,14 @@ Cite sources by category and title. Prefer recent and entity-linked entries.
 Do not fabricate documents or policies — only report what tools return.`,
     active: true,
   })
+
+  globalPromptManager.register({
+    id: 'whatsapp.agent',
+    version: '1.0.0',
+    system: `You are a WhatsApp assistant for freelancers on Talent OS.
+Be concise (under 320 characters). Answer questions about projects, opportunities, and availability.
+Use only the context provided in the user message — never invent project data.
+If you cannot answer from context, say so briefly and suggest contacting their agency manager.`,
+    active: true,
+  })
 }

@@ -1,4 +1,4 @@
-export { getAiGateway, resetAiGateway, AiGateway, callAiStructured } from '@/lib/ai/gateway'
+export { getAiGateway, resetAiGateway, AiGateway, callAiStructured, AiGuardrailError } from '@/lib/ai/gateway'
 
 export type {
   AiCompletionRequest,
@@ -29,6 +29,7 @@ export {
 export { loadGatewayConfig, getProviderApiKey, mapProviderToDb } from '@/lib/ai/config'
 
 export { globalPromptManager, PromptManager, registerDefaultPrompts } from '@/lib/ai/prompt/manager'
+export { completeWithPrompt } from '@/lib/ai/prompt/complete-with-prompt'
 export { registerAgentPrompts } from '@/lib/ai/agent/instructions'
 export {
   AGENT_DEFAULTS,
@@ -52,6 +53,15 @@ export {
   getFeatureFlags,
   isGatewayFeatureFlagEnabled,
 } from '@/lib/ai/features/flags'
+
+export { globalModelRouter, ModelRouter } from '@/lib/ai/router/model-router'
+export type { ModelRouteInput, ModelRouteResult } from '@/lib/ai/router/model-router'
+
+export { validateInput, validateOutput } from '@/lib/ai/guardrails'
+export { isAiGuardrailError } from '@/lib/ai/guardrails/errors'
+
+export { globalPlatformMemory, PlatformMemoryStore } from '@/lib/ai/memory'
+export type { MemoryEntry, MemoryScope, MemoryWriteInput, MemoryReadInput } from '@/lib/ai/memory'
 
 export {
   getProvider,

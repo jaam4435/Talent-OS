@@ -1,4 +1,4 @@
-import { getAiGateway } from '@/lib/ai'
+import { callAiStructured, getAiGateway } from '@/lib/ai'
 import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
@@ -7,7 +7,6 @@ import {
   createAiRequest,
   updateAiRequest,
 } from '@/lib/integrations/ai/governance'
-import { callOpenAiStructured } from '@/lib/integrations/ai/openai-client'
 import {
   PROJECT_SUMMARY_SCHEMA,
   SHORTLIST_SUMMARY_SCHEMA,
@@ -64,7 +63,7 @@ export async function generateProjectSummary(projectId: string): Promise<Project
     }
 
     const { system, user } = buildProjectSummaryPrompt(promptInput)
-    const { data, model } = await callOpenAiStructured<{
+    const { data, model } = await callAiStructured<{
       summary_text: string
       highlights: string[]
       blockers: string[]
@@ -227,7 +226,7 @@ export async function executeShortlistSummary(aiRequestId: string) {
         })),
       }
 
-      const { data } = await callOpenAiStructured<{
+      const { data } = await callAiStructured<{
         summary_text: string
         recommended_freelancer_id: string | null
         comparison_points: string[]
@@ -235,6 +234,9 @@ export async function executeShortlistSummary(aiRequestId: string) {
         system: SHORTLIST_SUMMARY_SYSTEM,
         user: JSON.stringify(promptInput, null, 2),
         schema: SHORTLIST_SUMMARY_SCHEMA,
+        feature: 'shortlist_summary',
+        promptId: 'shortlist_summary',
+        promptVersion: '1.0.0',
       })
 
       summaryText = data.summary_text

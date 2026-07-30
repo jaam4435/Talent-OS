@@ -56,6 +56,7 @@ This folder is the **authoritative architectural blueprint** for evolving Talent
 | [Module Standard](MODULE_STANDARD.md) | **Phase 2** — required module layout and architecture rules |
 | [Phase 2 Migration Notes](PHASE2_MIGRATION_NOTES.md) | Deploy steps for Platform Foundation |
 | [Phase 2 Release Notes](PHASE2_RELEASE_NOTES.md) | Module standardization and foundation summary |
+| [AI Platform Implementation](AI_PLATFORM_IMPLEMENTATION.md) | Gateway architecture and usage guide |
 
 ---
 

@@ -1,4 +1,4 @@
-import { getAiGateway } from '@/lib/ai'
+import { callAiStructured, getAiGateway, mapProviderToDb } from '@/lib/ai'
 import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
@@ -8,7 +8,10 @@ import {
   updateAiRequest,
 } from '@/lib/integrations/ai/governance'
 import { runRuleBasedMatching } from '@/lib/integrations/ai/fallback'
-import { rankTalentWithOpenAi } from '@/lib/integrations/ai/openai'
+import {
+  TALENT_MATCH_RESPONSE_SCHEMA,
+  buildTalentMatchPrompt,
+} from '@/lib/integrations/ai/prompt'
 import type {
   AiMatchResult,
   OpportunityMatchContext,
@@ -36,6 +39,62 @@ async function fetchOpportunityContext(opportunityId: string): Promise<Opportuni
     budget: data.budget,
     currency: data.currency,
     clientName: data.client_name,
+  }
+}
+
+async function rankTalentWithAi(
+  opportunity: OpportunityMatchContext,
+  candidates: TalentMatchCandidate[]
+): Promise<AiMatchResult & { promptHash: string }> {
+  const { system, user, promptHash } = buildTalentMatchPrompt(opportunity, candidates)
+
+  if (!candidates.length) {
+    return {
+      matches: [],
+      provider: 'openai',
+      model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+      usedFallback: false,
+      promptHash,
+    }
+  }
+
+  const result = await callAiStructured<{
+    matches: Array<{
+      freelancer_id: string
+      score: number
+      rationale: string
+      skill_overlap: string[]
+    }>
+  }>({
+    system,
+    user,
+    schema: TALENT_MATCH_RESPONSE_SCHEMA,
+    tenantId: opportunity.tenantId,
+    feature: 'talent_match',
+    promptId: 'talent_match',
+    promptVersion: '1.0.0',
+  })
+
+  const candidateIds = new Set(candidates.map((c) => c.id))
+  const matches = (result.data.matches ?? [])
+    .filter((m) => candidateIds.has(m.freelancer_id))
+    .map((m) => ({
+      freelancerId: m.freelancer_id,
+      score: Math.min(100, Math.max(0, Number(m.score))),
+      rationale: m.rationale,
+      skillOverlap: m.skill_overlap ?? [],
+    }))
+    .sort((a, b) => b.score - a.score)
+
+  return {
+    matches,
+    provider: mapProviderToDb(result.provider),
+    model: result.model,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+    estimatedCost: result.estimatedCost,
+    usedFallback: result.usedFallback,
+    promptHash: result.promptHash,
   }
 }
 
@@ -140,7 +199,7 @@ export async function executeTalentMatch(aiRequestId: string, actorId?: string |
   let result: AiMatchResult & { promptHash?: string }
   try {
     if (getAiGateway().isConfigured()) {
-      result = await rankTalentWithOpenAi(opportunity, candidates)
+      result = await rankTalentWithAi(opportunity, candidates)
     } else {
       throw new Error('No AI providers configured')
     }

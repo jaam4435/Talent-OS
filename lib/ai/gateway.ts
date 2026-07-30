@@ -1,14 +1,21 @@
 import { hashPayload } from '@/lib/integrations/encryption'
 import { loadGatewayConfig } from '@/lib/ai/config'
-import { AiConfigurationError, AiStructuredParseError } from '@/lib/ai/errors'
+import {
+  AiConfigurationError,
+  AiStructuredParseError,
+} from '@/lib/ai/errors'
+import { AiGuardrailError } from '@/lib/ai/guardrails/errors'
+import { validateInput, validateOutput } from '@/lib/ai/guardrails'
 import { assertFeatureEnabled, isGatewayFeatureFlagEnabled } from '@/lib/ai/features/flags'
 import { globalCostTracker } from '@/lib/ai/logging/cost-tracker'
 import { globalTokenLogger } from '@/lib/ai/logging/token-logger'
+import { globalPlatformMemory } from '@/lib/ai/memory/platform-memory'
 import { executeWithFallback, streamWithFallback } from '@/lib/ai/middleware/fallback'
 import { RateLimiter } from '@/lib/ai/middleware/rate-limit'
 import { withRetry } from '@/lib/ai/middleware/retry'
 import { globalPromptManager, registerDefaultPrompts } from '@/lib/ai/prompt/manager'
 import { registerAgentPrompts } from '@/lib/ai/agent/instructions'
+import { globalModelRouter } from '@/lib/ai/router/model-router'
 import { getProviderChain } from '@/lib/ai/providers'
 import type { AiProviderInterface } from '@/lib/ai/providers/interface'
 import { estimateTokenCost } from '@/lib/ai/logging/cost-tracker'
@@ -48,6 +55,18 @@ export class AiGateway {
     return globalPromptManager
   }
 
+  get modelRouter() {
+    return globalModelRouter
+  }
+
+  get memory() {
+    return globalPlatformMemory
+  }
+
+  get costTracker() {
+    return globalCostTracker
+  }
+
   isConfigured(): boolean {
     return this.resolveProviderChain(undefined).some((provider) => provider.isConfigured())
   }
@@ -71,8 +90,10 @@ export class AiGateway {
   }
 
   async *stream(request: AiCompletionRequest): AsyncGenerator<AiStreamChunk> {
+    const prepared = this.prepareRequest(request)
+
     if (!this.config.enableStreaming || !isGatewayFeatureFlagEnabled('streaming')) {
-      const result = await this.complete(request)
+      const result = await this.complete(prepared)
       yield {
         content: result.content,
         done: true,
@@ -83,56 +104,58 @@ export class AiGateway {
       return
     }
 
-    if (request.tenantId && request.feature) {
-      await assertFeatureEnabled(request.tenantId, request.feature)
+    if (prepared.tenantId && prepared.feature) {
+      await assertFeatureEnabled(prepared.tenantId, prepared.feature)
     }
 
-    const rateLimitKey = request.tenantId ?? 'global'
+    const rateLimitKey = prepared.tenantId ?? 'global'
     this.rateLimiter.consume(rateLimitKey)
 
-    const providers = this.resolveProviderChain(request)
-    const params = this.toProviderParams(request)
+    const providers = this.resolveProviderChain(prepared)
+    const params = this.toProviderParams(prepared)
     const startedAt = Date.now()
     let content = ''
+    let activeProvider = this.config.primaryProvider
 
     for await (const chunk of streamWithFallback(providers, params, (from, to, error) => {
+      activeProvider = to
       console.warn(`[AiGateway] Streaming fallback ${from} → ${to}:`, error)
     })) {
       content += chunk
       yield {
         content: chunk,
         done: false,
-        provider: this.config.primaryProvider,
+        provider: activeProvider,
         model: params.model,
       }
     }
 
-    const promptHash = this.buildPromptHash(request)
+    const validated = validateOutput(content)
     const usage = {
       inputTokens: 0,
-      outputTokens: Math.ceil(content.length / 4),
-      totalTokens: Math.ceil(content.length / 4),
-      estimatedCost: 0,
+      outputTokens: Math.ceil(validated.length / 4),
+      totalTokens: Math.ceil(validated.length / 4),
+      estimatedCost: estimateTokenCost(activeProvider, params.model, 0, Math.ceil(validated.length / 4)),
     }
 
     yield {
       content: '',
       done: true,
-      provider: this.config.primaryProvider,
+      provider: activeProvider,
       model: params.model,
       usage,
     }
 
-    if (this.config.enableTokenLogging && request.tenantId) {
+    if (this.config.enableTokenLogging && prepared.tenantId) {
       await globalTokenLogger.log({
-        tenantId: request.tenantId,
-        correlationId: request.correlationId,
-        provider: this.config.primaryProvider,
+        tenantId: prepared.tenantId,
+        correlationId: prepared.correlationId,
+        provider: activeProvider,
         model: params.model,
-        requestType: request.feature,
-        entityType: request.entityType,
-        entityId: request.entityId,
-        promptHash,
+        requestType: prepared.feature,
+        entityType: prepared.entityType,
+        entityId: prepared.entityId,
+        promptHash: this.buildPromptHash(prepared),
         usage,
         latencyMs: Date.now() - startedAt,
         status: 'completed',
@@ -140,26 +163,52 @@ export class AiGateway {
     }
   }
 
+  private prepareRequest(request: AiCompletionRequest): AiCompletionRequest {
+    const guardrail = validateInput(request)
+    let messages = guardrail.messages
+
+    if (request.memory) {
+      const memoryEntries = globalPlatformMemory.read({
+        tenantId: request.memory.tenantId ?? request.tenantId,
+        sessionId: request.memory.sessionId,
+        entityType: request.memory.entityType,
+        entityId: request.memory.entityId,
+        scope: request.memory.scope,
+        limit: request.memory.limit,
+      })
+      const memoryMessages = globalPlatformMemory.toMessages(memoryEntries)
+      messages = [...memoryMessages, ...messages]
+    }
+
+    if (guardrail.warnings.length) {
+      console.warn('[AiGateway] Guardrail warnings:', guardrail.warnings)
+    }
+
+    return { ...request, messages }
+  }
+
   private async execute(
     request: AiCompletionRequest,
     structured: boolean,
     schema?: AiStructuredRequest['schema']
   ): Promise<AiCompletionResponse> {
-    if (request.tenantId && request.feature) {
-      await assertFeatureEnabled(request.tenantId, request.feature)
+    const prepared = this.prepareRequest(request)
+
+    if (prepared.tenantId && prepared.feature) {
+      await assertFeatureEnabled(prepared.tenantId, prepared.feature)
     }
 
-    const rateLimitKey = request.tenantId ?? 'global'
+    const rateLimitKey = prepared.tenantId ?? 'global'
     this.rateLimiter.consume(rateLimitKey)
 
-    const providers = this.resolveProviderChain(request)
+    const providers = this.resolveProviderChain(prepared)
     if (!providers.some((provider) => provider.isConfigured())) {
       throw new AiConfigurationError('No AI providers are configured')
     }
 
-    const params = this.toProviderParams(request, schema)
+    const params = this.toProviderParams(prepared, schema)
     const startedAt = Date.now()
-    const promptHash = this.buildPromptHash(request)
+    const promptHash = this.buildPromptHash(prepared)
     let usedFallback = false
 
     const providerResult = await withRetry(
@@ -173,6 +222,8 @@ export class AiGateway {
         baseDelayMs: this.config.retryBaseDelayMs,
       }
     )
+
+    const validatedContent = validateOutput(providerResult.content)
 
     const estimatedCost = this.config.enableCostTracking
       ? estimateTokenCost(
@@ -196,21 +247,21 @@ export class AiGateway {
         model: providerResult.model,
         inputTokens: providerResult.inputTokens,
         outputTokens: providerResult.outputTokens,
-        tenantId: request.tenantId,
-        feature: request.feature,
+        tenantId: prepared.tenantId,
+        feature: prepared.feature,
       })
     }
 
     let aiRequestId: string | undefined
-    if (this.config.enableTokenLogging && request.tenantId && request.feature) {
+    if (this.config.enableTokenLogging && prepared.tenantId && prepared.feature) {
       aiRequestId = await globalTokenLogger.log({
-        tenantId: request.tenantId,
-        correlationId: request.correlationId,
+        tenantId: prepared.tenantId,
+        correlationId: prepared.correlationId,
         provider: providerResult.provider,
         model: providerResult.model,
-        requestType: request.feature,
-        entityType: request.entityType,
-        entityId: request.entityId,
+        requestType: prepared.feature,
+        entityType: prepared.entityType,
+        entityId: prepared.entityId,
         promptHash,
         usage,
         latencyMs: Date.now() - startedAt,
@@ -219,13 +270,13 @@ export class AiGateway {
     }
 
     return {
-      content: providerResult.content,
+      content: validatedContent,
       provider: providerResult.provider,
       model: providerResult.model,
       usage,
       promptHash,
-      promptId: request.promptId,
-      promptVersion: request.promptVersion,
+      promptId: prepared.promptId,
+      promptVersion: prepared.promptVersion,
       latencyMs: Date.now() - startedAt,
       usedFallback,
       aiRequestId,
@@ -233,19 +284,34 @@ export class AiGateway {
   }
 
   private resolveProviderChain(request?: AiCompletionRequest): AiProviderInterface[] {
-    const primary = request?.provider ?? this.config.primaryProvider
-    const fallbacks = this.config.fallbackProviders
-    return getProviderChain(primary, fallbacks)
+    const routed = globalModelRouter.resolveProviderChain(
+      {
+        feature: request?.feature,
+        provider: request?.provider ?? this.config.primaryProvider,
+        model: request?.model,
+        structured: Boolean(request?.metadata?.structured),
+        tenantTier: request?.tenantTier,
+      },
+      this.config.fallbackProviders
+    )
+    return getProviderChain(routed.primary, routed.fallbacks)
   }
 
   private toProviderParams(
     request: AiCompletionRequest,
     schema?: AiStructuredRequest['schema']
   ): ProviderCompletionParams {
-    const provider = request.provider ?? this.config.primaryProvider
-    const chain = getProviderChain(provider, this.config.fallbackProviders)
+    const routed = globalModelRouter.route({
+      feature: request.feature,
+      provider: request.provider ?? this.config.primaryProvider,
+      model: request.model,
+      structured: Boolean(schema),
+      tenantTier: request.tenantTier,
+    })
+
+    const chain = getProviderChain(routed.provider, this.config.fallbackProviders)
     const active = chain.find((entry) => entry.isConfigured()) ?? chain[0]
-    const model = request.model ?? active?.getDefaultModel() ?? this.config.models[provider]
+    const model = request.model ?? routed.model ?? active?.getDefaultModel() ?? this.config.models[routed.provider]
 
     return {
       messages: request.messages,
@@ -277,7 +343,7 @@ export function resetAiGateway(): void {
   promptsRegistered = false
 }
 
-/** Convenience wrapper used by legacy integration code. */
+/** Convenience wrapper used by integration code — all LLM calls must use this or AiGateway directly. */
 export async function callAiStructured<T>(input: {
   system: string
   user: string
@@ -288,6 +354,11 @@ export async function callAiStructured<T>(input: {
   promptId?: string
   promptVersion?: string
   provider?: AiCompletionRequest['provider']
+  model?: string
+  correlationId?: string
+  entityType?: string
+  entityId?: string
+  memory?: AiCompletionRequest['memory']
 }): Promise<{
   data: T
   model: string
@@ -297,6 +368,7 @@ export async function callAiStructured<T>(input: {
   estimatedCost: number
   promptHash: string
   usedFallback: boolean
+  aiRequestId?: string
 }> {
   const gateway = getAiGateway()
   const response = await gateway.completeStructured<T>({
@@ -311,6 +383,11 @@ export async function callAiStructured<T>(input: {
     promptId: input.promptId,
     promptVersion: input.promptVersion,
     provider: input.provider,
+    model: input.model,
+    correlationId: input.correlationId,
+    entityType: input.entityType,
+    entityId: input.entityId,
+    memory: input.memory,
   })
 
   return {
@@ -322,5 +399,8 @@ export async function callAiStructured<T>(input: {
     estimatedCost: response.usage.estimatedCost,
     promptHash: response.promptHash,
     usedFallback: response.usedFallback,
+    aiRequestId: response.aiRequestId,
   }
 }
+
+export { AiGuardrailError }
