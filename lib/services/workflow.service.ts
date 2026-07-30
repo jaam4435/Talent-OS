@@ -189,8 +189,37 @@ export class WorkflowService {
       } else {
         await this.repos.project.updateStatus(milestone.project_id, { status: 'active' })
       }
+
+      await this.emitEvent({
+        tenantId,
+        eventType: 'milestone.approved',
+        aggregateType: 'milestone',
+        aggregateId: milestoneId,
+        idempotencyKey: `milestone-approved:${milestoneId}`,
+        actorId: userId,
+        payload: {
+          milestone_id: milestoneId,
+          project_id: milestone.project_id,
+          project_title: project?.title,
+        },
+      })
     } else {
       await this.repos.project.updateStatus(milestone.project_id, { status: 'active' })
+
+      await this.emitEvent({
+        tenantId,
+        eventType: 'milestone.revision_requested',
+        aggregateType: 'milestone',
+        aggregateId: milestoneId,
+        idempotencyKey: `milestone-revision:${milestoneId}`,
+        actorId: userId,
+        payload: {
+          milestone_id: milestoneId,
+          project_id: milestone.project_id,
+          project_title: project?.title,
+          review_note: reviewNote ?? null,
+        },
+      })
     }
 
     return { ok: true, projectId: milestone.project_id }

@@ -24,6 +24,7 @@ import {
 } from '@/lib/repositories/integration.repository'
 import { PortfolioRepository } from '@/lib/domains/talent/repositories/portfolio.repository'
 import { RatingRepository } from '@/lib/domains/talent/repositories/rating.repository'
+import { WorkflowRepository } from '@/lib/repositories/workflow.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -47,6 +48,7 @@ export interface Repositories {
   whatsapp: WhatsappMessageRepository
   portfolio: PortfolioRepository
   rating: RatingRepository
+  workflow: WorkflowRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -72,6 +74,7 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     whatsapp: new WhatsappMessageRepository(ctx),
     portfolio: new PortfolioRepository(ctx),
     rating: new RatingRepository(ctx),
+    workflow: new WorkflowRepository(ctx),
   }
 }
 

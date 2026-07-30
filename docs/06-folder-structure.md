@@ -65,6 +65,10 @@ talent-os/
 │   │   ├── notification.service.ts
 │   │   ├── ai.service.ts
 │   │   └── integration.service.ts
+│   ├── workflows/                    # Workflow engine (triggers, conditions, actions)
+│   │   ├── registry.ts
+│   │   ├── engine.ts
+│   │   └── ...
 │   ├── domains/
 │
 ├── app/                              # Next.js App Router

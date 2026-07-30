@@ -13,6 +13,7 @@ import { AnalyticsService } from '@/lib/services/analytics.service'
 import { NotificationService } from '@/lib/services/notification.service'
 import { AIService } from '@/lib/services/ai.service'
 import { IntegrationService } from '@/lib/services/integration.service'
+import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
 
 export interface Services {
   project: ProjectService
@@ -20,6 +21,7 @@ export interface Services {
   assignment: AssignmentService
   crm: CRMService
   workflow: WorkflowService
+  workflowEngine: WorkflowEngineService
   finance: FinanceService
   analytics: AnalyticsService
   notification: NotificationService
@@ -33,9 +35,13 @@ function buildServices(repos: Repositories): Services {
   const ai = new AIService(repos)
   const crm = new CRMService(repos, notification, workflow)
 
-  return {
+  let services!: Services
+  const workflowEngine = new WorkflowEngineService(repos, async () => services)
+
+  services = {
     notification,
     workflow,
+    workflowEngine,
     ai,
     crm,
     talent: new TalentService(repos),
@@ -45,6 +51,8 @@ function buildServices(repos: Repositories): Services {
     analytics: new AnalyticsService(repos),
     integration: new IntegrationService(repos, crm, ai),
   }
+
+  return services
 }
 
 export async function createServices(): Promise<Services> {

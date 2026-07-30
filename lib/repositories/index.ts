@@ -56,6 +56,8 @@ export type { TenantAiSettings } from '@/lib/repositories/tenant.repository'
 export { DomainEventRepository } from '@/lib/repositories/domain-event.repository'
 export type { EmitDomainEventInput } from '@/lib/repositories/domain-event.repository'
 
+export { WorkflowRepository } from '@/lib/repositories/workflow.repository'
+
 export {
   IntegrationConfigRepository,
   WebhookDeliveryRepository,

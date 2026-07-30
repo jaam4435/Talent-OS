@@ -137,6 +137,22 @@ export class CRMService {
       })
     }
 
+    await this.workflow.emitEvent({
+      tenantId,
+      eventType: 'opportunity.response',
+      aggregateType: 'opportunity',
+      aggregateId: input.opportunityId,
+      idempotencyKey: `opportunity-response:${input.opportunityId}:${freelancerId}`,
+      actorId: userId,
+      payload: {
+        opportunity_id: input.opportunityId,
+        freelancer_id: freelancerId,
+        response: input.response,
+        note: input.note ?? null,
+        created_by: opportunity?.created_by ?? null,
+      },
+    })
+
     return { ok: true }
   }
 

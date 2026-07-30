@@ -203,6 +203,57 @@ export interface Database {
         created_at: string
         processed_at: string | null
       }>
+      workflow_runs: TableDef<{
+        id: string
+        tenant_id: string
+        workflow_id: string
+        trigger_event_id: string | null
+        trigger_event_type: string
+        status: string
+        context: Json
+        current_step_id: string | null
+        correlation_id: string
+        started_at: string | null
+        completed_at: string | null
+        last_error: string | null
+        created_at: string
+      }>
+      workflow_jobs: TableDef<{
+        id: string
+        tenant_id: string
+        run_id: string
+        step_id: string
+        queue_name: string
+        action_type: string
+        config: Json
+        status: string
+        retry_count: number
+        max_retries: number
+        last_error: string | null
+        scheduled_at: string
+        started_at: string | null
+        completed_at: string | null
+        created_at: string
+      }>
+      approval_requests: TableDef<{
+        id: string
+        tenant_id: string
+        run_id: string
+        job_id: string
+        approver_id: string | null
+        approver_role: string | null
+        status: string
+        title: string
+        body: string | null
+        entity_type: string | null
+        entity_id: string | null
+        metadata: Json
+        expires_at: string | null
+        decided_at: string | null
+        decided_by: string | null
+        decision_note: string | null
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
