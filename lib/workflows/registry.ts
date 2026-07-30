@@ -164,6 +164,14 @@ export const WORKFLOW_REGISTRY: WorkflowDefinition[] = [
     queue: 'notifications',
     steps: [{ id: 'log-activity', type: 'action', action: 'log_activity', config: { action: 'whatsapp_opt_out' } }],
   },
+  {
+    id: 'wf-whatsapp-send',
+    name: 'WhatsApp Outbound Send',
+    description: 'Dispatch outbound WhatsApp message via n8n',
+    trigger: { type: 'domain_event', eventType: 'whatsapp.send_requested' },
+    queue: 'integrations',
+    steps: [{ id: 'dispatch-n8n', type: 'action', action: 'dispatch_n8n' }],
+  },
 ]
 
 export function findWorkflowsForEvent(eventType: string): WorkflowDefinition[] {

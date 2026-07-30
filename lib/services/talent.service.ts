@@ -89,6 +89,23 @@ export class TalentService {
     return this.repos.talent.findIdByUserId(userId, tenantId)
   }
 
+  async updateAvailability(
+    userId: string,
+    tenantId: string,
+    availability: 'available' | 'busy' | 'unavailable'
+  ): Promise<ActionResult<{ freelancerId: string }>> {
+    try {
+      const freelancerId = await this.repos.talent.findIdByUserId(userId, tenantId)
+      if (!freelancerId) {
+        return actionFail('No freelancer profile linked to your account.')
+      }
+      await this.repos.talent.updateAvailability(freelancerId, tenantId, availability)
+      return actionOk({ freelancerId })
+    } catch (error) {
+      return catchToActionResult(error)
+    }
+  }
+
   async getTalentName(freelancerId: string): Promise<string | null> {
     return this.repos.talent.findNameById(freelancerId)
   }

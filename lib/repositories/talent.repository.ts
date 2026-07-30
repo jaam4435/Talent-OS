@@ -50,6 +50,20 @@ export class TalentRepository extends BaseRepository {
     this.invalidateTable('freelancers')
   }
 
+  async updateAvailability(
+    freelancerId: string,
+    tenantId: string,
+    availability: string
+  ): Promise<void> {
+    const { error } = await this.ctx.supabase
+      .from('freelancers')
+      .update({ availability })
+      .eq('id', freelancerId)
+      .eq('tenant_id', tenantId)
+    this.throwIfError(error)
+    this.invalidateTable('freelancers')
+  }
+
   async delete(freelancerId: string, tenantId: string): Promise<void> {
     const { error } = await this.ctx.supabase
       .from('freelancers')

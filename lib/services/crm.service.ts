@@ -272,6 +272,10 @@ export class CRMService {
     return this.repos.lead.findPendingRecipient(tenantId, freelancerId)
   }
 
+  async listPendingInvitesForFreelancer(tenantId: string, freelancerId: string) {
+    return this.repos.lead.listPendingRecipientsForFreelancer(tenantId, freelancerId)
+  }
+
   async updateRecipientResponse(
     recipientId: string,
     patch: { response: string; responded_at: string; response_note?: string }

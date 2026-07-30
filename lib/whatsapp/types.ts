@@ -20,9 +20,22 @@ export interface DeliveryStatusUpdate {
 export type WhatsAppIntent =
   | 'opportunity.interested'
   | 'opportunity.declined'
+  | 'opportunity.list'
   | 'milestone.submit'
   | 'milestone.start'
+  | 'milestone.review_approve'
+  | 'milestone.review_revision'
   | 'project.status'
+  | 'project.accept'
+  | 'availability.available'
+  | 'availability.busy'
+  | 'availability.unavailable'
+  | 'payment.status'
+  | 'notification.list'
+  | 'approval.list'
+  | 'approval.approve'
+  | 'approval.reject'
+  | 'approval.resolve'
   | 'opt_out'
   | 'help'
   | 'agent.query'
@@ -46,6 +59,13 @@ export interface ConversationContext {
   lastMessageAt: string
 }
 
+export interface WhatsAppParticipant {
+  freelancerId: string
+  freelancerName: string
+  userId: string | null
+  phone: string
+}
+
 export type WhatsAppHandlerResult =
   | {
       handled: true
@@ -65,4 +85,14 @@ export interface InboundProcessResult {
   freelancerId?: string
   intent?: WhatsAppIntent
   handler: WhatsAppHandlerResult
+}
+
+export interface IntentHandlerContext {
+  tenantId: string
+  freelancerId: string
+  freelancerName: string
+  userId: string | null
+  intent: DetectedIntent
+  conversation: ConversationContext
+  waMessageId: string
 }

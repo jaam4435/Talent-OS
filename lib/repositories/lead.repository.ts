@@ -278,6 +278,25 @@ export class LeadRepository extends BaseRepository {
     return data ?? null
   }
 
+  async listPendingRecipientsForFreelancer(tenantId: string, freelancerId: string, limit = 10) {
+    const { data, error } = await this.ctx.supabase
+      .from('opportunity_recipients')
+      .select('id, opportunity_id, response, created_at, opportunities(title, status)')
+      .eq('tenant_id', tenantId)
+      .eq('freelancer_id', freelancerId)
+      .eq('response', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    this.throwIfError(error)
+    return (data ?? []).map((row) => ({
+      recipient_id: row.id as string,
+      opportunity_id: row.opportunity_id as string,
+      title: (row.opportunities as { title?: string } | null)?.title ?? 'Opportunity',
+      created_at: row.created_at as string,
+    }))
+  }
+
   async updateRecipientResponse(
     recipientId: string,
     patch: { response: string; responded_at: string; response_note?: string }

@@ -5,16 +5,20 @@ import type { TalentService } from '@/lib/services/talent.service'
 import type { WorkflowService } from '@/lib/services/workflow.service'
 import type { ProjectService } from '@/lib/services/project.service'
 import type { IntegrationService } from '@/lib/services/integration.service'
+import { ConversationContextManager } from '@/lib/whatsapp/conversation-context'
+import { formatTurnsForPrompt } from '@/lib/whatsapp/conversation-memory'
 import { detectIntent } from '@/lib/whatsapp/intents'
 import { handleWhatsAppIntent } from '@/lib/whatsapp/handlers'
+import { emitIntentHandledEvent } from '@/lib/whatsapp/workflow-bridge'
 import type {
   ConversationContext,
   InboundProcessResult,
   ParsedWhatsAppMessage,
 } from '@/lib/whatsapp/types'
-import type { Json } from '@/modules/core/types/database'
 
 export class WhatsAppService {
+  private readonly conversation: ConversationContextManager
+
   constructor(
     private readonly repos: Repositories,
     private readonly integration: IntegrationService,
@@ -22,7 +26,9 @@ export class WhatsAppService {
     private readonly talent: TalentService,
     private readonly workflow: WorkflowService,
     private readonly project: ProjectService
-  ) {}
+  ) {
+    this.conversation = new ConversationContextManager(repos)
+  }
 
   async resolveTenantByPhoneNumberId(phoneNumberId: string) {
     return this.integration.resolveTenantByWhatsAppPhoneNumberId(phoneNumberId)
@@ -33,26 +39,27 @@ export class WhatsAppService {
   }
 
   async getConversation(tenantId: string, freelancerId: string, phone: string): Promise<ConversationContext> {
-    return this.repos.whatsappConversation.getOrCreate({
-      tenant_id: tenantId,
-      freelancer_id: freelancerId,
-      phone,
-    })
+    return this.conversation.load(tenantId, freelancerId, phone)
   }
 
   async clearActiveEntity(tenantId: string, freelancerId: string) {
-    await this.repos.whatsappConversation.updateContext(tenantId, freelancerId, {
-      active_intent: null,
-      active_entity_type: null,
-      active_entity_id: null,
-    })
+    await this.conversation.clearActiveEntity(tenantId, freelancerId)
+  }
+
+  async pinApproval(
+    tenantId: string,
+    freelancerId: string,
+    conversation: ConversationContext,
+    approvalId: string
+  ) {
+    return this.conversation.pinApproval(tenantId, freelancerId, conversation, approvalId)
   }
 
   async setActiveOpportunity(tenantId: string, freelancerId: string, opportunityId: string) {
-    await this.repos.whatsappConversation.updateContext(tenantId, freelancerId, {
-      active_intent: 'opportunity.interested',
-      active_entity_type: 'opportunity',
-      active_entity_id: opportunityId,
+    await this.conversation.setActiveEntity(tenantId, freelancerId, {
+      intent: 'opportunity.interested',
+      entityType: 'opportunity',
+      entityId: opportunityId,
     })
   }
 
@@ -76,16 +83,22 @@ export class WhatsAppService {
       body: message.body,
     })
 
-    const conversation = await this.getConversation(tenantId, freelancer.id, message.phone)
-    await this.repos.whatsappConversation.touchMessage(tenantId, freelancer.id, now)
+    let conversation = await this.conversation.load(tenantId, freelancer.id, message.phone)
+    await this.conversation.touch(tenantId, freelancer.id, now)
+
+    conversation = await this.conversation.recordTurn(tenantId, freelancer.id, conversation, {
+      role: 'user',
+      content: message.body,
+      at: now,
+    })
 
     const pending = await this.crm.findPendingRecipient(tenantId, freelancer.id)
     if (pending) {
       await this.setActiveOpportunity(tenantId, freelancer.id, pending.opportunity_id)
+      conversation = await this.conversation.load(tenantId, freelancer.id, message.phone)
     }
 
-    const refreshedConversation = await this.getConversation(tenantId, freelancer.id, message.phone)
-    const detected = detectIntent(message.body, refreshedConversation, message.buttonPayload)
+    const detected = detectIntent(message.body, conversation, message.buttonPayload)
 
     await this.workflow.emitEvent({
       tenantId,
@@ -110,24 +123,29 @@ export class WhatsAppService {
       freelancerName: freelancer.full_name,
       userId,
       intent: detected,
-      conversation: refreshedConversation,
+      conversation,
       waMessageId: message.waMessageId,
     })
 
-    if (handler.handled && handler.workflowEvent) {
-      await this.workflow.emitEvent({
-        tenantId,
-        eventType: 'whatsapp.intent_handled',
-        aggregateType: 'freelancer',
-        aggregateId: freelancer.id,
-        idempotencyKey: `whatsapp-intent:${message.waMessageId}:${detected.intent}`,
-        actorId: userId,
-        payload: {
+    await emitIntentHandledEvent(this.workflow, {
+      tenantId,
+      freelancerId: freelancer.id,
+      userId,
+      waMessageId: message.waMessageId,
+      intent: detected.intent,
+      handler,
+    })
+
+    if (handler.handled) {
+      const assistantContent = summarizeHandlerResponse(handler)
+      if (assistantContent) {
+        await this.conversation.recordTurn(tenantId, freelancer.id, conversation, {
+          role: 'assistant',
+          content: assistantContent,
+          at: new Date().toISOString(),
           intent: detected.intent,
-          workflow_event: handler.workflowEvent,
-          ...(handler.data as Record<string, unknown>),
-        },
-      })
+        })
+      }
     }
 
     return {
@@ -143,6 +161,7 @@ export class WhatsAppService {
     tenantId: string
     freelancerId: string
     freelancerName: string
+    userId: string | null
     query: string
     conversation: ConversationContext
   }): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; error: string }> {
@@ -151,16 +170,17 @@ export class WhatsAppService {
     }
 
     try {
-      const projects = await this.project.getFreelancerProjectSummary(
-        input.freelancerId,
-        input.tenantId
-      )
-      const pending = await this.crm.findPendingRecipient(input.tenantId, input.freelancerId)
+      const [projects, pending, recentTurns] = await Promise.all([
+        this.project.getFreelancerProjectSummary(input.freelancerId, input.tenantId),
+        this.crm.findPendingRecipient(input.tenantId, input.freelancerId),
+        Promise.resolve(this.conversation.getRecentTurns(input.conversation, 8)),
+      ])
 
       const userContext = {
         freelancer_name: input.freelancerName,
         active_projects: projects.slice(0, 3),
         pending_opportunity_id: pending?.opportunity_id ?? null,
+        conversation_history: formatTurnsForPrompt(recentTurns),
         conversation_context: {
           active_intent: input.conversation.activeIntent,
           active_entity_type: input.conversation.activeEntityType,
@@ -195,6 +215,7 @@ export class WhatsAppService {
         aggregateType: 'freelancer',
         aggregateId: input.freelancerId,
         idempotencyKey: `whatsapp-agent:${input.freelancerId}:${Date.now()}`,
+        actorId: input.userId,
         payload: {
           query: input.query,
           response: response.content,
@@ -301,6 +322,55 @@ export class WhatsAppService {
       }
     }
 
+    if (
+      handler.intent === 'opportunity.list' ||
+      handler.intent === 'payment.status' ||
+      handler.intent === 'notification.list' ||
+      handler.intent === 'approval.list'
+    ) {
+      return {
+        event: 'whatsapp.query_result',
+        idempotencyKey: `wa-query:${message.waMessageId}`,
+        data: {
+          freelancer_id: freelancer.id,
+          phone: message.phone,
+          intent: handler.intent,
+          ...handler.data,
+        },
+      }
+    }
+
+    if (
+      handler.intent.startsWith('availability.') ||
+      handler.intent === 'project.accept' ||
+      handler.intent.startsWith('approval.') ||
+      handler.intent.startsWith('milestone.review_')
+    ) {
+      return {
+        event: 'whatsapp.action_completed',
+        idempotencyKey: `wa-action:${message.waMessageId}`,
+        data: {
+          freelancer_id: freelancer.id,
+          phone: message.phone,
+          intent: handler.intent,
+          ...handler.data,
+        },
+      }
+    }
+
     return null
   }
+}
+
+function summarizeHandlerResponse(
+  handler: InboundProcessResult['handler']
+): string | null {
+  if (!handler.handled) return null
+  if (handler.intent === 'agent.query' && typeof handler.data.response === 'string') {
+    return handler.data.response
+  }
+  if (handler.intent === 'help' && Array.isArray(handler.data.menu)) {
+    return (handler.data.menu as string[]).join('\n')
+  }
+  return `Handled ${handler.intent}`
 }
