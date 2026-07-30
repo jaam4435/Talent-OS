@@ -6,6 +6,22 @@ Central documentation hub for Talent OS. Guides are maintained manually; referen
 
 ---
 
+## Platform Blueprint
+
+**Authoritative architecture for platform evolution** — read before large implementations.
+
+→ **[Platform Blueprint Index](./Platform/README.md)** (20 documents)
+
+| Start here | Document |
+|------------|----------|
+| North star | [01 Vision](./Platform/01%20Vision.md) |
+| Architecture | [06 C4 Architecture](./Platform/06%20C4%20Architecture.md) |
+| Roadmap | [19 Roadmap](./Platform/19%20Roadmap.md) |
+| Security | [13 Security Model](./Platform/13%20Security%20Model.md) |
+| Staff audit | [FINAL Audit](./FINAL_AUDIT.md) |
+
+---
+
 ## Guides
 
 | Guide | Description |
