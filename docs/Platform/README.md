@@ -53,6 +53,9 @@ This folder is the **authoritative architectural blueprint** for evolving Talent
 | [FINAL Audit](../FINAL_AUDIT.md) | Point-in-time security and technical findings |
 | [Phase 1 Migration Notes](PHASE1_MIGRATION_NOTES.md) | Deploy steps for Platform Stabilization |
 | [Phase 1 Release Notes](PHASE1_RELEASE_NOTES.md) | Security and reliability fixes summary |
+| [Module Standard](MODULE_STANDARD.md) | **Phase 2** — required module layout and architecture rules |
+| [Phase 2 Migration Notes](PHASE2_MIGRATION_NOTES.md) | Deploy steps for Platform Foundation |
+| [Phase 2 Release Notes](PHASE2_RELEASE_NOTES.md) | Module standardization and foundation summary |
 
 ---
 

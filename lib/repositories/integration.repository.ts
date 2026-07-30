@@ -1,10 +1,33 @@
 import { BaseRepository } from '@/lib/repositories/base/base.repository'
+import { decryptJson, encryptJson } from '@/lib/integrations/encryption'
 import type { Json } from '@/modules/core/types/database'
 
 export interface N8nIntegrationConfig {
   webhook_base_url: string
   webhook_secret: string
   is_active?: boolean
+}
+
+const ENCRYPTED_PREFIX = 'enc:v1:'
+
+function isEncryptedPayload(value: unknown): value is string {
+  return typeof value === 'string' && value.startsWith(ENCRYPTED_PREFIX)
+}
+
+function encryptConfig(config: Record<string, unknown>): Json {
+  try {
+    const payload = ENCRYPTED_PREFIX + encryptJson(config)
+    return payload as unknown as Json
+  } catch {
+    return config as Json
+  }
+}
+
+function decryptConfig(config: Json | Record<string, unknown>): Record<string, unknown> {
+  if (isEncryptedPayload(config)) {
+    return decryptJson(config.slice(ENCRYPTED_PREFIX.length))
+  }
+  return (config ?? {}) as Record<string, unknown>
 }
 
 export class IntegrationConfigRepository extends BaseRepository {
@@ -19,7 +42,7 @@ export class IntegrationConfigRepository extends BaseRepository {
 
     if (!data?.config) return null
 
-    const config = data.config as Record<string, unknown>
+    const config = decryptConfig(data.config as Json)
     if (!config.webhook_base_url || !config.webhook_secret) return null
 
     return {
@@ -30,20 +53,49 @@ export class IntegrationConfigRepository extends BaseRepository {
   }
 
   async resolveTenantByWhatsAppPhoneNumberId(phoneNumberId: string): Promise<string | null> {
-    const { data } = await this.ctx.supabase
+    const { data, error } = await this.ctx.supabase
       .from('integration_configs')
       .select('tenant_id, config')
       .eq('provider', 'whatsapp')
       .eq('is_active', true)
 
+    this.throwIfError(error)
+
     for (const row of data ?? []) {
-      const config = row.config as Record<string, unknown>
-      if (config.phone_number_id === phoneNumberId) {
+      const config = decryptConfig(row.config as Json)
+      const resolvedId = config.phone_number_id as string | undefined
+      if (resolvedId && String(resolvedId) === phoneNumberId) {
         return row.tenant_id
       }
     }
 
     return null
+  }
+
+  async upsertConfig(input: {
+    tenantId: string
+    provider: string
+    config: Record<string, unknown>
+    isActive?: boolean
+    whatsappPhoneNumberId?: string | null
+  }): Promise<void> {
+    const row: Record<string, unknown> = {
+      tenant_id: input.tenantId,
+      provider: input.provider,
+      config: encryptConfig(input.config),
+      is_active: input.isActive ?? true,
+      updated_at: new Date().toISOString(),
+    }
+
+    if (input.whatsappPhoneNumberId !== undefined) {
+      row.whatsapp_phone_number_id = input.whatsappPhoneNumberId
+    }
+
+    const { error } = await this.ctx.supabase.from('integration_configs').upsert(row as never, {
+      onConflict: 'tenant_id,provider',
+    })
+    this.throwIfError(error)
+    this.invalidateTable('integration_configs')
   }
 }
 
@@ -80,6 +132,18 @@ export class WebhookDeliveryRepository extends BaseRepository {
       .eq('source', source)
       .eq('idempotency_key', idempotencyKey)
     this.throwIfError(error)
+  }
+
+  async purgeOlderThanHours(hours: number): Promise<number> {
+    const cutoff = new Date(Date.now() - hours * 3600_000).toISOString()
+    const { data, error } = await this.ctx.supabase
+      .from('webhook_deliveries')
+      .delete()
+      .lt('created_at', cutoff)
+      .select('id')
+
+    this.throwIfError(error)
+    return data?.length ?? 0
   }
 
   async createEmailLog(input: {

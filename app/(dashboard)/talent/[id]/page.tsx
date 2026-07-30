@@ -8,7 +8,7 @@ import { Button } from '@/modules/core/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
-import { getPortfolioItems, getRatingHistory } from '@/lib/talent/queries'
+import { getPortfolioItems, getRatingHistory } from '@/lib/queries/talent.queries'
 import { getTalentActivity, getTalentName, getTalentProfile } from '@/lib/queries/talent.queries'
 import { formatCurrency } from '@/modules/core/utils/format'
 

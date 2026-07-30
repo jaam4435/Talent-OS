@@ -1,3 +1,4 @@
-export * from '@/modules/marketplace/types'
-export * from '@/modules/marketplace/validation'
-export * from '@/modules/marketplace/interfaces'
+/** Marketplace module — standardized barrel export. */
+export * from './types'
+export * from './schemas'
+export * from './events'

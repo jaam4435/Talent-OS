@@ -2,8 +2,8 @@ import { parsePagination } from '@/modules/core/api/pagination'
 import { success, handleApiError, AppError } from '@/modules/core/api/response'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
-import { createTalentServices } from '@/lib/domains/talent/factory'
-import type { TalentSearchParams } from '@/lib/talent/types'
+import { createServices } from '@/lib/services/factory'
+import type { TalentSearchParams } from '@/lib/domains/talent/types'
 
 export async function GET(request: Request) {
   try {
@@ -27,8 +27,8 @@ export async function GET(request: Request) {
       limit,
     }
 
-    const { talent } = await createTalentServices()
-    const data = await talent.searchRoster(tenant.id, params)
+    const services = await createServices()
+    const data = await services.talent.searchRoster(tenant.id, params)
 
     return success(data, { page, limit, total: data.length })
   } catch (error) {

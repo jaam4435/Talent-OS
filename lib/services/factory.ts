@@ -5,6 +5,7 @@ import {
 } from '@/lib/repositories/factory'
 import { ProjectService } from '@/lib/services/project.service'
 import { TalentService } from '@/lib/services/talent.service'
+import { PortfolioService } from '@/lib/services/portfolio.service'
 import { AssignmentService } from '@/lib/services/assignment.service'
 import { CRMService } from '@/lib/services/crm.service'
 import { WorkflowService } from '@/lib/services/workflow.service'
@@ -21,6 +22,7 @@ import { AgentService } from '@/lib/services/agent.service'
 export interface Services {
   project: ProjectService
   talent: TalentService
+  portfolio: PortfolioService
   assignment: AssignmentService
   crm: CRMService
   workflow: WorkflowService
@@ -41,6 +43,7 @@ function buildServices(repos: Repositories): Services {
   const ai = new AIService(repos)
   const crm = new CRMService(repos, notification, workflow)
   const talent = new TalentService(repos)
+  const portfolio = new PortfolioService(repos)
   const project = new ProjectService(repos, workflow)
   const integration = new IntegrationService(repos, crm, ai)
   const whatsapp = new WhatsAppService(repos, integration, crm, talent, workflow, project)
@@ -60,9 +63,10 @@ function buildServices(repos: Repositories): Services {
     ai,
     crm,
     talent,
+    portfolio,
     project,
     assignment: new AssignmentService(repos, notification, workflow),
-    finance: new FinanceService(repos),
+    finance: new FinanceService(repos, workflow),
     analytics: new AnalyticsService(repos),
     integration,
   }

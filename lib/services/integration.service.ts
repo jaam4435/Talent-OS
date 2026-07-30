@@ -39,6 +39,10 @@ export class IntegrationService {
     await this.repos.webhookDelivery.create(input)
   }
 
+  async purgeWebhookDeliveries(retentionHours = 72): Promise<number> {
+    return this.repos.webhookDelivery.purgeOlderThanHours(retentionHours)
+  }
+
   async markWebhookDeliveryProcessed(source: string, idempotencyKey: string): Promise<void> {
     await this.repos.webhookDelivery.markProcessed(source, idempotencyKey)
   }

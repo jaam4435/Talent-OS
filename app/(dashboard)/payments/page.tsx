@@ -1,14 +1,17 @@
 import { Badge } from '@/modules/core/components/ui/badge'
 import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
 import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
 import { formatCurrency } from '@/modules/core/utils/format'
 import { getPaymentsForPage } from '@/lib/queries/payments.queries'
+import { PaymentActions } from '@/components/payments/payment-actions'
 
 export const metadata = { title: 'Payments' }
 
 export default async function PaymentsPage() {
   const { tenant, user } = await requireTenant()
   const { payments, freelancerMap } = await getPaymentsForPage(tenant.id, tenant.role, user.id)
+  const canManage = isManager(tenant.role)
 
   return (
     <div>
@@ -28,6 +31,7 @@ export default async function PaymentsPage() {
                 <th className="p-4 font-medium">Amount</th>
                 <th className="p-4 font-medium">Status</th>
                 <th className="p-4 font-medium">Created</th>
+                {canManage ? <th className="p-4 font-medium">Actions</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -47,6 +51,11 @@ export default async function PaymentsPage() {
                     <td className="p-4 text-muted-foreground">
                       {new Date(payment.created_at).toLocaleDateString()}
                     </td>
+                    {canManage ? (
+                      <td className="p-4">
+                        <PaymentActions paymentId={payment.id} status={payment.status} />
+                      </td>
+                    ) : null}
                   </tr>
                 )
               })}

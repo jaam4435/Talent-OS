@@ -9,7 +9,6 @@ import {
 import {
   markEventDelivered,
   markEventFailed,
-  markEventProcessing,
 } from '@/lib/integrations/events'
 import { createAdminServices } from '@/lib/services/factory'
 
@@ -71,12 +70,10 @@ export async function GET(request: Request) {
   }
 
   const services = await createAdminServices()
-  const events = await services.workflow.listPendingForDispatch(50)
+  const events = await services.workflow.claimForDispatch(50)
   const results: Array<{ id: string; ok: boolean; workflows?: number; error?: string }> = []
 
   for (const event of events) {
-    await markEventProcessing(event.id)
-
     const workflows = findWorkflowsForEvent(event.event_type)
 
     if (workflows.length > 0) {

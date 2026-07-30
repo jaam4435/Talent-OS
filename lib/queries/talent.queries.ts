@@ -33,3 +33,13 @@ export async function searchTalentRoster(
   const services = await createServices()
   return services.talent.searchRosterQuery(tenantId, params)
 }
+
+export async function getPortfolioItems(freelancerId: string) {
+  const services = await createServices()
+  return services.portfolio.getItems(freelancerId)
+}
+
+export async function getRatingHistory(freelancerId: string) {
+  const services = await createServices()
+  return services.talent.getRatingHistory(freelancerId)
+}

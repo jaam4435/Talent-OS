@@ -28,6 +28,10 @@ export class WorkflowService {
     return this.repos.domainEvent.listPendingForDispatch(limit)
   }
 
+  async claimForDispatch(limit = 50) {
+    return this.repos.domainEvent.claimForDispatch(limit)
+  }
+
   async updateMilestoneStatus(
     milestoneId: string,
     tenantId: string,

@@ -1,17 +1,14 @@
-import { createServices } from '@/lib/services/factory'
-import type { PortfolioItem } from '@/lib/domains/talent/types'
-import { PortfolioService } from '@/lib/domains/talent/services/portfolio.service'
-import { createRepositoryContext } from '@/lib/repositories/context'
-import { FreelancerRepository } from '@/lib/domains/talent/repositories/freelancer.repository'
-import { PortfolioRepository } from '@/lib/domains/talent/repositories/portfolio.repository'
+/**
+ * @deprecated Use `createServices().portfolio` via `@/lib/services/factory` instead.
+ */
+export { PortfolioService } from '@/lib/services/portfolio.service'
 
 export async function createTalentServices() {
+  const { createServices } = await import('@/lib/services/factory')
   const services = await createServices()
-  const ctx = await createRepositoryContext()
-
   return {
     talent: services.talent,
-    portfolio: new PortfolioService(new FreelancerRepository(ctx), new PortfolioRepository(ctx)),
+    portfolio: services.portfolio,
     queries: {
       searchRoster: services.talent.searchRosterQuery.bind(services.talent),
       getRatingHistory: services.talent.getRatingHistory.bind(services.talent),
@@ -21,7 +18,7 @@ export async function createTalentServices() {
 
 export type TalentServices = Awaited<ReturnType<typeof createTalentServices>>
 
-export async function getPortfolioItems(freelancerId: string): Promise<PortfolioItem[]> {
-  const { portfolio } = await createTalentServices()
-  return portfolio.getItems(freelancerId)
+export async function getPortfolioItems(freelancerId: string) {
+  const { getPortfolioItems: load } = await import('@/lib/queries/talent.queries')
+  return load(freelancerId)
 }

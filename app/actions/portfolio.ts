@@ -3,20 +3,20 @@
 import { revalidatePath } from 'next/cache'
 import { requireTenant } from '@/modules/core/services/session'
 import { catchToActionResult } from '@/modules/core/utils/result'
-import { createTalentServices } from '@/lib/domains/talent/factory'
-import type { PortfolioItemInput } from '@/lib/talent/types'
+import { createServices } from '@/lib/services/factory'
+import type { PortfolioItemInput } from '@/lib/domains/talent/types'
 
 export async function addPortfolioItem(freelancerId: string, input: PortfolioItemInput) {
   const session = await requireTenant()
-  const { portfolio } = await createTalentServices()
+  const services = await createServices()
 
   try {
-    await portfolio.assertAccess(freelancerId, session.tenant, session.user)
+    await services.portfolio.assertAccess(freelancerId, session.tenant, session.user)
   } catch (error) {
     return catchToActionResult(error)
   }
 
-  const result = await portfolio.addItem(freelancerId, input)
+  const result = await services.portfolio.addItem(freelancerId, input)
   if (!result.ok) {
     return result
   }
@@ -28,15 +28,15 @@ export async function addPortfolioItem(freelancerId: string, input: PortfolioIte
 
 export async function deletePortfolioItem(freelancerId: string, itemId: string) {
   const session = await requireTenant()
-  const { portfolio } = await createTalentServices()
+  const services = await createServices()
 
   try {
-    await portfolio.assertAccess(freelancerId, session.tenant, session.user)
+    await services.portfolio.assertAccess(freelancerId, session.tenant, session.user)
   } catch (error) {
     return catchToActionResult(error)
   }
 
-  const result = await portfolio.deleteItem(freelancerId, itemId)
+  const result = await services.portfolio.deleteItem(freelancerId, itemId)
   if (!result.ok) {
     return result
   }
@@ -48,15 +48,19 @@ export async function deletePortfolioItem(freelancerId: string, itemId: string) 
 
 export async function uploadPortfolioImage(freelancerId: string, formData: FormData) {
   const session = await requireTenant()
-  const { portfolio } = await createTalentServices()
+  const services = await createServices()
 
   let tenantId: string
   try {
-    const access = await portfolio.assertAccess(freelancerId, session.tenant, session.user)
+    const access = await services.portfolio.assertAccess(
+      freelancerId,
+      session.tenant,
+      session.user
+    )
     tenantId = access.tenantId
   } catch (error) {
     return catchToActionResult(error)
   }
 
-  return portfolio.uploadImage(freelancerId, tenantId, formData)
+  return services.portfolio.uploadImage(freelancerId, tenantId, formData)
 }

@@ -5,7 +5,7 @@ import { PortfolioGallery } from '@/components/talent/portfolio-gallery'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 import { requireTenant } from '@/modules/core/services/session'
 import { getOwnFreelancerId } from '@/app/actions/freelancers'
-import { getPortfolioItems } from '@/lib/talent/queries'
+import { getPortfolioItems } from '@/lib/queries/talent.queries'
 import { getTalentProfile } from '@/lib/queries/talent.queries'
 
 export const metadata = { title: 'My profile' }

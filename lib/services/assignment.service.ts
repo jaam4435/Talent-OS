@@ -85,7 +85,7 @@ export class AssignmentService {
       eventType: 'opportunity.broadcast',
       aggregateType: 'opportunity',
       aggregateId: opportunity.id,
-      idempotencyKey: `opp-broadcast:${opportunity.id}:${Date.now()}`,
+      idempotencyKey: `opp-broadcast:${opportunity.id}:${input.freelancerIds.sort().join(',')}`,
       actorId: userId,
       payload: {
         opportunity_id: opportunity.id,

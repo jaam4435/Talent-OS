@@ -74,6 +74,27 @@ export class DomainEventRepository extends BaseRepository {
     return data ?? []
   }
 
+  /** Atomically claim events for dispatch (pending/failed → processing). */
+  async claimForDispatch(limit = 50) {
+    const candidates = await this.listPendingForDispatch(limit)
+    const claimed: typeof candidates = []
+
+    for (const event of candidates) {
+      const { data, error } = await this.ctx.supabase
+        .from('domain_events')
+        .update({ status: 'processing' })
+        .eq('id', event.id)
+        .eq('status', event.status)
+        .select('*')
+        .maybeSingle()
+
+      this.throwIfError(error)
+      if (data) claimed.push(data)
+    }
+
+    return claimed
+  }
+
   async markFailed(eventId: string, errorMessage: string): Promise<void> {
     const { data: event } = await this.ctx.supabase
       .from('domain_events')
