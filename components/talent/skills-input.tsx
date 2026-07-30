@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Button } from '@/modules/core/components/ui/button'
+import { Input } from '@/modules/core/components/ui/input'
 import { parseSkillsInput } from '@/lib/talent/validation'
 
 interface SkillsInputProps {

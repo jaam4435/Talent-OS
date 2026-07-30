@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/shared/page-header'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
 
 export const metadata = { title: 'Integrations' }
 

@@ -1,17 +1,17 @@
 import { redirect } from 'next/navigation'
-import { PageHeader } from '@/components/shared/page-header'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { TalentProfileForm } from '@/components/talent/talent-profile-form'
 import { PortfolioGallery } from '@/components/talent/portfolio-gallery'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
+import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
+import { requireTenant } from '@/modules/core/services/session'
 import { getOwnFreelancerId } from '@/app/actions/freelancers'
 import { getPortfolioItems } from '@/lib/talent/queries'
+import { getTalentProfile } from '@/lib/queries/talent.queries'
 
 export const metadata = { title: 'My profile' }
 
 export default async function ProfilePage() {
-  const { tenant, user } = await requireTenant()
+  const { tenant } = await requireTenant()
   const freelancerId = await getOwnFreelancerId()
 
   if (!freelancerId) {
@@ -25,13 +25,7 @@ export default async function ProfilePage() {
     )
   }
 
-  const supabase = await createClient()
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('*')
-    .eq('id', freelancerId)
-    .maybeSingle()
-
+  const freelancer = await getTalentProfile(freelancerId, tenant.id)
   if (!freelancer) redirect('/dashboard')
 
   const portfolioItems = await getPortfolioItems(freelancerId)
@@ -57,12 +51,12 @@ export default async function ProfilePage() {
               initial={{
                 fullName: freelancer.full_name,
                 email: freelancer.email,
-                discipline: freelancer.discipline,
+                discipline: freelancer.discipline as import('@/modules/core/types/enums').DisciplineType,
                 skills: freelancer.skills ?? [],
                 tags: freelancer.tags ?? [],
                 bio: freelancer.bio ?? undefined,
                 portfolioUrl: freelancer.portfolio_url ?? undefined,
-                availability: freelancer.availability,
+                availability: freelancer.availability as import('@/modules/core/types/enums').AvailabilityStatus,
               }}
             />
           </CardContent>
