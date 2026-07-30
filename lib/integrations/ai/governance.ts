@@ -1,74 +1,27 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminServices } from '@/lib/services/factory'
 import type { AiProvider, AiRequestType } from '@/lib/integrations/ai/types'
+import type { AiClaimResult } from '@/lib/repositories/ai-request.repository'
 
-interface TenantAiSettings {
-  aiMatchingEnabled: boolean
-  aiPmEnabled: boolean
-  maxAiRequestsMonthly: number
-}
+export type AiExecutionGate =
+  | { proceed: true }
+  | { proceed: false; reason: 'completed' | 'processing' | 'not_found' }
 
-const TIER_DEFAULTS: Record<string, number> = {
-  starter: 100,
-  pro: 1000,
-  enterprise: 100_000,
-}
-
-export async function getTenantAiSettings(tenantId: string): Promise<TenantAiSettings> {
-  const supabase = createAdminClient()
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('settings, subscription_status')
-    .eq('id', tenantId)
-    .maybeSingle()
-
-  const settings = (tenant?.settings ?? {}) as Record<string, unknown>
-  const features = (settings.features ?? {}) as Record<string, unknown>
-  const limits = (settings.limits ?? {}) as Record<string, unknown>
-  const subscription = (settings.subscription ?? {}) as Record<string, unknown>
-  const tier = String(subscription.tier ?? 'starter')
-
-  return {
-    aiMatchingEnabled: features.ai_matching !== false,
-    aiPmEnabled: features.ai_pm !== false,
-    maxAiRequestsMonthly:
-      typeof limits.max_ai_requests_monthly === 'number'
-        ? limits.max_ai_requests_monthly
-        : TIER_DEFAULTS[tier] ?? TIER_DEFAULTS.starter,
-  }
+export async function getTenantAiSettings(tenantId: string) {
+  const services = await createAdminServices()
+  return services.ai.getTenantAiSettings(tenantId)
 }
 
 export async function assertAiFeatureAllowed(
   tenantId: string,
   feature: 'talent_match' | 'brief_parse' | 'project_summary' | 'shortlist_summary' | 'status_assessment'
 ): Promise<void> {
-  const settings = await getTenantAiSettings(tenantId)
-
-  if (feature === 'talent_match' && !settings.aiMatchingEnabled) {
-    throw new Error('AI_MATCHING_DISABLED')
-  }
-
-  if (feature !== 'talent_match' && !settings.aiPmEnabled) {
-    throw new Error('AI_PM_DISABLED')
-  }
-
-  const supabase = createAdminClient()
-  const monthStart = new Date()
-  monthStart.setUTCDate(1)
-  monthStart.setUTCHours(0, 0, 0, 0)
-
-  const { count } = await supabase
-    .from('ai_requests')
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenantId)
-    .gte('created_at', monthStart.toISOString())
-
-  if ((count ?? 0) >= settings.maxAiRequestsMonthly) {
-    throw new Error('AI_MONTHLY_LIMIT_EXCEEDED')
-  }
+  const services = await createAdminServices()
+  return services.ai.assertAiFeatureAllowed(tenantId, feature)
 }
 
 export async function assertAiMatchingAllowed(tenantId: string): Promise<void> {
-  await assertAiFeatureAllowed(tenantId, 'talent_match')
+  const services = await createAdminServices()
+  return services.ai.assertAiMatchingAllowed(tenantId)
 }
 
 export async function createAiRequest(input: {
@@ -81,29 +34,28 @@ export async function createAiRequest(input: {
   entityId?: string
   promptHash?: string
 }): Promise<string> {
-  const supabase = createAdminClient()
+  const services = await createAdminServices()
+  return services.ai.createAiRequest(input)
+}
 
-  const { data, error } = await supabase
-    .from('ai_requests')
-    .insert({
-      tenant_id: input.tenantId,
-      correlation_id: input.correlationId ?? crypto.randomUUID(),
-      provider: input.provider,
-      model: input.model,
-      request_type: input.requestType,
-      entity_type: input.entityType ?? null,
-      entity_id: input.entityId ?? null,
-      prompt_hash: input.promptHash ?? null,
-      status: 'pending',
-    })
-    .select('id')
-    .single()
+export async function claimAiRequest(aiRequestId: string): Promise<AiClaimResult> {
+  const services = await createAdminServices()
+  return services.ai.claimAiRequest(aiRequestId)
+}
 
-  if (error || !data) {
-    throw new Error(`Failed to create AI request: ${error?.message ?? 'unknown'}`)
+/** Atomically claim an AI request before execution; prevents duplicate processing. */
+export async function beginAiExecution(aiRequestId: string): Promise<AiExecutionGate> {
+  const claim = await claimAiRequest(aiRequestId)
+  switch (claim) {
+    case 'claimed':
+      return { proceed: true }
+    case 'already_completed':
+      return { proceed: false, reason: 'completed' }
+    case 'already_processing':
+      return { proceed: false, reason: 'processing' }
+    case 'not_found':
+      return { proceed: false, reason: 'not_found' }
   }
-
-  return data.id as string
 }
 
 export async function updateAiRequest(
@@ -119,23 +71,6 @@ export async function updateAiRequest(
     promptHash?: string
   }
 ) {
-  const supabase = createAdminClient()
-
-  await supabase
-    .from('ai_requests')
-    .update({
-      status: patch.status,
-      result: patch.result,
-      error_message: patch.errorMessage,
-      input_tokens: patch.inputTokens,
-      output_tokens: patch.outputTokens,
-      estimated_cost: patch.estimatedCost,
-      duration_ms: patch.durationMs,
-      prompt_hash: patch.promptHash,
-      completed_at:
-        patch.status === 'completed' || patch.status === 'failed'
-          ? new Date().toISOString()
-          : undefined,
-    })
-    .eq('id', aiRequestId)
+  const services = await createAdminServices()
+  await services.ai.updateAiRequest(aiRequestId, patch)
 }

@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { LoginForm } from '@/components/auth/login-form'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { APP_NAME } from '@/lib/utils/constants'
+import { LoginForm } from '@/modules/core/components/auth/login-form'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
+import { APP_NAME } from '@/modules/core/utils/constants'
 
 export const metadata = { title: 'Sign in' }
 

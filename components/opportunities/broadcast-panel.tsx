@@ -3,10 +3,10 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { broadcastOpportunity } from '@/app/actions/opportunities'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/modules/core/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
+import { Label } from '@/modules/core/components/ui/label'
 
 interface FreelancerOption {
   id: string

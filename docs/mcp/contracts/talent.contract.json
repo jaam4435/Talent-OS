@@ -1,0 +1,95 @@
+{
+  "server": {
+    "id": "talent",
+    "name": "Talent OS Talent",
+    "version": "1.0.0",
+    "description": "Freelancer roster, skills, portfolio, and internal ratings.",
+    "resourcePrefix": "talentos://talent"
+  },
+  "tools": [
+    {
+      "name": "talent_search",
+      "title": "Search Talent",
+      "description": "Search the agency talent roster with filters for discipline, skills, availability, rate, and rating.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/talent.server.ts#talent_search"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "talent_get_profile",
+      "title": "Get Talent Profile",
+      "description": "Retrieve a freelancer profile by ID including skills, rates, and availability.",
+      "requiredPermission": "freelancers:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/talent.server.ts#talent_get_profile"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "talent_create_profile",
+      "title": "Create Talent Profile",
+      "description": "Add a new freelancer to the agency roster.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/talent.server.ts#talent_create_profile"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "talent_update_profile",
+      "title": "Update Talent Profile",
+      "description": "Update an existing freelancer profile.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/talent.server.ts#talent_update_profile"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "talent_list_portfolio",
+      "title": "List Portfolio Items",
+      "description": "List portfolio work samples for a freelancer.",
+      "requiredPermission": "freelancers:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/talent.server.ts#talent_list_portfolio"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "talent_add_portfolio_item",
+      "title": "Add Portfolio Item",
+      "description": "Add a portfolio item to a freelancer profile.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/talent.server.ts#talent_add_portfolio_item"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "talent_get_rating_history",
+      "title": "Get Rating History",
+      "description": "Retrieve internal rating history for a freelancer.",
+      "requiredPermission": "freelancers:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/talent.server.ts#talent_get_rating_history"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

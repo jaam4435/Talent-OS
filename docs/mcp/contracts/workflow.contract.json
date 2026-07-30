@@ -1,0 +1,71 @@
+{
+  "server": {
+    "id": "workflow",
+    "name": "Talent OS Workflow",
+    "version": "1.0.0",
+    "description": "Domain events, n8n orchestration, and WhatsApp messaging.",
+    "resourcePrefix": "talentos://workflow"
+  },
+  "tools": [
+    {
+      "name": "workflow_emit_event",
+      "title": "Emit Domain Event",
+      "description": "Enqueue a domain event to the outbox for async processing via n8n.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/workflow.server.ts#workflow_emit_event"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "workflow_list_events",
+      "title": "List Domain Events",
+      "description": "List domain events from the outbox with status filters.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/workflow.server.ts#workflow_list_events"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "workflow_get_event_status",
+      "title": "Get Event Status",
+      "description": "Retrieve processing status and error details for a domain event.",
+      "requiredPermission": "tenant:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/workflow.server.ts#workflow_get_event_status"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "workflow_send_whatsapp",
+      "title": "Send WhatsApp Message",
+      "description": "Send a WhatsApp Cloud API message to a recipient.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/workflow.server.ts#workflow_send_whatsapp"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "workflow_retry_failed_events",
+      "title": "Retry Failed Events",
+      "description": "Re-queue failed domain events for processing.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/workflow.server.ts#workflow_retry_failed_events"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

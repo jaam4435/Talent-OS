@@ -1,18 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
-import { ACTIVE_TENANT_COOKIE } from '@/lib/auth/tenant-context'
+import { updateSession } from '@/modules/core/utils/supabase/middleware'
+import { ACTIVE_TENANT_COOKIE } from '@/modules/core/services/tenant-context'
 import {
   ADMIN_ONLY_ROUTES,
   CLIENT_RESTRICTED_ROUTES,
+  isPublicOrSystemRoute,
   MANAGER_ONLY_ROUTES,
-  PUBLIC_ROUTES,
-} from '@/lib/utils/constants'
-
-function isPublicRoute(pathname: string) {
-  return PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  )
-}
+} from '@/modules/core/utils/constants'
 
 function matchesRoute(pathname: string, routes: readonly string[]) {
   return routes.some(
@@ -36,7 +30,7 @@ export async function middleware(request: NextRequest) {
 
   const response = await updateSession(request)
 
-  if (isPublicRoute(pathname) || pathname === '/') {
+  if (isPublicOrSystemRoute(pathname)) {
     return response
   }
 
