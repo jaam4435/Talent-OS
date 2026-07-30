@@ -7,6 +7,7 @@ export const AGENT_IDS = [
   'qa',
   'executive',
   'knowledge',
+  'support',
 ] as const
 
 export type AgentId = (typeof AGENT_IDS)[number]
@@ -18,17 +19,64 @@ export const AGENT_LABELS: Record<AgentId, string> = {
   qa: 'QA Agent',
   executive: 'Executive Agent',
   knowledge: 'Knowledge Agent',
+  support: 'Support Agent',
 }
 
 export type AgentMemoryScope = 'session' | 'entity' | 'tenant'
 
 export type AgentSessionStatus = 'active' | 'completed' | 'failed'
 
+export type AgentMessageRole = 'user' | 'assistant' | 'system' | 'tool'
+
 export interface AgentMemoryPolicy {
   scope: AgentMemoryScope
   entityTypes?: string[]
   maxEntries: number
   ttlHours?: number
+}
+
+/** Configurable reasoning loop parameters per agent. */
+export interface AgentReasoningPolicy {
+  maxSteps: number
+  toolUseEnabled: boolean
+  temperature: number
+  maxTokens: number
+}
+
+/** Configurable conversation state parameters per agent. */
+export interface AgentConversationPolicy {
+  maxHistoryMessages: number
+  persistToolResults: boolean
+  autoSummarize: boolean
+}
+
+/**
+ * Complete agent definition — six configurable dimensions.
+ * Instructions and tool content are resolved server-side only.
+ */
+export interface AgentDefinition {
+  agentId: AgentId
+  label: string
+  description: string
+  instructions: AgentInstructionsConfig
+  tools: AgentToolsConfig
+  permissions: AgentPermissionsConfig
+  memory: AgentMemoryPolicy
+  reasoning: AgentReasoningPolicy
+  conversation: AgentConversationPolicy
+}
+
+export interface AgentInstructionsConfig {
+  promptId: string
+  version: string
+}
+
+export interface AgentToolsConfig {
+  allowedTools: string[]
+}
+
+export interface AgentPermissionsConfig {
+  requiredPermissions: string[]
 }
 
 /** Built-in default definition (code registry). */
@@ -41,6 +89,8 @@ export interface AgentDefaultDefinition {
   allowedTools: string[]
   requiredPermissions: string[]
   memoryPolicy: AgentMemoryPolicy
+  reasoningPolicy: AgentReasoningPolicy
+  conversationPolicy: AgentConversationPolicy
   modelOverride?: string
 }
 
@@ -55,6 +105,8 @@ export interface ResolvedAgentConfig {
   allowedTools: string[]
   requiredPermissions: string[]
   memoryPolicy: AgentMemoryPolicy
+  reasoningPolicy: AgentReasoningPolicy
+  conversationPolicy: AgentConversationPolicy
   modelOverride: string | null
   metadata: Record<string, unknown>
   hasTenantOverride: boolean
@@ -69,6 +121,8 @@ export interface AgentConfigSummary {
   allowedTools: string[]
   requiredPermissions: string[]
   memoryPolicy: AgentMemoryPolicy
+  reasoningPolicy: AgentReasoningPolicy
+  conversationPolicy: AgentConversationPolicy
   modelOverride: string | null
   instructionPromptId: string
   instructionVersion: string | null
@@ -81,6 +135,8 @@ export interface UpdateAgentConfigInput {
   allowedTools?: string[]
   requiredPermissions?: string[]
   memoryPolicy?: Partial<AgentMemoryPolicy>
+  reasoningPolicy?: Partial<AgentReasoningPolicy>
+  conversationPolicy?: Partial<AgentConversationPolicy>
   modelOverride?: string | null
   metadata?: Record<string, unknown>
 }
@@ -106,6 +162,57 @@ export interface WriteAgentMemoryInput {
   ttlHours?: number
 }
 
+export interface AgentRunInput {
+  agentId: AgentId
+  message: string
+  sessionId?: string
+  entityType?: string
+  entityId?: string
+  correlationId?: string
+}
+
+export interface AgentToolCallRecord {
+  tool: string
+  serverId: string
+  arguments: Record<string, unknown>
+  result: unknown
+  isError: boolean
+}
+
+export interface AgentRunResult {
+  agentId: AgentId
+  sessionId: string
+  correlationId: string
+  content: string
+  steps: number
+  toolCalls: AgentToolCallRecord[]
+  usage?: {
+    inputTokens: number
+    outputTokens: number
+    totalTokens: number
+  }
+}
+
+export interface AgentConversationState {
+  sessionId: string
+  agentId: AgentId
+  status: AgentSessionStatus
+  turnCount: number
+  entityType: string | null
+  entityId: string | null
+  correlationId: string | null
+  messages: AgentMessageSummary[]
+  context: Record<string, unknown>
+}
+
+export interface AgentMessageSummary {
+  id: string
+  role: AgentMessageRole
+  content: string
+  createdAt: string
+  metadata?: Record<string, unknown>
+}
+
 export interface AgentMemoryEntryRow {
   id: string
   tenant_id: string
@@ -120,6 +227,17 @@ export interface AgentMemoryEntryRow {
   expires_at: string | null
   created_at: string
   updated_at: string
+}
+
+export interface AgentMessageRow {
+  id: string
+  tenant_id: string
+  session_id: string
+  agent_id: AgentId
+  role: AgentMessageRole
+  content: string
+  metadata: Record<string, unknown>
+  created_at: string
 }
 
 export interface AgentSessionRow {
@@ -147,6 +265,8 @@ export interface AgentConfigRow {
   allowed_tools: string[]
   required_permissions: string[]
   memory_policy: AgentMemoryPolicy
+  reasoning_policy: AgentReasoningPolicy
+  conversation_policy: AgentConversationPolicy
   model_override: string | null
   metadata: Record<string, unknown>
   created_at: string
@@ -161,6 +281,7 @@ export interface AgentRunContext {
     promptId: string
     version: string
     promptHash: string
+    system: string
   }
   tools: Array<{
     name: string
@@ -168,8 +289,13 @@ export interface AgentRunContext {
     description: string
     destructive?: boolean
     requiredPermission?: string
+    serverId: string
   }>
   memory: AgentMemoryEntryRow[]
   permissions: string[]
+  reasoningPolicy: AgentReasoningPolicy
+  conversationPolicy: AgentConversationPolicy
+  modelOverride: string | null
   correlationId: string
+  conversationMessages: AgentMessageRow[]
 }

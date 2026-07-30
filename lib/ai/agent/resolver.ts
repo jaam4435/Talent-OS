@@ -2,6 +2,8 @@ import type {
   AgentConfigRow,
   AgentDefaultDefinition,
   AgentMemoryPolicy,
+  AgentReasoningPolicy,
+  AgentConversationPolicy,
   ResolvedAgentConfig,
 } from '@/modules/agents/types'
 import { getAgentDefault } from '@/lib/ai/agent/registry'
@@ -23,6 +25,8 @@ export function mergeAgentConfig(
       allowedTools: [...defaults.allowedTools],
       requiredPermissions: [...defaults.requiredPermissions],
       memoryPolicy: { ...defaults.memoryPolicy },
+      reasoningPolicy: { ...defaults.reasoningPolicy },
+      conversationPolicy: { ...defaults.conversationPolicy },
       modelOverride: defaults.modelOverride ?? null,
       metadata: {},
       hasTenantOverride: false,
@@ -45,6 +49,11 @@ export function mergeAgentConfig(
         ? tenantOverride.required_permissions
         : [...defaults.requiredPermissions],
     memoryPolicy: mergeMemoryPolicy(defaults.memoryPolicy, tenantOverride.memory_policy),
+    reasoningPolicy: mergeReasoningPolicy(defaults.reasoningPolicy, tenantOverride.reasoning_policy),
+    conversationPolicy: mergeConversationPolicy(
+      defaults.conversationPolicy,
+      tenantOverride.conversation_policy
+    ),
     modelOverride: tenantOverride.model_override ?? defaults.modelOverride ?? null,
     metadata: tenantOverride.metadata ?? {},
     hasTenantOverride: true,
@@ -63,6 +72,29 @@ function mergeMemoryPolicy(
   }
 }
 
+function mergeReasoningPolicy(
+  defaults: AgentReasoningPolicy,
+  override: Partial<AgentReasoningPolicy>
+): AgentReasoningPolicy {
+  return {
+    maxSteps: override.maxSteps ?? defaults.maxSteps,
+    toolUseEnabled: override.toolUseEnabled ?? defaults.toolUseEnabled,
+    temperature: override.temperature ?? defaults.temperature,
+    maxTokens: override.maxTokens ?? defaults.maxTokens,
+  }
+}
+
+function mergeConversationPolicy(
+  defaults: AgentConversationPolicy,
+  override: Partial<AgentConversationPolicy>
+): AgentConversationPolicy {
+  return {
+    maxHistoryMessages: override.maxHistoryMessages ?? defaults.maxHistoryMessages,
+    persistToolResults: override.persistToolResults ?? defaults.persistToolResults,
+    autoSummarize: override.autoSummarize ?? defaults.autoSummarize,
+  }
+}
+
 /** Public summary — never includes instruction content. */
 export function toAgentConfigSummary(config: ResolvedAgentConfig) {
   return {
@@ -73,6 +105,8 @@ export function toAgentConfigSummary(config: ResolvedAgentConfig) {
     allowedTools: config.allowedTools,
     requiredPermissions: config.requiredPermissions,
     memoryPolicy: config.memoryPolicy,
+    reasoningPolicy: config.reasoningPolicy,
+    conversationPolicy: config.conversationPolicy,
     modelOverride: config.modelOverride,
     instructionPromptId: config.instructionPromptId,
     instructionVersion: config.instructionVersion,

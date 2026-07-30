@@ -35,6 +35,7 @@ import {
 import {
   AgentSessionRepository,
   AgentMemoryRepository,
+  AgentMessageRepository,
 } from '@/lib/repositories/agent-session.repository'
 
 export interface Repositories {
@@ -67,6 +68,7 @@ export interface Repositories {
   agentInstruction: AgentInstructionRepository
   agentSession: AgentSessionRepository
   agentMemory: AgentMemoryRepository
+  agentMessage: AgentMessageRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -100,6 +102,7 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     agentInstruction: new AgentInstructionRepository(ctx),
     agentSession: new AgentSessionRepository(ctx),
     agentMemory: new AgentMemoryRepository(ctx),
+    agentMessage: new AgentMessageRepository(ctx),
   }
 }
 

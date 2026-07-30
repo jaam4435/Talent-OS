@@ -15,3 +15,8 @@ export async function getAgentSession(sessionId: string, tenantId: string) {
   const services = await createServices()
   return services.agent.getSession(sessionId, tenantId)
 }
+
+export async function getAgentConversationState(sessionId: string, tenantId: string) {
+  const services = await createServices()
+  return services.agent.getConversationState(sessionId, tenantId)
+}

@@ -8,11 +8,26 @@ const memoryPolicySchema = z.object({
   ttlHours: z.number().int().positive().optional(),
 })
 
+const reasoningPolicySchema = z.object({
+  maxSteps: z.number().int().min(1).max(20),
+  toolUseEnabled: z.boolean(),
+  temperature: z.number().min(0).max(2),
+  maxTokens: z.number().int().min(256).max(32_000),
+})
+
+const conversationPolicySchema = z.object({
+  maxHistoryMessages: z.number().int().min(1).max(200),
+  persistToolResults: z.boolean(),
+  autoSummarize: z.boolean(),
+})
+
 export const updateAgentConfigSchema = z.object({
   enabled: z.boolean().optional(),
   allowedTools: z.array(z.string().min(1)).max(100).optional(),
   requiredPermissions: z.array(z.string().min(1)).max(50).optional(),
   memoryPolicy: memoryPolicySchema.partial().optional(),
+  reasoningPolicy: reasoningPolicySchema.partial().optional(),
+  conversationPolicy: conversationPolicySchema.partial().optional(),
   modelOverride: z.string().max(100).nullable().optional(),
   metadata: z.record(z.unknown()).optional(),
 })
@@ -44,4 +59,20 @@ export const prepareAgentRunSchema = z.object({
   entityType: z.string().optional(),
   entityId: z.string().uuid().optional(),
   correlationId: z.string().max(100).optional(),
+})
+
+export const runAgentSchema = z.object({
+  agentId: z.enum(AGENT_IDS),
+  message: z.string().min(1).max(20_000),
+  sessionId: z.string().uuid().optional(),
+  entityType: z.string().optional(),
+  entityId: z.string().uuid().optional(),
+  correlationId: z.string().max(100).optional(),
+})
+
+export const publishAgentInstructionSchema = z.object({
+  agentId: z.enum(AGENT_IDS),
+  promptId: z.string().min(1).max(200),
+  version: z.string().min(1).max(50),
+  content: z.string().min(1).max(100_000),
 })

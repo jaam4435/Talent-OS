@@ -323,12 +323,15 @@ export interface Database {
           | 'qa'
           | 'executive'
           | 'knowledge'
+          | 'support'
         enabled: boolean
         instruction_prompt_id: string
         instruction_version: string | null
         allowed_tools: string[]
         required_permissions: string[]
         memory_policy: Json
+        reasoning_policy: Json
+        conversation_policy: Json
         model_override: string | null
         metadata: Json
         created_at: string
@@ -344,6 +347,7 @@ export interface Database {
           | 'qa'
           | 'executive'
           | 'knowledge'
+          | 'support'
         prompt_id: string
         version: string
         content: string
@@ -361,6 +365,7 @@ export interface Database {
           | 'qa'
           | 'executive'
           | 'knowledge'
+          | 'support'
         user_id: string | null
         entity_type: string | null
         entity_id: string | null
@@ -381,6 +386,7 @@ export interface Database {
           | 'qa'
           | 'executive'
           | 'knowledge'
+          | 'support'
         session_id: string | null
         scope: 'session' | 'entity' | 'tenant'
         entity_type: string | null
@@ -391,6 +397,23 @@ export interface Database {
         expires_at: string | null
         created_at: string
         updated_at: string
+      }>
+      agent_messages: TableDef<{
+        id: string
+        tenant_id: string
+        session_id: string
+        agent_id:
+          | 'recruiter'
+          | 'project_manager'
+          | 'finance'
+          | 'qa'
+          | 'executive'
+          | 'knowledge'
+          | 'support'
+        role: 'user' | 'assistant' | 'system' | 'tool'
+        content: string
+        metadata: Json
+        created_at: string
       }>
       ai_requests: TableDef<{
         id: string

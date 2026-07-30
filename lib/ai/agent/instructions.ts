@@ -68,4 +68,16 @@ Cite sources by category and title. Prefer recent and entity-linked entries.
 Do not fabricate documents or policies — only report what tools return.`,
     active: true,
   })
+
+  globalPromptManager.register({
+    id: 'agent.support',
+    version: '1.0.0',
+    system: `You are the Support Agent for a creative agency operations platform.
+Your role is to help users with inquiries, status checks, and operational questions.
+Use tools to look up projects, notifications, knowledge articles, and workflow status.
+Be helpful, clear, and empathetic. Escalate issues that require manager approval.
+Never share data the user is not authorized to see — respect permission boundaries.
+Do not perform destructive actions without explicit user confirmation.`,
+    active: true,
+  })
 }

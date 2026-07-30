@@ -3,6 +3,8 @@ import type {
   AgentId,
   AgentMemoryEntryRow,
   AgentMemoryScope,
+  AgentMessageRole,
+  AgentMessageRow,
   AgentSessionRow,
   AgentSessionStatus,
   CreateAgentSessionInput,
@@ -44,6 +46,19 @@ function mapMemoryRow(row: Record<string, unknown>): AgentMemoryEntryRow {
   }
 }
 
+function mapMessageRow(row: Record<string, unknown>): AgentMessageRow {
+  return {
+    id: row.id as string,
+    tenant_id: row.tenant_id as string,
+    session_id: row.session_id as string,
+    agent_id: row.agent_id as AgentId,
+    role: row.role as AgentMessageRole,
+    content: row.content as string,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    created_at: row.created_at as string,
+  }
+}
+
 export class AgentSessionRepository extends BaseRepository {
   async create(tenantId: string, input: CreateAgentSessionInput): Promise<string> {
     const { data, error } = await this.ctx.supabase
@@ -55,7 +70,7 @@ export class AgentSessionRepository extends BaseRepository {
         entity_type: input.entityType ?? null,
         entity_id: input.entityId ?? null,
         correlation_id: input.correlationId ?? null,
-        context: (input.context ?? {}) as Json,
+        context: (input.context ?? { turnCount: 0 }) as Json,
       })
       .select('id')
       .single()
@@ -93,6 +108,68 @@ export class AgentSessionRepository extends BaseRepository {
       .eq('tenant_id', tenantId)
 
     this.throwIfError(error)
+  }
+
+  async mergeContext(
+    sessionId: string,
+    tenantId: string,
+    contextPatch: Record<string, unknown>
+  ): Promise<void> {
+    const session = await this.findById(sessionId, tenantId)
+    if (!session) this.notFound('Agent session')
+
+    const { error } = await this.ctx.supabase
+      .from('agent_sessions')
+      .update({ context: { ...session.context, ...contextPatch } as Json } as never)
+      .eq('id', sessionId)
+      .eq('tenant_id', tenantId)
+
+    this.throwIfError(error)
+  }
+}
+
+export class AgentMessageRepository extends BaseRepository {
+  async listBySession(
+    sessionId: string,
+    tenantId: string,
+    limit = 50
+  ): Promise<AgentMessageRow[]> {
+    const { data, error } = await this.ctx.supabase
+      .from('agent_messages')
+      .select('*')
+      .eq('session_id', sessionId)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: true })
+      .limit(limit)
+
+    this.throwIfError(error)
+    return (data ?? []).map(mapMessageRow)
+  }
+
+  async append(params: {
+    tenantId: string
+    sessionId: string
+    agentId: AgentId
+    role: AgentMessageRole
+    content: string
+    metadata?: Record<string, unknown>
+  }): Promise<string> {
+    const { data, error } = await this.ctx.supabase
+      .from('agent_messages')
+      .insert({
+        tenant_id: params.tenantId,
+        session_id: params.sessionId,
+        agent_id: params.agentId,
+        role: params.role,
+        content: params.content,
+        metadata: (params.metadata ?? {}) as Json,
+      })
+      .select('id')
+      .single()
+
+    this.throwIfError(error)
+    if (!data?.id) this.notFound('Agent message')
+    return data.id
   }
 }
 

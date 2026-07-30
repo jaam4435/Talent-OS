@@ -13,11 +13,16 @@ import {
   listAgentDefaults,
   isValidAgentId,
 } from '@/lib/ai/agent'
+import { AgentExecutor } from '@/lib/ai/agent/executor'
+import { buildConversationState } from '@/lib/ai/agent/conversation'
 import { isDomainError } from '@/modules/core/utils/errors'
 import type { Repositories } from '@/lib/repositories/factory'
 import type {
   AgentId,
   AgentRunContext,
+  AgentRunInput,
+  AgentRunResult,
+  AgentConversationState,
   CreateAgentSessionInput,
   UpdateAgentConfigInput,
   WriteAgentMemoryInput,
@@ -25,6 +30,8 @@ import type {
 import {
   createAgentSessionSchema,
   prepareAgentRunSchema,
+  publishAgentInstructionSchema,
+  runAgentSchema,
   updateAgentConfigSchema,
   writeAgentMemorySchema,
 } from '@/modules/agents/validation'
@@ -32,10 +39,42 @@ import type { UserRole } from '@/modules/core/types/enums'
 import { getPermissionsForRole } from '@/modules/core/services/permissions'
 
 export class AgentService {
+  private executor: AgentExecutor | null = null
+
   constructor(private readonly repos: Repositories) {}
+
+  private getExecutor(): AgentExecutor {
+    if (!this.executor) {
+      this.executor = new AgentExecutor({
+        listMessages: (sessionId, tenantId, limit) =>
+          this.repos.agentMessage.listBySession(sessionId, tenantId, limit),
+        appendMessage: (params) => this.repos.agentMessage.append(params),
+        updateSessionContext: (sessionId, tenantId, context) =>
+          this.repos.agentSession.mergeContext(sessionId, tenantId, context),
+      })
+    }
+    return this.executor
+  }
 
   async getSession(sessionId: string, tenantId: string) {
     return this.repos.agentSession.findById(sessionId, tenantId)
+  }
+
+  async getConversationState(
+    sessionId: string,
+    tenantId: string
+  ): Promise<AgentConversationState | null> {
+    const session = await this.repos.agentSession.findById(sessionId, tenantId)
+    if (!session) return null
+
+    const config = await this.getResolvedConfig(tenantId, session.agent_id)
+    const messages = await this.repos.agentMessage.listBySession(
+      sessionId,
+      tenantId,
+      config.conversationPolicy.maxHistoryMessages
+    )
+
+    return buildConversationState(session, messages)
   }
 
   async listAgents(tenantId: string) {
@@ -95,6 +134,41 @@ export class AgentService {
     } catch (error) {
       if (isDomainError(error)) return { ok: false, error: error.message }
       return { ok: false, error: error instanceof Error ? error.message : 'Reset failed' }
+    }
+  }
+
+  async publishInstruction(
+    tenantId: string,
+    userId: string,
+    input: {
+      agentId: AgentId
+      promptId: string
+      version: string
+      content: string
+    }
+  ): Promise<{ ok: true; instructionId: string } | { ok: false; error: string }> {
+    const parsed = publishAgentInstructionSchema.safeParse(input)
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
+    }
+
+    if (!isValidAgentId(parsed.data.agentId)) {
+      return { ok: false, error: 'Invalid agent' }
+    }
+
+    try {
+      const instructionId = await this.repos.agentInstruction.publish({
+        tenantId,
+        agentId: parsed.data.agentId,
+        promptId: parsed.data.promptId,
+        version: parsed.data.version,
+        content: parsed.data.content,
+        createdBy: userId,
+      })
+      return { ok: true, instructionId }
+    } catch (error) {
+      if (isDomainError(error)) return { ok: false, error: error.message }
+      return { ok: false, error: error instanceof Error ? error.message : 'Publish failed' }
     }
   }
 
@@ -172,8 +246,50 @@ export class AgentService {
   }
 
   /**
-   * Assemble run context: instructions (server-side), tools, memory, permissions.
-   * Does not invoke LLM — execution layer comes in a future iteration.
+   * Execute an agent run: assemble context, reason with tools, persist conversation state.
+   * Instructions resolved server-side — never returned to UI layers.
+   */
+  async run(
+    tenantId: string,
+    userId: string,
+    role: UserRole,
+    input: AgentRunInput
+  ): Promise<{ ok: true; result: AgentRunResult } | { ok: false; error: string }> {
+    const parsed = runAgentSchema.safeParse(input)
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
+    }
+
+    const prepared = await this.prepareRun(tenantId, userId, role, parsed.data)
+    if (!prepared.ok) return prepared
+
+    const session = await this.repos.agentSession.findById(
+      prepared.context.sessionId,
+      tenantId
+    )
+    const turnCount =
+      session && typeof session.context.turnCount === 'number' ? session.context.turnCount : 0
+
+    try {
+      const result = await this.getExecutor().execute({
+        context: prepared.context,
+        userMessage: parsed.data.message,
+        tenantId,
+        userId,
+        role,
+        turnCount,
+      })
+
+      return { ok: true, result }
+    } catch (error) {
+      await this.repos.agentSession.updateStatus(prepared.context.sessionId, tenantId, 'failed')
+      if (isDomainError(error)) return { ok: false, error: error.message }
+      return { ok: false, error: error instanceof Error ? error.message : 'Agent run failed' }
+    }
+  }
+
+  /**
+   * Assemble run context: instructions, tools, memory, permissions, reasoning, conversation.
    */
   async prepareRun(
     tenantId: string,
@@ -231,6 +347,12 @@ export class AgentService {
       parsed.data.entityId
     )
 
+    const conversationMessages = await this.repos.agentMessage.listBySession(
+      sessionId,
+      tenantId,
+      config.conversationPolicy.maxHistoryMessages
+    )
+
     return {
       ok: true,
       context: {
@@ -239,10 +361,16 @@ export class AgentService {
         instructions,
         tools,
         memory,
-        permissions: userPermissions.filter((p) =>
-          config.requiredPermissions.includes(p) || tools.some((t) => t.requiredPermission === p)
+        permissions: userPermissions.filter(
+          (p) =>
+            config.requiredPermissions.includes(p) ||
+            tools.some((t) => t.requiredPermission === p)
         ),
+        reasoningPolicy: config.reasoningPolicy,
+        conversationPolicy: config.conversationPolicy,
+        modelOverride: config.modelOverride,
         correlationId: parsed.data.correlationId ?? randomUUID(),
+        conversationMessages,
       },
     }
   }
@@ -252,7 +380,7 @@ export class AgentService {
     return mergeAgentConfig(agentId, override)
   }
 
-  /** Resolve instructions server-side — never returned to UI layers. */
+  /** Resolve instructions server-side — content used only in execution layer. */
   private async resolveInstructions(
     tenantId: string,
     config: Awaited<ReturnType<typeof mergeAgentConfig>>
@@ -271,6 +399,7 @@ export class AgentService {
           version: dbInstruction.version,
           content: dbInstruction.content,
         }),
+        system: dbInstruction.content,
       }
     }
 
@@ -283,6 +412,7 @@ export class AgentService {
       promptId: resolved.id,
       version: resolved.version,
       promptHash: resolved.promptHash,
+      system: resolved.system,
     }
   }
 }

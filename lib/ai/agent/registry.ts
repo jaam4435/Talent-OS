@@ -1,4 +1,5 @@
 import type { AgentDefaultDefinition, AgentId } from '@/modules/agents/types'
+import { DEFAULT_CONVERSATION_POLICY, DEFAULT_REASONING_POLICY } from '@/lib/ai/agent/defaults'
 
 export const AGENT_DEFAULTS: Record<AgentId, AgentDefaultDefinition> = {
   recruiter: {
@@ -24,6 +25,8 @@ export const AGENT_DEFAULTS: Record<AgentId, AgentDefaultDefinition> = {
     ],
     requiredPermissions: ['agent:run', 'freelancers:read', 'ai:match'],
     memoryPolicy: { scope: 'entity', entityTypes: ['opportunity', 'freelancer'], maxEntries: 100, ttlHours: 336 },
+    reasoningPolicy: { ...DEFAULT_REASONING_POLICY, maxSteps: 6 },
+    conversationPolicy: { ...DEFAULT_CONVERSATION_POLICY },
   },
   project_manager: {
     agentId: 'project_manager',
@@ -48,6 +51,8 @@ export const AGENT_DEFAULTS: Record<AgentId, AgentDefaultDefinition> = {
     ],
     requiredPermissions: ['agent:run', 'projects:read', 'ai:summary', 'ai:status'],
     memoryPolicy: { scope: 'entity', entityTypes: ['project', 'milestone'], maxEntries: 100, ttlHours: 336 },
+    reasoningPolicy: { ...DEFAULT_REASONING_POLICY, maxSteps: 6 },
+    conversationPolicy: { ...DEFAULT_CONVERSATION_POLICY },
   },
   finance: {
     agentId: 'finance',
@@ -67,6 +72,8 @@ export const AGENT_DEFAULTS: Record<AgentId, AgentDefaultDefinition> = {
     ],
     requiredPermissions: ['agent:run', 'payments:read'],
     memoryPolicy: { scope: 'entity', entityTypes: ['project', 'payment'], maxEntries: 50, ttlHours: 168 },
+    reasoningPolicy: { ...DEFAULT_REASONING_POLICY, maxSteps: 4 },
+    conversationPolicy: { ...DEFAULT_CONVERSATION_POLICY, maxHistoryMessages: 30 },
   },
   qa: {
     agentId: 'qa',
@@ -87,6 +94,8 @@ export const AGENT_DEFAULTS: Record<AgentId, AgentDefaultDefinition> = {
     ],
     requiredPermissions: ['agent:run', 'projects:read', 'milestones:review'],
     memoryPolicy: { scope: 'entity', entityTypes: ['project', 'milestone'], maxEntries: 75, ttlHours: 168 },
+    reasoningPolicy: { ...DEFAULT_REASONING_POLICY, maxSteps: 5 },
+    conversationPolicy: { ...DEFAULT_CONVERSATION_POLICY },
   },
   executive: {
     agentId: 'executive',
@@ -107,6 +116,8 @@ export const AGENT_DEFAULTS: Record<AgentId, AgentDefaultDefinition> = {
     ],
     requiredPermissions: ['agent:run', 'analytics:read'],
     memoryPolicy: { scope: 'tenant', maxEntries: 25, ttlHours: 720 },
+    reasoningPolicy: { ...DEFAULT_REASONING_POLICY, maxSteps: 3, toolUseEnabled: true },
+    conversationPolicy: { ...DEFAULT_CONVERSATION_POLICY, maxHistoryMessages: 20 },
   },
   knowledge: {
     agentId: 'knowledge',
@@ -125,6 +136,31 @@ export const AGENT_DEFAULTS: Record<AgentId, AgentDefaultDefinition> = {
     ],
     requiredPermissions: ['agent:run', 'tenant:read'],
     memoryPolicy: { scope: 'tenant', maxEntries: 200, ttlHours: 720 },
+    reasoningPolicy: { ...DEFAULT_REASONING_POLICY, maxSteps: 4 },
+    conversationPolicy: { ...DEFAULT_CONVERSATION_POLICY, maxHistoryMessages: 40 },
+  },
+  support: {
+    agentId: 'support',
+    label: 'Support Agent',
+    description: 'Handles user inquiries, notifications, and operational support requests.',
+    instructionPromptId: 'agent.support',
+    instructionVersion: '1.0.0',
+    allowedTools: [
+      'notification_list',
+      'notification_get',
+      'notification_send',
+      'projects_list',
+      'projects_get',
+      'talent_get_profile',
+      'knowledge_search',
+      'knowledge_get_entity_context',
+      'workflow_list_events',
+      'workflow_get_event_status',
+    ],
+    requiredPermissions: ['agent:run', 'tenant:read'],
+    memoryPolicy: { scope: 'session', maxEntries: 50, ttlHours: 168 },
+    reasoningPolicy: { ...DEFAULT_REASONING_POLICY, maxSteps: 5 },
+    conversationPolicy: { ...DEFAULT_CONVERSATION_POLICY, maxHistoryMessages: 50 },
   },
 }
 
@@ -138,4 +174,21 @@ export function listAgentDefaults(): AgentDefaultDefinition[] {
 
 export function isValidAgentId(value: string): value is AgentId {
   return value in AGENT_DEFAULTS
+}
+
+export function toAgentDefinition(config: AgentDefaultDefinition) {
+  return {
+    agentId: config.agentId,
+    label: config.label,
+    description: config.description,
+    instructions: {
+      promptId: config.instructionPromptId,
+      version: config.instructionVersion,
+    },
+    tools: { allowedTools: config.allowedTools },
+    permissions: { requiredPermissions: config.requiredPermissions },
+    memory: config.memoryPolicy,
+    reasoning: config.reasoningPolicy,
+    conversation: config.conversationPolicy,
+  }
 }
