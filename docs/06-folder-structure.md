@@ -26,6 +26,17 @@ talent-os/
 │       ├── hooks/
 │       └── utils/
 │
+├── lib/
+│   ├── ai/                           # AI Gateway — all LLM requests go here
+│   │   ├── gateway.ts
+│   │   ├── providers/
+│   │   ├── prompt/
+│   │   ├── logging/
+│   │   ├── middleware/
+│   │   ├── features/
+│   │   └── streaming/
+│   ├── domains/
+│
 ├── app/                              # Next.js App Router
 │   ├── (auth)/                       # Auth layout group (no sidebar)
 │   │   ├── login/

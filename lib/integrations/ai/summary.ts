@@ -1,3 +1,4 @@
+import { getAiGateway } from '@/lib/ai'
 import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import { emitEvent } from '@/lib/integrations/events'
 import {
@@ -89,7 +90,7 @@ export async function generateProjectSummary(projectId: string): Promise<Project
   if (!context) throw new Error('PROJECT_NOT_FOUND')
 
   try {
-    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured')
+    if (!getAiGateway().isConfigured()) throw new Error('No AI providers configured')
 
     const promptInput = {
       project: context.project,
@@ -275,7 +276,7 @@ export async function executeShortlistSummary(aiRequestId: string) {
   let recommendedId: string | null = null
 
   try {
-    if (process.env.OPENAI_API_KEY && scores?.length) {
+    if (getAiGateway().isConfigured() && scores?.length) {
       const promptInput = {
         opportunity,
         candidates: scores.map((s) => ({

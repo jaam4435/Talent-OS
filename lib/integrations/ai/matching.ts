@@ -1,3 +1,4 @@
+import { getAiGateway } from '@/lib/ai'
 import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import { emitEvent } from '@/lib/integrations/events'
 import {
@@ -173,10 +174,10 @@ export async function executeTalentMatch(aiRequestId: string, actorId?: string |
 
   let result: AiMatchResult & { promptHash?: string }
   try {
-    if (process.env.OPENAI_API_KEY) {
+    if (getAiGateway().isConfigured()) {
       result = await rankTalentWithOpenAi(opportunity, candidates)
     } else {
-      throw new Error('OPENAI_API_KEY not configured')
+      throw new Error('No AI providers configured')
     }
   } catch (error) {
     console.warn('AI matching failed, using rule-based fallback:', error)

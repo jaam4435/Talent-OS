@@ -1,3 +1,4 @@
+import { getAiGateway } from '@/lib/ai'
 import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import { emitEvent } from '@/lib/integrations/events'
 import {
@@ -80,8 +81,8 @@ export async function parseBriefText(input: {
   currency?: string
 }): Promise<BriefParseResult> {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured')
+    if (!getAiGateway().isConfigured()) {
+      throw new Error('No AI providers configured')
     }
 
     const { system, user } = buildBriefParsePrompt({
