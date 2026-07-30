@@ -1,18 +1,13 @@
-import { NextResponse } from 'next/server'
+import { withApiHandler } from '@/modules/core/api/handler'
 import { createAdminServices } from '@/lib/services/factory'
 
-export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const GET = withApiHandler(
+  { auth: 'cron', rateLimit: 'cron', legacyEnvelope: true },
+  async ({ searchParams }) => {
+    const queue = searchParams.get('queue') ?? undefined
+    const limit = Number(searchParams.get('limit') ?? 50)
+
+    const services = await createAdminServices()
+    return services.workflowEngine.processJobQueue(limit, queue ?? undefined)
   }
-
-  const { searchParams } = new URL(request.url)
-  const queue = searchParams.get('queue') ?? undefined
-  const limit = Number(searchParams.get('limit') ?? 50)
-
-  const services = await createAdminServices()
-  const result = await services.workflowEngine.processJobQueue(limit, queue ?? undefined)
-
-  return NextResponse.json(result)
-}
+)

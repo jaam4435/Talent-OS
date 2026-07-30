@@ -11,6 +11,28 @@ export const PUBLIC_ROUTES = [
   '/api/webhooks',
 ] as const
 
+/** API routes that bypass session auth (each handler validates its own credentials). */
+export const API_PUBLIC_ROUTES = [
+  '/api/health',
+  '/api/openapi',
+  '/api/cron',
+  '/api/internal',
+  '/api/webhooks',
+  '/api/auth/callback',
+  '/api/auth/signout',
+  '/api/auth/invite',
+] as const
+
+export function isApiRoute(pathname: string): boolean {
+  return pathname.startsWith('/api/')
+}
+
+export function isApiPublicRoute(pathname: string): boolean {
+  return API_PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+}
+
 export const ADMIN_ONLY_ROUTES = [
   '/settings',
   '/settings/team',

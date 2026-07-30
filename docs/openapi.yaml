@@ -1,0 +1,342 @@
+openapi: 3.1.0
+info:
+  title: Talent OS API
+  version: 1.0.0
+  description: |
+    Talent OS HTTP API. All authenticated endpoints use session cookies.
+    Standard response envelope: `{ data, meta? }` on success, `{ error: { code, message, details? } }` on failure.
+    API version header: `X-API-Version: v1` (default).
+servers:
+  - url: /api
+    description: Relative to deployment origin
+tags:
+  - name: System
+  - name: Auth
+  - name: Talent
+  - name: AI
+  - name: Analytics
+  - name: Team
+  - name: Webhooks
+  - name: Cron
+  - name: Internal
+components:
+  headers:
+    X-API-Version:
+      schema:
+        type: string
+        example: v1
+    X-Request-ID:
+      schema:
+        type: string
+        format: uuid
+    Idempotency-Key:
+      schema:
+        type: string
+  schemas:
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - UNAUTHORIZED
+                - NO_TENANT
+                - FORBIDDEN
+                - NOT_FOUND
+                - VALIDATION_ERROR
+                - DUPLICATE
+                - RATE_LIMITED
+                - IDEMPOTENCY_CONFLICT
+                - INTERNAL_ERROR
+                - AI_MATCHING_DISABLED
+                - AI_MONTHLY_LIMIT_EXCEEDED
+                - WEBHOOK_INVALID_SIGNATURE
+                - CRON_UNAUTHORIZED
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: sb-access-token
+    cronBearer:
+      type: http
+      scheme: bearer
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service health (legacy envelope)
+  /auth/session:
+    get:
+      tags: [Auth]
+      summary: Get current session
+      operationId: getSession
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Session context or null
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /auth/invite/{token}:
+    get:
+      tags: [Auth]
+      summary: Preview team invite
+      operationId: getInvitePreview
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invite preview
+        '404':
+          description: Invite not found
+  /talent/search:
+    get:
+      tags: [Talent]
+      summary: Search talent roster
+      operationId: searchTalent
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: discipline
+          in: query
+          schema: { type: string }
+        - name: availability
+          in: query
+          schema: { type: string }
+        - name: sort
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated talent results
+        '403':
+          description: Managers only
+  /ai/match:
+    post:
+      tags: [AI]
+      summary: Request AI talent match
+      operationId: requestTalentMatch
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/headers/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [opportunity_id]
+              properties:
+                opportunity_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Match request queued
+        '429':
+          description: Rate limited or AI quota exceeded
+  /ai/match/{opportunityId}:
+    get:
+      tags: [AI]
+      summary: Get talent match results
+      operationId: getTalentMatchResults
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: opportunityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Match results
+  /ai/pm/{entityType}/{entityId}:
+    get:
+      tags: [AI]
+      summary: Get AI project manager results
+      operationId: getAiPmResults
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [project, opportunity]
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: AI PM results
+  /analytics/dashboard:
+    get:
+      tags: [Analytics]
+      summary: Dashboard analytics summary
+      operationId: getDashboardAnalytics
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Dashboard data
+  /team/members:
+    get:
+      tags: [Team]
+      summary: List team members
+      operationId: getTeamMembers
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Team members
+        '403':
+          description: Admin only
+  /webhooks/n8n:
+    post:
+      tags: [Webhooks]
+      summary: n8n inbound webhook
+      operationId: n8nWebhook
+      parameters:
+        - name: x-webhook-signature
+          in: header
+          schema: { type: string }
+        - name: x-idempotency-key
+          in: header
+          schema: { type: string }
+      responses:
+        '200':
+          description: Processed or duplicate (legacy envelope)
+  /webhooks/whatsapp:
+    get:
+      tags: [Webhooks]
+      summary: Meta webhook verification
+      operationId: whatsappVerify
+      responses:
+        '200':
+          description: Challenge response (plain text)
+    post:
+      tags: [Webhooks]
+      summary: WhatsApp inbound webhook
+      operationId: whatsappInbound
+      responses:
+        '200':
+          description: Received (legacy envelope)
+  /cron/dispatch-events:
+    get:
+      tags: [Cron]
+      summary: Dispatch pending domain events
+      operationId: cronDispatchEvents
+      security: [{ cronBearer: [] }]
+      responses:
+        '200':
+          description: Dispatch results (legacy envelope)
+        '401':
+          description: Invalid cron secret
+  /cron/process-workflow-jobs:
+    get:
+      tags: [Cron]
+      summary: Process workflow job queue
+      operationId: cronProcessWorkflowJobs
+      security: [{ cronBearer: [] }]
+      responses:
+        '200':
+          description: Job processing results
+  /cron/check-overdue-milestones:
+    get:
+      tags: [Cron]
+      summary: Check overdue milestones
+      operationId: cronCheckOverdueMilestones
+      security: [{ cronBearer: [] }]
+      responses:
+        '200':
+          description: Overdue milestone results
+  /internal/ai/execute:
+    post:
+      tags: [Internal]
+      summary: Execute AI request (internal)
+      operationId: internalExecuteAi
+      security: [{ cronBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ai_request_id]
+              properties:
+                ai_request_id:
+                  type: string
+                  format: uuid
+                actor_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+      responses:
+        '200':
+          description: Execution result
+  /internal/ai/execute-match:
+    post:
+      tags: [Internal]
+      summary: Execute talent match (internal)
+      operationId: internalExecuteMatch
+      security: [{ cronBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ai_request_id]
+              properties:
+                ai_request_id:
+                  type: string
+                  format: uuid
+                actor_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+      responses:
+        '200':
+          description: Match execution result

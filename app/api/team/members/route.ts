@@ -1,13 +1,6 @@
-import { requireAdmin } from '@/modules/core/services/guards'
-import { success, handleApiError } from '@/modules/core/api/response'
+import { withApiHandler } from '@/modules/core/api/handler'
 import { getTeamMembersPageData } from '@/lib/queries/team.queries'
 
-export async function GET() {
-  try {
-    const { tenant } = await requireAdmin()
-    const data = await getTeamMembersPageData(tenant.id)
-    return success(data)
-  } catch (error) {
-    return handleApiError(error)
-  }
-}
+export const GET = withApiHandler({ auth: 'admin', rateLimit: 'default' }, async ({ ctx }) => {
+  return getTeamMembersPageData(ctx.tenant!.id)
+})

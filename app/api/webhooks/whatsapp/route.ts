@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { handleApiError, AppError } from '@/modules/core/api/response'
 import { verifyMetaSignature } from '@/lib/integrations/encryption'
 import { parseMetaWebhook } from '@/lib/whatsapp/parser'
 import { buildN8nEnvelope, dispatchToN8n } from '@/lib/integrations/n8n'
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   const appSecret = process.env.WHATSAPP_APP_SECRET ?? ''
 
   if (appSecret && !verifyMetaSignature(rawBody, appSecret, signature)) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    return handleApiError(new AppError('WEBHOOK_INVALID_SIGNATURE', 'Invalid signature', 401))
   }
 
   const body = JSON.parse(rawBody)

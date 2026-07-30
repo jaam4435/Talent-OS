@@ -1,26 +1,16 @@
-import { NextResponse } from 'next/server'
+import { z } from 'zod'
+import { withApiHandler } from '@/modules/core/api/handler'
 import { executeAiRequest } from '@/lib/integrations/ai/executor'
 
-export async function POST(request: Request) {
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+const bodySchema = z.object({
+  ai_request_id: z.string().uuid(),
+  actor_id: z.string().uuid().nullable().optional(),
+})
 
-  const body = (await request.json()) as {
-    ai_request_id?: string
-    actor_id?: string | null
+export const POST = withApiHandler(
+  { auth: 'cron', rateLimit: 'cron', validate: { body: bodySchema } },
+  async ({ body }) => {
+    const parsed = body as z.infer<typeof bodySchema>
+    return executeAiRequest(parsed.ai_request_id, parsed.actor_id ?? null)
   }
-
-  if (!body.ai_request_id) {
-    return NextResponse.json({ error: 'ai_request_id is required' }, { status: 400 })
-  }
-
-  try {
-    const result = await executeAiRequest(body.ai_request_id, body.actor_id ?? null)
-    return NextResponse.json({ data: result })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'EXECUTION_FAILED'
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
-}
+)

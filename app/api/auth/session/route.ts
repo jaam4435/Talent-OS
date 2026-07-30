@@ -1,14 +1,5 @@
-import { getSession } from '@/modules/core/services/session'
-import { success, handleApiError } from '@/modules/core/api/response'
+import { withApiHandler } from '@/modules/core/api/handler'
 
-export async function GET() {
-  try {
-    const session = await getSession()
-    if (!session) {
-      return success(null)
-    }
-    return success(session)
-  } catch (err) {
-    return handleApiError(err)
-  }
-}
+export const GET = withApiHandler({ auth: 'optional' }, async ({ ctx }) => {
+  return ctx.session
+})

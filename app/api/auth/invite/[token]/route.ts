@@ -1,14 +1,17 @@
+import { withApiHandler } from '@/modules/core/api/handler'
+import { AppError } from '@/modules/core/api/response'
 import { createClient } from '@/modules/core/utils/supabase/server'
 import { hashInviteToken } from '@/modules/core/services/invites'
-import { success, handleApiError, AppError } from '@/modules/core/api/response'
 import { formatRole } from '@/modules/core/services/roles'
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ token: string }> }
-) {
-  try {
-    const { token } = await params
+export const GET = withApiHandler(
+  { auth: 'none', rateLimit: 'auth' },
+  async ({ params }) => {
+    const token = params?.token
+    if (!token) {
+      throw new AppError('VALIDATION_ERROR', 'Invite token is required', 400)
+    }
+
     const supabase = await createClient()
     const tokenHash = hashInviteToken(token)
 
@@ -17,7 +20,7 @@ export async function GET(
     })
 
     if (error) {
-      throw new AppError('INVITE_LOOKUP_FAILED', error.message, 500)
+      throw new AppError('INTERNAL_ERROR', error.message, 500)
     }
 
     const preview = Array.isArray(data) ? data[0] : data
@@ -25,7 +28,7 @@ export async function GET(
       throw new AppError('NOT_FOUND', 'Invitation not found', 404)
     }
 
-    return success({
+    return {
       inviteId: preview.invite_id,
       tenantId: preview.tenant_id,
       tenantName: preview.tenant_name,
@@ -34,8 +37,6 @@ export async function GET(
       roleLabel: formatRole(preview.role),
       expiresAt: preview.expires_at,
       isValid: preview.is_valid,
-    })
-  } catch (error) {
-    return handleApiError(error)
+    }
   }
-}
+)

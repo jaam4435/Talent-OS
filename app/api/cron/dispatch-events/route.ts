@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { withApiHandler } from '@/modules/core/api/handler'
 import { findWorkflowsForEvent } from '@/lib/workflows/registry'
 import {
   buildN8nEnvelope,
@@ -63,67 +63,65 @@ async function legacyDispatch(event: {
   return { ok: true }
 }
 
-export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export const GET = withApiHandler(
+  { auth: 'cron', rateLimit: 'cron', legacyEnvelope: true },
+  async () => {
+    const services = await createAdminServices()
+    const events = await services.workflow.listPendingForDispatch(50)
+    const results: Array<{ id: string; ok: boolean; workflows?: number; error?: string }> = []
 
-  const services = await createAdminServices()
-  const events = await services.workflow.listPendingForDispatch(50)
-  const results: Array<{ id: string; ok: boolean; workflows?: number; error?: string }> = []
+    for (const event of events) {
+      await markEventProcessing(event.id)
 
-  for (const event of events) {
-    await markEventProcessing(event.id)
+      const workflows = findWorkflowsForEvent(event.event_type)
 
-    const workflows = findWorkflowsForEvent(event.event_type)
-
-    if (workflows.length > 0) {
-      try {
-        const started = await services.workflowEngine.triggerFromDomainEvent({
-          id: event.id,
-          tenant_id: event.tenant_id,
-          event_type: event.event_type,
-          aggregate_type: event.aggregate_type,
-          aggregate_id: event.aggregate_id,
-          payload: (event.payload as Record<string, unknown>) ?? null,
-          actor_id: event.actor_id,
-          correlation_id: event.correlation_id,
-          idempotency_key: event.idempotency_key,
-        })
-        await markEventDelivered(event.id)
-        results.push({ id: event.id, ok: true, workflows: started.length })
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Workflow trigger failed'
-        await markEventFailed(event.id, message)
-        results.push({ id: event.id, ok: false, error: message })
+      if (workflows.length > 0) {
+        try {
+          const started = await services.workflowEngine.triggerFromDomainEvent({
+            id: event.id,
+            tenant_id: event.tenant_id,
+            event_type: event.event_type,
+            aggregate_type: event.aggregate_type,
+            aggregate_id: event.aggregate_id,
+            payload: (event.payload as Record<string, unknown>) ?? null,
+            actor_id: event.actor_id,
+            correlation_id: event.correlation_id,
+            idempotency_key: event.idempotency_key,
+          })
+          await markEventDelivered(event.id)
+          results.push({ id: event.id, ok: true, workflows: started.length })
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Workflow trigger failed'
+          await markEventFailed(event.id, message)
+          results.push({ id: event.id, ok: false, error: message })
+        }
+        continue
       }
-      continue
+
+      const result = await legacyDispatch({
+        id: event.id,
+        tenant_id: event.tenant_id,
+        event_type: event.event_type,
+        payload: (event.payload as Record<string, unknown>) ?? null,
+        actor_id: event.actor_id,
+        correlation_id: event.correlation_id,
+        idempotency_key: event.idempotency_key,
+      })
+
+      if (result.ok) {
+        await markEventDelivered(event.id)
+        results.push({ id: event.id, ok: true, workflows: 0 })
+      } else {
+        await markEventFailed(event.id, result.error ?? 'Dispatch failed')
+        results.push({ id: event.id, ok: false, error: result.error })
+      }
     }
 
-    const result = await legacyDispatch({
-      id: event.id,
-      tenant_id: event.tenant_id,
-      event_type: event.event_type,
-      payload: (event.payload as Record<string, unknown>) ?? null,
-      actor_id: event.actor_id,
-      correlation_id: event.correlation_id,
-      idempotency_key: event.idempotency_key,
-    })
-
-    if (result.ok) {
-      await markEventDelivered(event.id)
-      results.push({ id: event.id, ok: true, workflows: 0 })
-    } else {
-      await markEventFailed(event.id, result.error ?? 'Dispatch failed')
-      results.push({ id: event.id, ok: false, error: result.error })
+    return {
+      processed: results.length,
+      delivered: results.filter((r) => r.ok).length,
+      failed: results.filter((r) => !r.ok).length,
+      results,
     }
   }
-
-  return NextResponse.json({
-    processed: results.length,
-    delivered: results.filter((r) => r.ok).length,
-    failed: results.filter((r) => !r.ok).length,
-    results,
-  })
-}
+)
