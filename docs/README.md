@@ -50,7 +50,8 @@ Regenerate locally: `npm run docs:generate`
 | [01 PRD](./01-PRD.md) | Product requirements |
 | [08 Multi-Tenant](./08-multi-tenant-architecture.md) | Tenant isolation |
 | [11 Enterprise Architecture](./11-enterprise-system-architecture.md) | Full HLD |
-| [24 Technical Audit](./24-technical-audit.md) | Codebase audit |
+| [24 Technical Audit](./24-technical-audit.md) | Initial codebase audit |
+| [FINAL Audit](./FINAL_AUDIT.md) | Staff engineer audit (Jul 2026) |
 | [30 Service Layer](./30-service-layer.md) | Service patterns |
 | [31 Workflow Engine](./31-workflow-engine.md) | Workflow detail |
 | [32 WhatsApp Interface](./32-whatsapp-interface.md) | WhatsApp pipeline |
