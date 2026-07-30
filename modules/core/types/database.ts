@@ -313,6 +313,85 @@ export interface Database {
         metadata: Json
         created_at: string
       }>
+      agent_configs: TableDef<{
+        id: string
+        tenant_id: string
+        agent_id:
+          | 'recruiter'
+          | 'project_manager'
+          | 'finance'
+          | 'qa'
+          | 'executive'
+          | 'knowledge'
+        enabled: boolean
+        instruction_prompt_id: string
+        instruction_version: string | null
+        allowed_tools: string[]
+        required_permissions: string[]
+        memory_policy: Json
+        model_override: string | null
+        metadata: Json
+        created_at: string
+        updated_at: string
+      }>
+      agent_instruction_versions: TableDef<{
+        id: string
+        tenant_id: string | null
+        agent_id:
+          | 'recruiter'
+          | 'project_manager'
+          | 'finance'
+          | 'qa'
+          | 'executive'
+          | 'knowledge'
+        prompt_id: string
+        version: string
+        content: string
+        active: boolean
+        created_by: string | null
+        created_at: string
+      }>
+      agent_sessions: TableDef<{
+        id: string
+        tenant_id: string
+        agent_id:
+          | 'recruiter'
+          | 'project_manager'
+          | 'finance'
+          | 'qa'
+          | 'executive'
+          | 'knowledge'
+        user_id: string | null
+        entity_type: string | null
+        entity_id: string | null
+        status: 'active' | 'completed' | 'failed'
+        context: Json
+        correlation_id: string | null
+        created_at: string
+        updated_at: string
+        completed_at: string | null
+      }>
+      agent_memory_entries: TableDef<{
+        id: string
+        tenant_id: string
+        agent_id:
+          | 'recruiter'
+          | 'project_manager'
+          | 'finance'
+          | 'qa'
+          | 'executive'
+          | 'knowledge'
+        session_id: string | null
+        scope: 'session' | 'entity' | 'tenant'
+        entity_type: string | null
+        entity_id: string | null
+        memory_key: string
+        content: string
+        metadata: Json
+        expires_at: string | null
+        created_at: string
+        updated_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string

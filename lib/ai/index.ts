@@ -29,6 +29,15 @@ export {
 export { loadGatewayConfig, getProviderApiKey, mapProviderToDb } from '@/lib/ai/config'
 
 export { globalPromptManager, PromptManager, registerDefaultPrompts } from '@/lib/ai/prompt/manager'
+export { registerAgentPrompts } from '@/lib/ai/agent/instructions'
+export {
+  AGENT_DEFAULTS,
+  getAgentDefault,
+  listAgentDefaults,
+  isValidAgentId,
+  mergeAgentConfig,
+  resolveAgentTools,
+} from '@/lib/ai/agent'
 
 export { globalTokenLogger, TokenUsageLogger } from '@/lib/ai/logging/token-logger'
 export { globalCostTracker, CostTracker, estimateTokenCost } from '@/lib/ai/logging/cost-tracker'

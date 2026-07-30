@@ -64,6 +64,15 @@ export { KnowledgeRepository } from '@/lib/repositories/knowledge.repository'
 export { KnowledgeEmbeddingRepository } from '@/lib/repositories/knowledge-embedding.repository'
 
 export {
+  AgentConfigRepository,
+  AgentInstructionRepository,
+} from '@/lib/repositories/agent.repository'
+export {
+  AgentSessionRepository,
+  AgentMemoryRepository,
+} from '@/lib/repositories/agent-session.repository'
+
+export {
   IntegrationConfigRepository,
   WebhookDeliveryRepository,
   WhatsappMessageRepository,

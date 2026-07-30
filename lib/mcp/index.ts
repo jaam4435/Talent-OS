@@ -34,6 +34,8 @@ export {
   MCP_TOOL_COUNT,
 } from '@/lib/mcp/servers'
 
+export { getMcpGateway, resetMcpGateway, createMcpExecutionContext, McpGateway } from '@/lib/mcp/gateway'
+
 export {
   CRM_TOOLS,
   CRM_SERVER_DEFINITION,
