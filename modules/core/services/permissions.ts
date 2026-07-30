@@ -32,6 +32,8 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'companies:create',
     'companies:read',
     'companies:update',
+    'agent:run',
+    'agent:configure',
   ],
   talent_manager: [
     'tenant:read',
@@ -55,6 +57,8 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'payments:read',
     'analytics:read',
     'companies:read',
+    'agent:run',
+    'agent:configure',
   ],
   freelancer: [
     'tenant:read',

@@ -8,6 +8,7 @@ import { executeWithFallback, streamWithFallback } from '@/lib/ai/middleware/fal
 import { RateLimiter } from '@/lib/ai/middleware/rate-limit'
 import { withRetry } from '@/lib/ai/middleware/retry'
 import { globalPromptManager, registerDefaultPrompts } from '@/lib/ai/prompt/manager'
+import { registerAgentPrompts } from '@/lib/ai/agent/instructions'
 import { getProviderChain } from '@/lib/ai/providers'
 import type { AiProviderInterface } from '@/lib/ai/providers/interface'
 import { estimateTokenCost } from '@/lib/ai/logging/cost-tracker'
@@ -27,6 +28,7 @@ let promptsRegistered = false
 function ensurePromptsRegistered(): void {
   if (!promptsRegistered) {
     registerDefaultPrompts()
+    registerAgentPrompts()
     promptsRegistered = true
   }
 }

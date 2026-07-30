@@ -28,6 +28,15 @@ import { WorkflowRepository } from '@/lib/repositories/workflow.repository'
 import { WhatsappConversationRepository } from '@/lib/repositories/whatsapp-conversation.repository'
 import { KnowledgeRepository } from '@/lib/repositories/knowledge.repository'
 import { KnowledgeEmbeddingRepository } from '@/lib/repositories/knowledge-embedding.repository'
+import {
+  AgentConfigRepository,
+  AgentInstructionRepository,
+} from '@/lib/repositories/agent.repository'
+import {
+  AgentSessionRepository,
+  AgentMemoryRepository,
+  AgentMessageRepository,
+} from '@/lib/repositories/agent-session.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -55,6 +64,11 @@ export interface Repositories {
   whatsappConversation: WhatsappConversationRepository
   knowledge: KnowledgeRepository
   knowledgeEmbedding: KnowledgeEmbeddingRepository
+  agentConfig: AgentConfigRepository
+  agentInstruction: AgentInstructionRepository
+  agentSession: AgentSessionRepository
+  agentMemory: AgentMemoryRepository
+  agentMessage: AgentMessageRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -84,6 +98,11 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     whatsappConversation: new WhatsappConversationRepository(ctx),
     knowledge: new KnowledgeRepository(ctx),
     knowledgeEmbedding: new KnowledgeEmbeddingRepository(ctx),
+    agentConfig: new AgentConfigRepository(ctx),
+    agentInstruction: new AgentInstructionRepository(ctx),
+    agentSession: new AgentSessionRepository(ctx),
+    agentMemory: new AgentMemoryRepository(ctx),
+    agentMessage: new AgentMessageRepository(ctx),
   }
 }
 

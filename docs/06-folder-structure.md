@@ -25,7 +25,11 @@ talent-os/
 │   │   ├── components/
 │   │   ├── hooks/
 │   │   └── utils/
-│   └── knowledge/                    # Knowledge base domain types + validation
+│   ├── knowledge/                    # Knowledge base domain types + validation
+│   │   ├── types.ts
+│   │   ├── validation.ts
+│   │   └── index.ts
+│   └── agents/                       # Agent framework domain types + validation
 │       ├── types.ts
 │       ├── validation.ts
 │       └── index.ts
@@ -33,6 +37,7 @@ talent-os/
 ├── lib/
 │   ├── ai/                           # AI Gateway — all LLM requests go here
 │   │   ├── gateway.ts
+│   │   ├── agent/                    # Agent framework (registry, tools, memory)
 │   │   ├── providers/
 │   │   ├── prompt/
 │   │   ├── logging/
@@ -70,7 +75,8 @@ talent-os/
 │   │   ├── ai.service.ts
 │   │   ├── integration.service.ts
 │   │   ├── whatsapp.service.ts
-│   │   └── knowledge.service.ts
+│   │   ├── knowledge.service.ts
+│   │   └── agent.service.ts
 │   ├── workflows/                    # Workflow engine (triggers, conditions, actions)
 │   │   ├── registry.ts
 │   │   ├── engine.ts
