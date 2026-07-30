@@ -83,7 +83,15 @@ function buildServices(repos: Repositories): Services {
     marketplace: null as unknown as MarketplaceService,
   }
 
-  services.marketplace = new MarketplaceService(repos, talent, ai, services.assignment)
+  services.marketplace = new MarketplaceService(
+    repos,
+    talent,
+    ai,
+    services.assignment,
+    crm,
+    project,
+    workflow
+  )
 
   return services
 }

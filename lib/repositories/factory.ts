@@ -37,6 +37,14 @@ import {
   AgentMemoryRepository,
 } from '@/lib/repositories/agent-session.repository'
 import { StorageRepository } from '@/lib/repositories/storage.repository'
+import {
+  MarketplaceProfileRepository,
+  AvailabilityBlockRepository,
+  MarketplaceRatingRepository,
+  MarketplaceContractRepository,
+  MarketplaceInvitationRepository,
+  MarketplaceRecommendationRepository,
+} from '@/lib/repositories/marketplace'
 
 export interface Repositories {
   talent: TalentRepository
@@ -69,6 +77,12 @@ export interface Repositories {
   agentSession: AgentSessionRepository
   agentMemory: AgentMemoryRepository
   storage: StorageRepository
+  marketplaceProfile: MarketplaceProfileRepository
+  marketplaceAvailability: AvailabilityBlockRepository
+  marketplaceRating: MarketplaceRatingRepository
+  marketplaceContract: MarketplaceContractRepository
+  marketplaceInvitation: MarketplaceInvitationRepository
+  marketplaceRecommendation: MarketplaceRecommendationRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -103,6 +117,12 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     agentSession: new AgentSessionRepository(ctx),
     agentMemory: new AgentMemoryRepository(ctx),
     storage: new StorageRepository(ctx),
+    marketplaceProfile: new MarketplaceProfileRepository(ctx),
+    marketplaceAvailability: new AvailabilityBlockRepository(ctx),
+    marketplaceRating: new MarketplaceRatingRepository(ctx),
+    marketplaceContract: new MarketplaceContractRepository(ctx),
+    marketplaceInvitation: new MarketplaceInvitationRepository(ctx),
+    marketplaceRecommendation: new MarketplaceRecommendationRepository(ctx),
   }
 }
 

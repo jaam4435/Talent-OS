@@ -34,7 +34,7 @@ export class MatchScoreRepository extends BaseRepository {
     const { data } = await this.ctx.supabase
       .from('talent_match_scores')
       .select(
-        'id, opportunity_id, freelancer_id, ai_request_id, score, rationale, skill_overlap, rank, created_at'
+        'id, opportunity_id, freelancer_id, ai_request_id, score, rationale, skill_overlap, rank, match_source, created_at'
       )
       .eq('opportunity_id', opportunityId)
       .eq('tenant_id', tenantId)

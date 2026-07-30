@@ -153,9 +153,20 @@ export const EVENT_CATALOG: readonly EventCatalogEntry[] = [
   entry(AgentEvents.SESSION_COMPLETED, 'application', 'agents', 'Agent session completed', 'agent_session', 'AgentService', {
     status: 'planned',
   }),
-  entry(MarketplaceEvents.PROFILE_PUBLISHED, 'domain', 'marketplace', 'Talent profile published to marketplace', 'freelancer', 'MarketplaceService', {
-    status: 'planned',
+  entry(MarketplaceEvents.PROFILE_PUBLISHED, 'domain', 'marketplace', 'Talent profile published to marketplace', 'freelancer', 'MarketplaceProfileService', {
+    idempotencyPattern: 'marketplace-profile:{freelancer_id}',
   }),
+  entry(MarketplaceEvents.INVITATION_SENT, 'domain', 'marketplace', 'Marketplace invitation sent', 'marketplace_invitation', 'MarketplaceInviteService', {
+    idempotencyPattern: 'marketplace-invite:{invitation_id}',
+  }),
+  entry(MarketplaceEvents.APPLICATION_RECEIVED, 'domain', 'marketplace', 'Freelancer accepted marketplace invitation', 'marketplace_invitation', 'MarketplaceInviteService', {
+    idempotencyPattern: 'marketplace-application:{invitation_id}',
+  }),
+  entry(MarketplaceEvents.CONTRACT_SIGNED, 'domain', 'marketplace', 'Marketplace contract signed', 'marketplace_contract', 'MarketplaceContractService', {
+    idempotencyPattern: 'marketplace-contract-signed:{contract_id}',
+  }),
+  entry(MarketplaceEvents.RECOMMENDATION_GENERATED, 'application', 'marketplace', 'Proactive recommendations generated', 'tenant', 'MarketplaceRecommendationService', {}),
+  entry(MarketplaceEvents.MATCH_COMPLETED, 'application', 'marketplace', 'Marketplace match run completed', 'opportunity', 'MarketplaceMatchingService', {}),
   entry(IntegrationsEvents.WEBHOOK_RECEIVED, 'integration', 'integrations', 'Inbound webhook received', 'webhook', 'IntegrationService', {
     idempotencyPattern: '{source}:{idempotency_key}',
   }),

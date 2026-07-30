@@ -297,6 +297,23 @@ export interface CreateRecommendationInput {
   expiresAt?: string
 }
 
+// ─── Capacity Planning ───────────────────────────────────────────────────────
+
+export interface CapacitySnapshot {
+  supplyTotal: number
+  supplyByAvailability: Record<string, number>
+  supplyByDiscipline: Record<string, number>
+  openOpportunities: number
+  activeProjects: number
+  availableCapacityPct: number
+  demandPressure: 'low' | 'balanced' | 'high'
+}
+
+export interface CapacityPlanningParams {
+  windowStart: string
+  windowEnd: string
+}
+
 // ─── Row types (DB mapping) ──────────────────────────────────────────────────
 
 export interface TalentAvailabilityBlockRow {

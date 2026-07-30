@@ -17,7 +17,12 @@
 | `knowledge.embedding_completed` | application | knowledge | knowledge | knowledge module | embedding completed |
 | `knowledge.embedding_requested` | application | knowledge | knowledge | knowledge module | embedding requested |
 | `knowledge.entry_created` | application | knowledge | knowledge | knowledge module | entry created |
+| `marketplace.application_received` | domain | marketplace | marketplace | marketplace module | application received |
+| `marketplace.contract_signed` | domain | marketplace | marketplace | marketplace module | contract signed |
+| `marketplace.invitation_sent` | domain | marketplace | marketplace | marketplace module | invitation sent |
+| `marketplace.match_completed` | domain | marketplace | marketplace | marketplace module | match completed |
 | `marketplace.profile_published` | domain | marketplace | marketplace | marketplace module | profile published |
+| `marketplace.recommendation_generated` | domain | marketplace | marketplace | marketplace module | recommendation generated |
 | `milestone.approved` | domain | projects | milestone | WorkflowService | Manager approved milestone |
 | `milestone.overdue` | domain | projects | milestone | Cron | Milestone past due date |
 | `milestone.revision_requested` | domain | projects | milestone | WorkflowService | Manager requested revision |
@@ -43,6 +48,6 @@
 | `whatsapp.send_requested` | application | whatsapp | whatsapp | WorkflowService | WhatsApp send queued |
 | `whatsapp.unrecognized` | application | whatsapp | whatsapp | WhatsAppService | Unrecognized WhatsApp message |
 
-**Total:** 39 documented events
+**Total:** 44 documented events
 
 Authoritative registry: [`lib/events/catalog.ts`](../lib/events/catalog.ts)
