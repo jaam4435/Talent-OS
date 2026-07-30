@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-07-30T20:26:10.980Z",
+  "generator": "scripts/generate-mcp-contracts.mjs",
+  "servers": [
+    {
+      "id": "ai",
+      "name": "Talent OS AI",
+      "toolCount": 10,
+      "contract": "docs/mcp/contracts/ai.contract.json"
+    },
+    {
+      "id": "analytics",
+      "name": "Talent OS Analytics",
+      "toolCount": 6,
+      "contract": "docs/mcp/contracts/analytics.contract.json"
+    },
+    {
+      "id": "crm",
+      "name": "Talent OS CRM",
+      "toolCount": 5,
+      "contract": "docs/mcp/contracts/crm.contract.json"
+    },
+    {
+      "id": "finance",
+      "name": "Talent OS Finance",
+      "toolCount": 7,
+      "contract": "docs/mcp/contracts/finance.contract.json"
+    },
+    {
+      "id": "knowledge",
+      "name": "Talent OS Knowledge",
+      "toolCount": 6,
+      "contract": "docs/mcp/contracts/knowledge.contract.json"
+    },
+    {
+      "id": "marketplace",
+      "name": "Talent OS Marketplace",
+      "toolCount": 6,
+      "contract": "docs/mcp/contracts/marketplace.contract.json"
+    },
+    {
+      "id": "notification",
+      "name": "Talent OS Notifications",
+      "toolCount": 6,
+      "contract": "docs/mcp/contracts/notification.contract.json"
+    },
+    {
+      "id": "projects",
+      "name": "Talent OS Projects",
+      "toolCount": 7,
+      "contract": "docs/mcp/contracts/projects.contract.json"
+    },
+    {
+      "id": "storage",
+      "name": "Talent OS Storage",
+      "toolCount": 6,
+      "contract": "docs/mcp/contracts/storage.contract.json"
+    },
+    {
+      "id": "talent",
+      "name": "Talent OS Talent",
+      "toolCount": 7,
+      "contract": "docs/mcp/contracts/talent.contract.json"
+    },
+    {
+      "id": "workflow",
+      "name": "Talent OS Workflow",
+      "toolCount": 5,
+      "contract": "docs/mcp/contracts/workflow.contract.json"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import type { MilestoneStatus, ProjectStatus } from '@/types/enums'
+import type { MilestoneStatus, ProjectStatus } from '@/modules/core/types/enums'
 
 export interface MilestoneInput {
   title: string

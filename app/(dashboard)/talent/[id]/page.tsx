@@ -1,16 +1,16 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ExternalLink } from 'lucide-react'
-import { PageHeader } from '@/components/shared/page-header'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { PortfolioGallery } from '@/components/talent/portfolio-gallery'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { isManager } from '@/lib/auth/permissions'
-import { getPortfolioItems, getRatingHistory } from '@/lib/talent/queries'
-import { formatCurrency } from '@/lib/utils/format'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Button } from '@/modules/core/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
+import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
+import { getPortfolioItems, getRatingHistory } from '@/lib/queries/talent.queries'
+import { getTalentActivity, getTalentName, getTalentProfile } from '@/lib/queries/talent.queries'
+import { formatCurrency } from '@/modules/core/utils/format'
 
 export async function generateMetadata({
   params,
@@ -18,9 +18,8 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data } = await supabase.from('freelancers').select('full_name').eq('id', id).maybeSingle()
-  return { title: data?.full_name ?? 'Talent profile' }
+  const name = await getTalentName(id)
+  return { title: name ?? 'Talent profile' }
 }
 
 export default async function TalentDetailPage({
@@ -30,15 +29,8 @@ export default async function TalentDetailPage({
 }) {
   const { id } = await params
   const { tenant, user } = await requireTenant()
-  const supabase = await createClient()
 
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('*')
-    .eq('id', id)
-    .eq('tenant_id', tenant?.id ?? '')
-    .maybeSingle()
-
+  const freelancer = await getTalentProfile(id, tenant?.id ?? '')
   if (!freelancer) notFound()
 
   const isOwnProfile = freelancer.user_id === user.id
@@ -46,16 +38,11 @@ export default async function TalentDetailPage({
 
   if (!canManage && !isOwnProfile) notFound()
 
-  const portfolioItems = await getPortfolioItems(id)
-  const ratingHistory = canManage ? await getRatingHistory(id) : []
-
-  const { data: activity } = await supabase
-    .from('activity_logs')
-    .select('action, metadata, created_at')
-    .eq('entity_type', 'freelancer')
-    .eq('entity_id', id)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const [portfolioItems, ratingHistory, activity] = await Promise.all([
+    getPortfolioItems(id),
+    canManage ? getRatingHistory(id) : Promise.resolve([]),
+    getTalentActivity(id),
+  ])
 
   return (
     <div>
@@ -189,7 +176,7 @@ export default async function TalentDetailPage({
         </Card>
       ) : null}
 
-      {activity?.length ? (
+      {activity.length ? (
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>Activity</CardTitle>

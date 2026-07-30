@@ -1,19 +1,12 @@
-import { requireTenant } from '@/lib/auth/session'
-import { createClient } from '@/lib/supabase/server'
-import { success, handleApiError } from '@/lib/api/response'
+import { requireTenant } from '@/modules/core/services/session'
+import { createServices } from '@/lib/services/factory'
+import { success, handleApiError } from '@/modules/core/api/response'
 
 export async function GET() {
   try {
     const { tenant } = await requireTenant()
-    const supabase = await createClient()
-
-    const { data, error } = await supabase
-      .from('v_dashboard_summary')
-      .select('*')
-      .eq('tenant_id', tenant.id)
-      .maybeSingle()
-
-    if (error) throw error
+    const services = await createServices()
+    const data = await services.analytics.getDashboardSummary(tenant.id)
     return success(data)
   } catch (err) {
     return handleApiError(err)

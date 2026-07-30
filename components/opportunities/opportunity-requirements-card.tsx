@@ -4,9 +4,9 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sparkles } from 'lucide-react'
 import { runBriefParse } from '@/app/actions/ai-pm'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/modules/core/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 import type { ParsedRequirements } from '@/lib/integrations/ai/types'
 
 interface OpportunityRequirementsCardProps {
