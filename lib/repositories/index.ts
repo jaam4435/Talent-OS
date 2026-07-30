@@ -58,6 +58,8 @@ export type { EmitDomainEventInput } from '@/lib/repositories/domain-event.repos
 
 export { WorkflowRepository } from '@/lib/repositories/workflow.repository'
 
+export { WhatsappConversationRepository } from '@/lib/repositories/whatsapp-conversation.repository'
+
 export {
   IntegrationConfigRepository,
   WebhookDeliveryRepository,

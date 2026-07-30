@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifyMetaSignature } from '@/lib/integrations/encryption'
-import {
-  parseMetaWebhook,
-  processInboundQuickReply,
-  resolveTenantByPhoneNumberId,
-  findFreelancerByPhone,
-  updateDeliveryStatus,
-} from '@/lib/integrations/whatsapp'
+import { parseMetaWebhook } from '@/lib/whatsapp/parser'
 import { buildN8nEnvelope, dispatchToN8n } from '@/lib/integrations/n8n'
 import { createAdminServices } from '@/lib/services/factory'
 import type { Json } from '@/modules/core/types/database'
@@ -51,7 +45,7 @@ export async function POST(request: Request) {
       processed_at: new Date().toISOString(),
     })
 
-    await updateDeliveryStatus(status.waMessageId, status.status)
+    await services.whatsapp.updateDeliveryStatus(status.waMessageId, status.status)
   }
 
   for (const message of inbound) {
@@ -62,7 +56,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: 'duplicate' })
     }
 
-    const tenantId = await resolveTenantByPhoneNumberId(message.phoneNumberId)
+    const tenantId = await services.whatsapp.resolveTenantByPhoneNumberId(message.phoneNumberId)
     if (!tenantId) {
       await services.integration.createWebhookDelivery({
         source: 'whatsapp',
@@ -74,7 +68,7 @@ export async function POST(request: Request) {
       continue
     }
 
-    const freelancer = await findFreelancerByPhone(tenantId, message.phone)
+    const freelancer = await services.talent.findByPhone(tenantId, message.phone)
     if (!freelancer) {
       await services.integration.createWebhookDelivery({
         tenant_id: tenantId,
@@ -96,13 +90,11 @@ export async function POST(request: Request) {
       continue
     }
 
-    const result = await processInboundQuickReply({
+    const result = await services.whatsapp.processInboundMessage({
+      message,
       tenantId,
-      freelancerId: freelancer.id,
-      freelancerName: freelancer.full_name,
-      phone: message.phone,
-      body: message.body,
-      waMessageId: message.waMessageId,
+      freelancer: { id: freelancer.id, full_name: freelancer.full_name },
+      services,
     })
 
     await services.integration.createWebhookDelivery({
@@ -115,34 +107,19 @@ export async function POST(request: Request) {
       processed_at: new Date().toISOString(),
     })
 
-    if (result.handled) {
+    const n8nPayload = services.whatsapp.buildN8nPayload(
+      result,
+      { id: freelancer.id, full_name: freelancer.full_name },
+      message
+    )
+
+    if (n8nPayload) {
       await dispatchToN8n(
         buildN8nEnvelope({
-          event: 'whatsapp.response_processed',
+          event: n8nPayload.event,
           tenantId,
-          idempotencyKey: `wa-response:${result.recipientId}`,
-          data: {
-            freelancer_id: freelancer.id,
-            freelancer_name: result.freelancerName,
-            response: result.response,
-            opportunity_id: result.opportunityId,
-            recipient_id: result.recipientId,
-            phone: message.phone,
-          },
-        })
-      )
-    } else {
-      await dispatchToN8n(
-        buildN8nEnvelope({
-          event: 'whatsapp.unrecognized',
-          tenantId,
-          idempotencyKey: `wa-unrecognized:${message.waMessageId}`,
-          data: {
-            freelancer_id: freelancer.id,
-            phone: message.phone,
-            body: message.body,
-            reason: result.reason,
-          },
+          idempotencyKey: n8nPayload.idempotencyKey,
+          data: n8nPayload.data,
         })
       )
     }

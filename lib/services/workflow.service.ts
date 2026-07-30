@@ -243,6 +243,10 @@ export class WorkflowService {
   }) {
     await this.repos.activityLog.create(input)
   }
+
+  async findSubmittableMilestone(freelancerId: string, tenantId: string) {
+    return this.repos.task.findSubmittableForFreelancer(freelancerId, tenantId)
+  }
 }
 
 export type EmitEventInput = import('@/lib/repositories/domain-event.repository').EmitDomainEventInput

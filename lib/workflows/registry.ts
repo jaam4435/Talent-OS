@@ -143,6 +143,27 @@ export const WORKFLOW_REGISTRY: WorkflowDefinition[] = [
       { id: 'notify-freelancer', type: 'action', action: 'notify', config: { type: 'payment_paid' } },
     ],
   },
+  {
+    id: 'wf-whatsapp-inbound',
+    name: 'WhatsApp Inbound Message',
+    trigger: { type: 'domain_event', eventType: 'whatsapp.inbound' },
+    queue: 'integrations',
+    steps: [{ id: 'log-activity', type: 'action', action: 'log_activity', config: { action: 'whatsapp_inbound' } }],
+  },
+  {
+    id: 'wf-whatsapp-agent',
+    name: 'WhatsApp Agent Query',
+    trigger: { type: 'domain_event', eventType: 'whatsapp.agent_requested' },
+    queue: 'ai',
+    steps: [{ id: 'dispatch-n8n', type: 'action', action: 'dispatch_n8n' }],
+  },
+  {
+    id: 'wf-whatsapp-opt-out',
+    name: 'WhatsApp Opt Out',
+    trigger: { type: 'domain_event', eventType: 'whatsapp.opt_out' },
+    queue: 'notifications',
+    steps: [{ id: 'log-activity', type: 'action', action: 'log_activity', config: { action: 'whatsapp_opt_out' } }],
+  },
 ]
 
 export function findWorkflowsForEvent(eventType: string): WorkflowDefinition[] {

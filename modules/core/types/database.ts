@@ -254,6 +254,19 @@ export interface Database {
         decision_note: string | null
         created_at: string
       }>
+      whatsapp_conversations: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        phone: string
+        active_intent: string | null
+        active_entity_type: string | null
+        active_entity_id: string | null
+        context: Json
+        last_message_at: string
+        created_at: string
+        updated_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string

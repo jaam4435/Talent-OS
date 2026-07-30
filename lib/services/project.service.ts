@@ -264,4 +264,14 @@ export class ProjectService {
   async findById(projectId: string, tenantId: string) {
     return this.repos.project.findById(projectId, tenantId)
   }
+
+  async getFreelancerProjectSummary(freelancerId: string, tenantId: string) {
+    const result = await this.repos.project.listByTenant(tenantId, { freelancerId })
+    return result.data.map((p) => ({
+      id: p.id,
+      title: p.title,
+      status: p.status,
+      client_name: p.client_name,
+    }))
+  }
 }

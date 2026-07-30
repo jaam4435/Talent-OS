@@ -102,7 +102,7 @@ export class CRMService {
 
   async respondToOpportunity(
     tenantId: string,
-    userId: string,
+    userId: string | null,
     freelancerId: string,
     input: OpportunityResponseInput
   ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -154,6 +154,39 @@ export class CRMService {
     })
 
     return { ok: true }
+  }
+
+  /** Respond to the freelancer's most recent pending opportunity invite (WhatsApp + unified path). */
+  async respondToPendingOpportunity(
+    tenantId: string,
+    userId: string | null,
+    freelancerId: string,
+    response: 'interested' | 'declined',
+    note: string
+  ): Promise<
+    | { ok: true; opportunityId: string; recipientId: string }
+    | { ok: false; error: string }
+  > {
+    const recipient = await this.findPendingRecipient(tenantId, freelancerId)
+    if (!recipient) {
+      return { ok: false, error: 'no_pending_opportunity' }
+    }
+
+    const result = await this.respondToOpportunity(tenantId, userId, freelancerId, {
+      opportunityId: recipient.opportunity_id,
+      response,
+      note,
+    })
+
+    if (!result.ok) {
+      return result
+    }
+
+    return {
+      ok: true,
+      opportunityId: recipient.opportunity_id,
+      recipientId: recipient.id,
+    }
   }
 
   async getOpportunitiesForPage(tenantId: string) {

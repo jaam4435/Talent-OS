@@ -69,6 +69,11 @@ talent-os/
 │   │   ├── registry.ts
 │   │   ├── engine.ts
 │   │   └── ...
+│   ├── whatsapp/                     # First-class WhatsApp interface
+│   │   ├── parser.ts
+│   │   ├── intents.ts
+│   │   ├── handlers.ts
+│   │   └── ...
 │   ├── domains/
 │
 ├── app/                              # Next.js App Router

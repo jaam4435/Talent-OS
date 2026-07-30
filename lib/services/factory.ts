@@ -14,6 +14,7 @@ import { NotificationService } from '@/lib/services/notification.service'
 import { AIService } from '@/lib/services/ai.service'
 import { IntegrationService } from '@/lib/services/integration.service'
 import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
+import { WhatsAppService } from '@/lib/services/whatsapp.service'
 
 export interface Services {
   project: ProjectService
@@ -22,6 +23,7 @@ export interface Services {
   crm: CRMService
   workflow: WorkflowService
   workflowEngine: WorkflowEngineService
+  whatsapp: WhatsAppService
   finance: FinanceService
   analytics: AnalyticsService
   notification: NotificationService
@@ -34,6 +36,10 @@ function buildServices(repos: Repositories): Services {
   const workflow = new WorkflowService(repos, notification)
   const ai = new AIService(repos)
   const crm = new CRMService(repos, notification, workflow)
+  const talent = new TalentService(repos)
+  const project = new ProjectService(repos, workflow)
+  const integration = new IntegrationService(repos, crm, ai)
+  const whatsapp = new WhatsAppService(repos, integration, crm, talent, workflow, project)
 
   let services!: Services
   const workflowEngine = new WorkflowEngineService(repos, async () => services)
@@ -42,14 +48,15 @@ function buildServices(repos: Repositories): Services {
     notification,
     workflow,
     workflowEngine,
+    whatsapp,
     ai,
     crm,
-    talent: new TalentService(repos),
-    project: new ProjectService(repos, workflow),
+    talent,
+    project,
     assignment: new AssignmentService(repos, notification, workflow),
     finance: new FinanceService(repos),
     analytics: new AnalyticsService(repos),
-    integration: new IntegrationService(repos, crm, ai),
+    integration,
   }
 
   return services

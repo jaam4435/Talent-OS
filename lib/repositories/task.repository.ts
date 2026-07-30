@@ -72,6 +72,42 @@ export class TaskRepository extends BaseRepository {
     return data ?? []
   }
 
+  async findSubmittableForFreelancer(freelancerId: string, tenantId: string) {
+    const { data: projects } = await this.ctx.supabase
+      .from('projects')
+      .select('id, title')
+      .eq('freelancer_id', freelancerId)
+      .eq('tenant_id', tenantId)
+      .in('status', ['active', 'in_review'])
+
+    for (const project of projects ?? []) {
+      const { data: milestone } = await this.ctx.supabase
+        .from('milestones')
+        .select('id, title, status, project_id')
+        .eq('project_id', project.id)
+        .in('status', ['pending', 'in_progress', 'revision'])
+        .order('sort_order')
+        .limit(1)
+        .maybeSingle()
+
+      if (milestone) {
+        return {
+          id: milestone.id as string,
+          title: milestone.title as string,
+          status: milestone.status as string,
+          project_id: milestone.project_id as string,
+          project_title: project.title as string,
+        }
+      }
+    }
+
+    return null
+  }
+
+  async findNextActionableForFreelancer(freelancerId: string, tenantId: string) {
+    return this.findSubmittableForFreelancer(freelancerId, tenantId)
+  }
+
   async submit(
     milestoneId: string,
     submissionNote: string | null
