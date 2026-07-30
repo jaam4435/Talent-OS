@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyMetaSignature } from '@/lib/integrations/encryption'
+import { requireWebhookSecretInProduction } from '@/lib/integrations/system-auth'
+import { logEvent } from '@/lib/utils/logger'
 import { parseMetaWebhook } from '@/lib/whatsapp/parser'
 import { buildN8nEnvelope, dispatchToN8n } from '@/lib/integrations/n8n'
 import { createAdminServices } from '@/lib/services/factory'
@@ -23,11 +25,22 @@ export async function POST(request: Request) {
   const signature = request.headers.get('x-hub-signature-256')
   const appSecret = process.env.WHATSAPP_APP_SECRET ?? ''
 
-  if (appSecret && !verifyMetaSignature(rawBody, appSecret, signature)) {
+  if (!appSecret) {
+    if (requireWebhookSecretInProduction()) {
+      logEvent('webhook.whatsapp', 'App secret missing in production', undefined, 'error')
+      return NextResponse.json({ error: 'Webhook verification is not configured' }, { status: 503 })
+    }
+  } else if (!verifyMetaSignature(rawBody, appSecret, signature)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  const body = JSON.parse(rawBody)
+  let body: Parameters<typeof parseMetaWebhook>[0]
+  try {
+    body = JSON.parse(rawBody) as Parameters<typeof parseMetaWebhook>[0]
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+  }
+
   const { inbound, statuses } = parseMetaWebhook(body)
   const services = await createAdminServices()
 

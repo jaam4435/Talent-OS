@@ -165,7 +165,9 @@ export class WorkflowEngine {
     const approval = await this.repos.findApprovalById(approvalId)
     if (!approval) return { ok: false, error: 'Approval not found' }
     if (approval.status !== 'pending') return { ok: false, error: 'Approval already decided' }
-    if (approval.approver_id && approval.approver_id !== userId) {
+
+    const authorized = await this.canUserDecideApproval(approval, userId)
+    if (!authorized) {
       return { ok: false, error: 'Not authorized to decide this approval' }
     }
 
@@ -250,6 +252,34 @@ export class WorkflowEngine {
         current_step_id: completedStepId,
       })
     }
+  }
+
+  private async canUserDecideApproval(
+    approval: {
+      approver_id: string | null
+      approver_role: string | null
+      tenant_id: string
+    },
+    userId: string
+  ): Promise<boolean> {
+    if (approval.approver_id) {
+      return approval.approver_id === userId
+    }
+
+    if (!approval.approver_role) {
+      return false
+    }
+
+    if (approval.approver_role === 'project_manager' || approval.approver_role === 'assigned_by') {
+      return false
+    }
+
+    if (approval.approver_role === 'tenant_admin') {
+      const role = await this.repos.findMemberRole(approval.tenant_id, userId)
+      return role === 'admin'
+    }
+
+    return false
   }
 
   private async resolveApprover(

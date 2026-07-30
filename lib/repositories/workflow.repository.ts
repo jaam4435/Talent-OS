@@ -202,6 +202,17 @@ export class WorkflowRepository extends BaseRepository {
     return data.id
   }
 
+  async findMemberRole(tenantId: string, userId: string): Promise<string | null> {
+    const { data } = await this.ctx.supabase
+      .from('tenant_members')
+      .select('role')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle()
+    return data?.role ?? null
+  }
+
   async findApprovalById(approvalId: string) {
     const { data } = await this.ctx.supabase
       .from('approval_requests')

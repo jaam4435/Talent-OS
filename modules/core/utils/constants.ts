@@ -11,6 +11,27 @@ export const PUBLIC_ROUTES = [
   '/api/webhooks',
 ] as const
 
+/** System routes authenticated via bearer secret in route handlers, not session cookies. */
+export const SYSTEM_ROUTES = ['/api/cron', '/api/internal', '/api/health'] as const
+
+export function matchesRoutePrefix(pathname: string, routes: readonly string[]): boolean {
+  return routes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+}
+
+export function isSystemRoute(pathname: string): boolean {
+  return matchesRoutePrefix(pathname, SYSTEM_ROUTES)
+}
+
+export function isPublicOrSystemRoute(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    matchesRoutePrefix(pathname, PUBLIC_ROUTES) ||
+    isSystemRoute(pathname)
+  )
+}
+
 export const ADMIN_ONLY_ROUTES = [
   '/settings',
   '/settings/team',

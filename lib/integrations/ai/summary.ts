@@ -3,6 +3,7 @@ import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiFeatureAllowed,
+  beginAiExecution,
   createAiRequest,
   updateAiRequest,
 } from '@/lib/integrations/ai/governance'
@@ -102,12 +103,15 @@ export async function executeProjectSummary(aiRequestId: string) {
   const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
-  if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
+
+  const gate = await beginAiExecution(aiRequestId)
+  if (!gate.proceed) {
+    if (gate.reason === 'not_found') throw new Error('AI_REQUEST_NOT_FOUND')
+    return { aiRequestId, status: 'completed' as const, skipped: true }
+  }
 
   const projectId = aiRequest.entity_id
   if (!projectId) throw new Error('INVALID_AI_REQUEST')
-
-  await updateAiRequest(aiRequestId, { status: 'processing' })
 
   const result = await generateProjectSummary(projectId)
 
@@ -182,12 +186,15 @@ export async function executeShortlistSummary(aiRequestId: string) {
   const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
-  if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
+
+  const gate = await beginAiExecution(aiRequestId)
+  if (!gate.proceed) {
+    if (gate.reason === 'not_found') throw new Error('AI_REQUEST_NOT_FOUND')
+    return { aiRequestId, status: 'completed' as const, skipped: true }
+  }
 
   const opportunityId = aiRequest.entity_id
   if (!opportunityId) throw new Error('INVALID_AI_REQUEST')
-
-  await updateAiRequest(aiRequestId, { status: 'processing' })
 
   const opportunity = await services.crm.findShortlistSummaryContext(opportunityId)
   const scores = await services.assignment.listTopMatchScores(opportunityId)

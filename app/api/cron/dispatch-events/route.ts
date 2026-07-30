@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { validateSystemAuth } from '@/lib/integrations/system-auth'
 import { findWorkflowsForEvent } from '@/lib/workflows/registry'
 import {
   buildN8nEnvelope,
@@ -64,9 +65,9 @@ async function legacyDispatch(event: {
 }
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = validateSystemAuth(request.headers.get('authorization'), 'cron')
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
 
   const services = await createAdminServices()

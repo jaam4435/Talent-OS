@@ -1,5 +1,10 @@
 import { createAdminServices } from '@/lib/services/factory'
 import type { AiProvider, AiRequestType } from '@/lib/integrations/ai/types'
+import type { AiClaimResult } from '@/lib/repositories/ai-request.repository'
+
+export type AiExecutionGate =
+  | { proceed: true }
+  | { proceed: false; reason: 'completed' | 'processing' | 'not_found' }
 
 export async function getTenantAiSettings(tenantId: string) {
   const services = await createAdminServices()
@@ -31,6 +36,26 @@ export async function createAiRequest(input: {
 }): Promise<string> {
   const services = await createAdminServices()
   return services.ai.createAiRequest(input)
+}
+
+export async function claimAiRequest(aiRequestId: string): Promise<AiClaimResult> {
+  const services = await createAdminServices()
+  return services.ai.claimAiRequest(aiRequestId)
+}
+
+/** Atomically claim an AI request before execution; prevents duplicate processing. */
+export async function beginAiExecution(aiRequestId: string): Promise<AiExecutionGate> {
+  const claim = await claimAiRequest(aiRequestId)
+  switch (claim) {
+    case 'claimed':
+      return { proceed: true }
+    case 'already_completed':
+      return { proceed: false, reason: 'completed' }
+    case 'already_processing':
+      return { proceed: false, reason: 'processing' }
+    case 'not_found':
+      return { proceed: false, reason: 'not_found' }
+  }
 }
 
 export async function updateAiRequest(

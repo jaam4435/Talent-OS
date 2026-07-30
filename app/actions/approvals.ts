@@ -12,6 +12,14 @@ export async function resolveApproval(input: {
   const { tenant, user } = await requireTenant()
   const services = await createServices()
 
+  const approval = await services.workflowEngine.findApprovalById(input.approvalId)
+  if (!approval) {
+    return { ok: false, error: 'Approval not found' }
+  }
+  if (approval.tenant_id !== tenant.id) {
+    return { ok: false, error: 'Forbidden' }
+  }
+
   const result = await services.workflowEngine.resolveApproval(
     input.approvalId,
     user.id,

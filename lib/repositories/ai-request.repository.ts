@@ -26,6 +26,8 @@ export interface UpdateAiRequestInput {
   promptHash?: string
 }
 
+export type AiClaimResult = 'claimed' | 'already_processing' | 'already_completed' | 'not_found'
+
 export class AiRequestRepository extends BaseRepository {
   async create(input: CreateAiRequestInput): Promise<string> {
     const { data, error } = await this.ctx.supabase
@@ -65,6 +67,29 @@ export class AiRequestRepository extends BaseRepository {
       .eq('id', aiRequestId)
       .maybeSingle()
     return data?.request_type ?? null
+  }
+
+  async claim(aiRequestId: string): Promise<AiClaimResult> {
+    const existing = await this.findById(aiRequestId)
+    if (!existing) return 'not_found'
+    if (existing.status === 'completed') return 'already_completed'
+    if (existing.status === 'processing') return 'already_processing'
+
+    const { data, error } = await this.ctx.supabase
+      .from('ai_requests')
+      .update({ status: 'processing' })
+      .eq('id', aiRequestId)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle()
+
+    this.throwIfError(error)
+    if (data?.id) return 'claimed'
+
+    const refreshed = await this.findById(aiRequestId)
+    if (!refreshed) return 'not_found'
+    if (refreshed.status === 'completed') return 'already_completed'
+    return 'already_processing'
   }
 
   async update(aiRequestId: string, patch: UpdateAiRequestInput): Promise<void> {

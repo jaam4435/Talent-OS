@@ -20,6 +20,10 @@ export class WorkflowEngineService {
     return this.engine.processJobQueue(limit, queueName)
   }
 
+  async findApprovalById(approvalId: string) {
+    return this.repos.workflow.findApprovalById(approvalId)
+  }
+
   async resolveApproval(
     approvalId: string,
     userId: string,

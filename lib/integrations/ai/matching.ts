@@ -3,6 +3,7 @@ import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiMatchingAllowed,
+  beginAiExecution,
   createAiRequest,
   updateAiRequest,
 } from '@/lib/integrations/ai/governance'
@@ -114,7 +115,9 @@ export async function executeTalentMatch(aiRequestId: string, actorId?: string |
     throw new Error('AI_REQUEST_NOT_FOUND')
   }
 
-  if (aiRequest.status === 'completed') {
+  const gate = await beginAiExecution(aiRequestId)
+  if (!gate.proceed) {
+    if (gate.reason === 'not_found') throw new Error('AI_REQUEST_NOT_FOUND')
     return { aiRequestId, status: 'completed' as const, skipped: true }
   }
 
@@ -122,8 +125,6 @@ export async function executeTalentMatch(aiRequestId: string, actorId?: string |
   if (!opportunityId || aiRequest.request_type !== 'talent_match') {
     throw new Error('INVALID_AI_REQUEST')
   }
-
-  await updateAiRequest(aiRequestId, { status: 'processing' })
 
   const opportunity = await fetchOpportunityContext(opportunityId)
   if (!opportunity) {

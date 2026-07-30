@@ -70,6 +70,10 @@ export class AIService {
     return this.repos.aiRequest.create(input)
   }
 
+  async claimAiRequest(aiRequestId: string) {
+    return this.repos.aiRequest.claim(aiRequestId)
+  }
+
   async updateAiRequest(
     aiRequestId: string,
     patch: {
