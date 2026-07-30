@@ -46,6 +46,7 @@ This folder is the **authoritative architectural blueprint** for evolving Talent
 
 | Document | Summary |
 |----------|---------|
+| [Engineering Roadmap](Engineering%20Roadmap.md) | **7-phase detailed plan** — objectives, tasks, acceptance criteria, effort |
 | [Architecture Gap Analysis](Architecture%20Gap%20Analysis.md) | Repository vs blueprint — module maturity, gaps, remediation backlog |
 | [FINAL Audit](../FINAL_AUDIT.md) | Point-in-time security and technical findings |
 
