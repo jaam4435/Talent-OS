@@ -1,17 +1,16 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { PageHeader } from '@/components/shared/page-header'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { AiMatchPanel } from '@/components/opportunities/ai-match-panel'
 import { ShortlistBoard } from '@/components/opportunities/shortlist-board'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { isManager } from '@/lib/auth/permissions'
-import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
+import { Button } from '@/modules/core/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
+import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
+import { getShortlistPageHeader } from '@/lib/queries/opportunities.queries'
 import { getShortlistItems } from '@/lib/shortlists/queries'
-import { getShortlistSummaryResult } from '@/lib/integrations/ai/summary'
+import { getTalentMatchResults, getShortlistSummaryResult } from '@/lib/queries/ai.queries'
 import { AddRespondentsButton } from '@/components/opportunities/add-respondents-button'
 import { ShortlistSummarySection } from '@/components/opportunities/shortlist-summary-section'
 
@@ -27,25 +26,12 @@ export default async function ShortlistPage({
     notFound()
   }
 
-  const supabase = await createClient()
-  const { data: opportunity } = await supabase
-    .from('opportunities')
-    .select('id, title, status, description, budget, client_name')
-    .eq('id', id)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
-
+  const { opportunity, interestedCount } = await getShortlistPageHeader(id, tenant.id)
   if (!opportunity) notFound()
 
   const matchResults = await getTalentMatchResults(id, tenant.id)
   const { shortlistId, items } = await getShortlistItems(id, tenant.id)
   const shortlistSummary = await getShortlistSummaryResult(id, tenant.id)
-
-  const { count: interestedCount } = await supabase
-    .from('opportunity_recipients')
-    .select('id', { count: 'exact', head: true })
-    .eq('opportunity_id', id)
-    .eq('response', 'interested')
 
   return (
     <div>
@@ -63,8 +49,8 @@ export default async function ShortlistPage({
       <div className="mb-4 flex flex-wrap gap-2">
         <Badge className="capitalize">{opportunity.status}</Badge>
         {shortlistId ? <Badge variant="outline">Shortlist active</Badge> : null}
-        {(interestedCount ?? 0) > 0 ? (
-          <AddRespondentsButton opportunityId={id} count={interestedCount ?? 0} />
+        {interestedCount > 0 ? (
+          <AddRespondentsButton opportunityId={id} count={interestedCount} />
         ) : null}
       </div>
 

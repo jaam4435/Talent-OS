@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
-import { requireTenant } from '@/lib/auth/session'
-import { isManager } from '@/lib/auth/permissions'
-import { parsePagination } from '@/lib/api/pagination'
-import { success, handleApiError, AppError } from '@/lib/api/response'
+import { parsePagination } from '@/modules/core/api/pagination'
+import { success, handleApiError, AppError } from '@/modules/core/api/response'
+import { requireTenant } from '@/modules/core/services/session'
+import { isManager } from '@/modules/core/services/permissions'
+import { createTalentServices } from '@/lib/domains/talent/factory'
 import type { TalentSearchParams } from '@/lib/talent/types'
 
 export async function GET(request: Request) {
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const { page, limit, offset } = parsePagination(searchParams)
+    const { page, limit } = parsePagination(searchParams)
 
     const params: TalentSearchParams = {
       query: searchParams.get('q') ?? undefined,
@@ -27,23 +27,10 @@ export async function GET(request: Request) {
       limit,
     }
 
-    const supabase = await createClient()
-    const { data, error } = await supabase.rpc('search_freelancers', {
-      p_tenant_id: tenant.id,
-      p_query: params.query ?? null,
-      p_discipline: params.discipline ?? null,
-      p_availability: params.availability ?? null,
-      p_min_rate: params.minRate ?? null,
-      p_max_rate: params.maxRate ?? null,
-      p_min_rating: params.minRating ?? null,
-      p_sort: params.sort ?? 'rating',
-      p_limit: limit,
-      p_offset: offset,
-    })
+    const { talent } = await createTalentServices()
+    const data = await talent.searchRoster(tenant.id, params)
 
-    if (error) throw error
-
-    return success(data ?? [], { page, limit, total: data?.length ?? 0 })
+    return success(data, { page, limit, total: data.length })
   } catch (error) {
     return handleApiError(error)
   }

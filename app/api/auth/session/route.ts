@@ -1,5 +1,5 @@
-import { getSession } from '@/lib/auth/session'
-import { success, handleApiError } from '@/lib/api/response'
+import { getSession } from '@/modules/core/services/session'
+import { success, handleApiError } from '@/modules/core/api/response'
 
 export async function GET() {
   try {

@@ -1,5 +1,5 @@
-import { InviteAcceptForm } from '@/components/auth/invite-accept-form'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { InviteAcceptForm } from '@/modules/core/components/auth/invite-accept-form'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 
 export const metadata = { title: 'Accept invitation' }
 

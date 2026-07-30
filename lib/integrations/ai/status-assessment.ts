@@ -1,4 +1,5 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getAiGateway } from '@/lib/ai'
+import { createAdminServices } from '@/lib/services/factory'
 import { emitEvent } from '@/lib/integrations/events'
 import {
   assertAiFeatureAllowed,
@@ -52,47 +53,8 @@ function ruleBasedStatusAssessment(context: {
 }
 
 async function fetchStatusContext(projectId: string) {
-  const supabase = createAdminClient()
-
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, tenant_id, title, status, description')
-    .eq('id', projectId)
-    .maybeSingle()
-
-  if (!project) return null
-
-  const { data: milestones } = await supabase
-    .from('milestones')
-    .select('title, status, due_date, submitted_at')
-    .eq('project_id', projectId)
-    .order('sort_order')
-
-  const { data: activity } = await supabase
-    .from('activity_logs')
-    .select('action, metadata, created_at')
-    .eq('entity_type', 'project')
-    .eq('entity_id', projectId)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  const now = new Date()
-  const overdueCount =
-    milestones?.filter(
-      (m) =>
-        m.due_date &&
-        new Date(m.due_date) < now &&
-        !['approved', 'canceled'].includes(m.status)
-    ).length ?? 0
-
-  return {
-    project,
-    milestones: milestones ?? [],
-    activity: activity ?? [],
-    overdueCount,
-    submittedCount: milestones?.filter((m) => m.status === 'submitted').length ?? 0,
-    revisionCount: milestones?.filter((m) => m.status === 'revision').length ?? 0,
-  }
+  const services = await createAdminServices()
+  return services.project.findStatusContext(projectId)
 }
 
 export async function generateStatusAssessment(projectId: string): Promise<StatusAssessmentResult> {
@@ -100,7 +62,7 @@ export async function generateStatusAssessment(projectId: string): Promise<Statu
   if (!context) throw new Error('PROJECT_NOT_FOUND')
 
   try {
-    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured')
+    if (!getAiGateway().isConfigured()) throw new Error('No AI providers configured')
 
     const { system, user } = buildStatusAssessmentPrompt({
       project: context.project,
@@ -140,14 +102,9 @@ export async function generateStatusAssessment(projectId: string): Promise<Statu
 }
 
 export async function executeStatusAssessment(aiRequestId: string, actorId?: string | null) {
-  const supabase = createAdminClient()
+  const services = await createAdminServices()
   const startedAt = Date.now()
-
-  const { data: aiRequest } = await supabase
-    .from('ai_requests')
-    .select('*')
-    .eq('id', aiRequestId)
-    .maybeSingle()
+  const aiRequest = await services.ai.findById(aiRequestId)
 
   if (!aiRequest) throw new Error('AI_REQUEST_NOT_FOUND')
   if (aiRequest.status === 'completed') return { aiRequestId, status: 'completed' as const, skipped: true }
@@ -159,18 +116,13 @@ export async function executeStatusAssessment(aiRequestId: string, actorId?: str
 
   const result = await generateStatusAssessment(projectId)
 
-  await supabase
-    .from('projects')
-    .update({
-      ai_status_assessment: {
-        risk_level: result.riskLevel,
-        suggested_status: result.suggestedStatus,
-        narrative: result.narrative,
-        reasons: result.reasons,
-        assessed_at: new Date().toISOString(),
-      },
-    })
-    .eq('id', projectId)
+  await services.project.updateStatusAssessment(projectId, {
+    risk_level: result.riskLevel,
+    suggested_status: result.suggestedStatus,
+    narrative: result.narrative,
+    reasons: result.reasons,
+    assessed_at: new Date().toISOString(),
+  })
 
   await updateAiRequest(aiRequestId, {
     status: 'completed',
@@ -187,7 +139,7 @@ export async function executeStatusAssessment(aiRequestId: string, actorId?: str
   })
 
   if (result.riskLevel !== 'on_track' && actorId) {
-    await supabase.from('notifications').insert({
+    await services.notification.create({
       tenant_id: aiRequest.tenant_id,
       user_id: actorId,
       type: 'system',
@@ -211,14 +163,8 @@ export async function requestStatusAssessment(input: {
 }) {
   await assertAiFeatureAllowed(input.tenantId, 'status_assessment')
 
-  const supabase = createAdminClient()
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id')
-    .eq('id', input.projectId)
-    .eq('tenant_id', input.tenantId)
-    .maybeSingle()
-
+  const services = await createAdminServices()
+  const project = await services.project.findById(input.projectId, input.tenantId)
   if (!project) throw new Error('PROJECT_NOT_FOUND')
 
   const correlationId = crypto.randomUUID()
@@ -250,25 +196,14 @@ export async function requestStatusAssessment(input: {
 }
 
 export async function getStatusAssessmentResult(projectId: string, tenantId: string) {
-  const supabase = createAdminClient()
-
-  const { data: project } = await supabase
-    .from('projects')
-    .select('ai_status_assessment, status')
-    .eq('id', projectId)
-    .eq('tenant_id', tenantId)
-    .maybeSingle()
-
-  const { data: latestRequest } = await supabase
-    .from('ai_requests')
-    .select('id, status, created_at, completed_at, result')
-    .eq('tenant_id', tenantId)
-    .eq('entity_type', 'project')
-    .eq('entity_id', projectId)
-    .eq('request_type', 'status_assessment')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const services = await createAdminServices()
+  const project = await services.project.findAiFields(projectId, tenantId)
+  const latestRequest = await services.ai.findLatestByEntity({
+    tenantId,
+    entityType: 'project',
+    entityId: projectId,
+    requestType: 'status_assessment',
+  })
 
   return {
     assessment: project?.ai_status_assessment as Record<string, unknown> | null,
@@ -286,36 +221,21 @@ export async function getStatusAssessmentResult(projectId: string, tenantId: str
 }
 
 export async function processOverdueMilestones() {
-  const supabase = createAdminClient()
+  const services = await createAdminServices()
   const now = new Date().toISOString()
-
-  const { data: overdue } = await supabase
-    .from('milestones')
-    .select('id, title, project_id, tenant_id, due_date')
-    .lt('due_date', now.split('T')[0])
-    .in('status', ['pending', 'in_progress', 'revision', 'submitted'])
-
+  const overdue = await services.workflow.listOverdueMilestones(now)
   const results: Array<{ milestoneId: string; ok: boolean }> = []
 
-  for (const milestone of overdue ?? []) {
+  for (const milestone of overdue) {
     const idempotencyKey = `milestone-overdue:${milestone.id}:${milestone.due_date}`
-
-    const { data: existing } = await supabase
-      .from('domain_events')
-      .select('id')
-      .eq('idempotency_key', idempotencyKey)
-      .maybeSingle()
+    const existing = await services.workflow.findEventByIdempotencyKey(idempotencyKey)
 
     if (existing) {
       results.push({ milestoneId: milestone.id, ok: true })
       continue
     }
 
-    const { data: project } = await supabase
-      .from('projects')
-      .select('title, assigned_by, status')
-      .eq('id', milestone.project_id)
-      .maybeSingle()
+    const project = await services.project.findAssignedBy(milestone.project_id)
 
     await emitEvent({
       tenantId: milestone.tenant_id,
@@ -331,7 +251,7 @@ export async function processOverdueMilestones() {
       },
     })
 
-    await supabase.from('activity_logs').insert({
+    await services.workflow.logActivity({
       tenant_id: milestone.tenant_id,
       actor_id: null,
       entity_type: 'milestone',
@@ -344,7 +264,7 @@ export async function processOverdueMilestones() {
     })
 
     if (project?.assigned_by) {
-      await supabase.from('notifications').insert({
+      await services.notification.create({
         tenant_id: milestone.tenant_id,
         user_id: project.assigned_by,
         type: 'system',

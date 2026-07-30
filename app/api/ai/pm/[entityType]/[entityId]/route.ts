@@ -1,9 +1,12 @@
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
-import { AppError, handleApiError, success } from '@/lib/api/response'
-import { getProjectSummaryResult, getShortlistSummaryResult } from '@/lib/integrations/ai/summary'
-import { getStatusAssessmentResult } from '@/lib/integrations/ai/status-assessment'
-import { getBriefParseResult } from '@/lib/integrations/ai/brief-parse'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { AppError, handleApiError, success } from '@/modules/core/api/response'
+import {
+  getBriefParseResult,
+  getProjectSummaryResult,
+  getShortlistSummaryResult,
+  getStatusAssessmentResult,
+} from '@/lib/queries/ai.queries'
 
 export async function GET(
   _request: Request,
