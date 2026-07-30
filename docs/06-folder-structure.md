@@ -95,6 +95,17 @@ talent-os/
 │   │   └── ...
 │   ├── domains/
 │
+├── tests/                            # Vitest test suite
+│   ├── setup.ts
+│   ├── helpers/                      # mock-supabase, mock-repositories
+│   ├── unit/
+│   ├── repository/
+│   ├── service/
+│   ├── workflow/
+│   └── integration/
+│
+├── vitest.config.ts
+│
 ├── app/                              # Next.js App Router
 │   ├── (auth)/                       # Auth layout group (no sidebar)
 │   │   ├── login/
