@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { signOut } from '@/app/actions/auth'
+import { signOut } from '@/modules/core/api/auth.actions'
 
 export async function POST() {
   await signOut()

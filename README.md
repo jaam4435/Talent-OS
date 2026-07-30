@@ -11,103 +11,54 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | Database | Supabase (PostgreSQL 15) |
 | Auth | Supabase Auth (JWT, magic links) |
 | Storage | Supabase Storage |
-| Automation | n8n |
-| Messaging | WhatsApp Cloud API |
+| Automation | n8n + Workflow Engine |
+| AI | OpenAI / Anthropic via AI Gateway |
+| Agents | MCP + configurable agent framework |
 | Deployment | Vercel |
 
-## Users
+## Documentation
 
-- **Admin** — Agency owner; full access, billing, integrations
-- **Talent Manager** — Producers; talent roster, opportunities, projects
-- **Freelancer** — Contractors; respond to gigs, submit work, track payments
+**Start here:** [docs/README.md](docs/README.md)
 
-## Core Modules
+| Guide | Description |
+|---|---|
+| [Architecture](docs/architecture.md) | System design and layers |
+| [API](docs/api.md) | Routes, actions, auth |
+| [Database](docs/database.md) | Schema, migrations, RLS |
+| [Events](docs/events.md) | Domain events and outbox |
+| [MCP](docs/mcp.md) | AI agent tool catalog |
+| [AI](docs/ai.md) | AI Gateway and features |
+| [Workflow](docs/workflow.md) | Workflow engine |
+| [Deployment](docs/deployment.md) | Vercel + Supabase |
+| [Developer Guide](docs/developer-guide.md) | Local setup and workflow |
+| [Contribution Guide](docs/contribution-guide.md) | PR standards |
+| [Operations Guide](docs/operations-guide.md) | Production ops |
+| [System Diagrams](docs/system-diagrams.md) | Mermaid diagrams |
 
-- Talent database with search, skills, and ratings
-- Opportunity broadcasting (in-app + WhatsApp)
-- Shortlisting and candidate comparison
-- Project assignment with milestones
-- Status tracking (Kanban + activity log)
-- Payment workflow (pending → approved → paid)
-- Analytics dashboards (fill rate, utilization, payment aging)
+Auto-generated catalogs (API routes, migrations, MCP tools, etc.) update via `npm run docs:generate`.
 
-## Architecture Documentation
-
-| # | Document | Description |
-|---|---|---|
-| 1 | [PRD](docs/01-PRD.md) | Product requirements, scope, KPIs, release plan |
-| 2 | [User Stories](docs/02-user-stories.md) | 36 stories across 9 epics with acceptance criteria |
-| 3 | [Database Schema](docs/03-database-schema.md) | ERD, tables, enums, views, storage buckets |
-| 4 | [**Complete Supabase Schema**](docs/04-supabase-complete-schema.md) | Tables, FKs, RLS matrix, triggers, migrations |
-| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–006 |
-| 6 | [API Architecture](docs/05-api-architecture.md) | REST endpoints, server actions, event contracts |
-| 7 | [Folder Structure](docs/06-folder-structure.md) | Next.js project tree and conventions |
-| 8 | [Authentication Design](docs/07-authentication-design.md) | Auth flows, RBAC, session management |
-| 9 | [Multi-Tenant Architecture](docs/08-multi-tenant-architecture.md) | RLS isolation, subdomain routing, scaling |
-| 10 | [n8n Workflows](docs/09-n8n-workflows.md) | 12 workflow specifications with payloads |
-| 11 | [WhatsApp Integration](docs/10-whatsapp-integration.md) | Templates, webhooks, inbound parsing |
-| 12 | [Enterprise System Architecture](docs/11-enterprise-system-architecture.md) | HLD, components, events, webhooks, security, scale |
-| 13 | [**WhatsApp + n8n Integration**](docs/12-whatsapp-n8n-integration-architecture.md) | **Unified messaging orchestration architecture** |
-| 24 | [**Technical Audit**](docs/24-technical-audit.md) | Codebase audit: architecture, schema, debt, AI roadmap |
-
-## Enterprise Architecture Highlights
-
-The [enterprise architecture document](docs/11-enterprise-system-architecture.md) covers:
-
-1. **High-Level Architecture** — C4 context, layered design, bounded contexts
-2. **Component Diagram** — Next.js, Supabase, n8n, AI gateway, shadcn/ui
-3. **Service Diagram** — Vercel, Supabase, n8n cluster, external providers
-4. **Database Architecture** — Schema layers, indexing, read/write separation
-5. **Event-Driven Architecture** — Transactional outbox, 16-event catalog, retry policy
-6. **Webhook Architecture** — Inbound gateway, HMAC verification, idempotency
-7. **Workflow Engine Design** — 14 n8n workflows, AI + email orchestration
-8. **Multi-Tenant Design** — RLS isolation, subdomain routing, tier enforcement
-9. **Security Model** — STRIDE threat model, RBAC, compliance, encryption
-10. **Scalability Model** — Capacity planning, caching, DR, cost model
-
-## Database Migrations
-
-Run in order against your Supabase project:
+## Quick Start
 
 ```bash
-supabase db push
-# or manually:
-psql -f supabase/migrations/001_initial_schema.sql
-psql -f supabase/migrations/002_rls_policies.sql
-psql -f supabase/migrations/003_functions_triggers.sql
-psql -f supabase/migrations/004_views_analytics.sql
-psql -f supabase/migrations/005_event_infrastructure.sql
-psql -f supabase/migrations/006_complete_rls_and_integrity.sql
-```
-
-## Quick Start (Development)
-
-```bash
-# Clone and install
 git clone <repo-url> && cd talent-os
 npm install
-
-# Configure environment
-cp .env.local.example .env.local
-# Fill in Supabase URL, anon key, service role key
-
-# Run Supabase migrations
+cp .env.local.example .env.local   # fill Supabase credentials
 supabase db push
-
-# Start dev server
-npm run dev
+npm run dev                        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — redirects to `/login` or `/dashboard`.
-
-### Scripts
+## Scripts
 
 | Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
+|---|---|
+| `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript check |
+| `npm run lint` | ESLint |
+| `npm test` | Run all tests |
+| `npm run test:coverage` | Tests + coverage report |
+| `npm run docs:generate` | Regenerate doc catalogs from source |
+| `npm run docs:check` | Verify catalogs are up to date (CI) |
 
 ## License
 
