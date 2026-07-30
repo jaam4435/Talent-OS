@@ -1,7 +1,11 @@
-/** Canonical whatsapp domain event type strings. */
+/** Canonical whatsapp application event type strings. */
 export const WhatsappEvents = {
-  INBOUND_MESSAGE: 'whatsapp.inbound_message',
-  STATUS_UPDATE: 'whatsapp.status_update',
+  INBOUND: 'whatsapp.inbound',
+  INTENT_HANDLED: 'whatsapp.intent_handled',
+  AGENT_REQUESTED: 'whatsapp.agent_requested',
+  OPT_OUT: 'whatsapp.opt_out',
+  UNRECOGNIZED: 'whatsapp.unrecognized',
+  SEND_REQUESTED: 'whatsapp.send_requested',
 } as const
 
 export type WhatsappEventType = (typeof WhatsappEvents)[keyof typeof WhatsappEvents]

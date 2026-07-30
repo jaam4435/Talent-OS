@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T20:26:11.078Z",
+  "generatedAt": "2026-07-30T20:42:48.221Z",
   "generator": "scripts/generate-docs.mjs",
   "files": [
     "api-routes.md",
@@ -14,7 +14,7 @@
   "counts": {
     "apiRoutes": 21,
     "actionModules": 14,
-    "migrations": 20,
+    "migrations": 21,
     "workflows": 17
   }
 }

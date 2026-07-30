@@ -18,6 +18,7 @@ import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
 import { WhatsAppService } from '@/lib/services/whatsapp.service'
 import { KnowledgeService } from '@/lib/services/knowledge.service'
 import { AgentService } from '@/lib/services/agent.service'
+import { EventPlatformService } from '@/lib/services/event-platform.service'
 import { MarketplaceService } from '@/lib/services/marketplace.service'
 import { StorageService } from '@/lib/services/storage.service'
 import type { McpExecutionContext } from '@/lib/mcp/types'
@@ -40,10 +41,12 @@ export interface Services {
   integration: IntegrationService
   marketplace: MarketplaceService
   storage: StorageService
+  eventPlatform: EventPlatformService
 }
 
 function buildServices(repos: Repositories): Services {
-  const notification = new NotificationService(repos)
+  const eventPlatform = new EventPlatformService(repos)
+  const notification = new NotificationService(repos, eventPlatform)
   const workflow = new WorkflowService(repos, notification)
   const ai = new AIService(repos)
   const crm = new CRMService(repos, notification, workflow)
@@ -52,7 +55,7 @@ function buildServices(repos: Repositories): Services {
   const project = new ProjectService(repos, workflow)
   const integration = new IntegrationService(repos, crm, ai)
   const whatsapp = new WhatsAppService(repos, integration, crm, talent, workflow, project)
-  const knowledge = new KnowledgeService(repos)
+  const knowledge = new KnowledgeService(repos, workflow)
   const agent = new AgentService(repos)
   const storage = new StorageService(repos)
 
@@ -76,6 +79,7 @@ function buildServices(repos: Repositories): Services {
     analytics: new AnalyticsService(repos),
     integration,
     storage,
+    eventPlatform,
     marketplace: null as unknown as MarketplaceService,
   }
 

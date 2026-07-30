@@ -1,5 +1,8 @@
 import { isDomainError } from '@/modules/core/utils/errors'
 import type { Repositories } from '@/lib/repositories/factory'
+import { KnowledgeEvents } from '@/modules/knowledge/events'
+import { IdempotencyKeys } from '@/lib/events/idempotency'
+import type { WorkflowService } from '@/lib/services/workflow.service'
 import type {
   CreateEmbeddingChunkInput,
   CreateKnowledgeEntryInput,
@@ -17,7 +20,10 @@ import type { PaginationParams } from '@/lib/repositories/base/types'
 const DEFAULT_CHUNK_SIZE = 1500
 
 export class KnowledgeService {
-  constructor(private readonly repos: Repositories) {}
+  constructor(
+    private readonly repos: Repositories,
+    private readonly workflow?: WorkflowService
+  ) {}
 
   async createEntry(
     tenantId: string,
@@ -34,8 +40,31 @@ export class KnowledgeService {
 
       if (parsed.data.content && parsed.data.content.length > 0) {
         await this.prepareEmbeddingChunks(tenantId, entryId, parsed.data.content)
+        if (this.workflow) {
+          await this.workflow.emitEvent({
+            tenantId,
+            eventType: KnowledgeEvents.EMBEDDING_REQUESTED,
+            aggregateType: 'knowledge_entry',
+            aggregateId: entryId,
+            idempotencyKey: IdempotencyKeys.knowledgeEmbedding(entryId),
+            actorId: userId,
+            payload: { entry_id: entryId, category: parsed.data.category },
+          })
+        }
       } else {
         await this.repos.knowledge.updateEmbeddingStatus(entryId, tenantId, 'skipped')
+      }
+
+      if (this.workflow) {
+        await this.workflow.emitEvent({
+          tenantId,
+          eventType: KnowledgeEvents.ENTRY_CREATED,
+          aggregateType: 'knowledge_entry',
+          aggregateId: entryId,
+          idempotencyKey: IdempotencyKeys.knowledgeEntry(entryId),
+          actorId: userId,
+          payload: { entry_id: entryId, category: parsed.data.category, title: parsed.data.title },
+        })
       }
 
       return { ok: true, entryId }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { validateSystemAuth } from '@/lib/integrations/system-auth'
 import { createAdminServices } from '@/lib/services/factory'
+import { runJobProcessorWorker } from '@/lib/events/workers/job-worker'
 
 export async function GET(request: Request) {
   const auth = validateSystemAuth(request.headers.get('authorization'), 'cron')
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   const limit = Number(searchParams.get('limit') ?? 50)
 
   const services = await createAdminServices()
-  const result = await services.workflowEngine.processJobQueue(limit, queue ?? undefined)
+  const result = await runJobProcessorWorker(services, limit, queue ?? undefined)
 
   return NextResponse.json(result)
 }

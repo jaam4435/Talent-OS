@@ -22,7 +22,8 @@
     "check:ai-gateway": "node scripts/check-ai-gateway-usage.mjs",
     "check:mcp-services": "node scripts/check-mcp-services.mjs",
     "mcp:contracts": "node scripts/generate-mcp-contracts.mjs",
-    "docs:generate": "node scripts/generate-docs.mjs",
+    "events:catalog": "node scripts/generate-events-catalog.mjs",
+    "docs:generate": "node scripts/generate-docs.mjs && node scripts/generate-events-catalog.mjs",
     "docs:check": "node scripts/generate-docs.mjs && git diff --exit-code docs/generated/"
   },
   "dependencies": {

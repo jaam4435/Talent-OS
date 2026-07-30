@@ -15,6 +15,8 @@ describe('DomainEventRepository.claimForDispatch', () => {
       domain_events: { data: [event], error: null },
     })
 
+    supabase.rpc = vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST202' } })
+
     const repo = new DomainEventRepository({ supabase: supabase as never })
     vi.spyOn(repo, 'listPendingForDispatch').mockResolvedValue([event] as never)
 

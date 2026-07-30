@@ -77,7 +77,14 @@ export async function prepareAgentRun(input: {
       agentId: result.context.agentId,
       sessionId: result.context.sessionId,
       tools: result.context.tools,
-      memory: result.context.memory.map((m) => ({
+      memory: result.context.memory.map((m: {
+        id: string
+        scope: string
+        memory_key: string
+        content: string
+        entity_type: string | null
+        entity_id: string | null
+      }) => ({
         id: m.id,
         scope: m.scope,
         memoryKey: m.memory_key,

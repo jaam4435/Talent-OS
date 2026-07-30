@@ -91,6 +91,21 @@ export class WorkflowRepository extends BaseRepository {
   }
 
   async listPendingJobs(limit = 50, queueName?: string) {
+    const { data, error } = await (this.ctx.supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>
+    ) => Promise<{ data: Awaited<ReturnType<WorkflowRepository['listPendingJobsLegacy']>> | null; error: unknown }>)(
+      'claim_workflow_jobs',
+      { p_limit: limit, p_queue: queueName ?? null }
+    )
+    if (!error && data !== null && data !== undefined) {
+      return data
+    }
+
+    return this.listPendingJobsLegacy(limit, queueName)
+  }
+
+  async listPendingJobsLegacy(limit = 50, queueName?: string) {
     let query = this.ctx.supabase
       .from('workflow_jobs')
       .select('*')
@@ -99,16 +114,51 @@ export class WorkflowRepository extends BaseRepository {
       .order('scheduled_at')
       .limit(limit)
 
-    if (queueName) {
-      query = query.eq('queue_name', queueName)
+    if (queueName) query = query.eq('queue_name', queueName)
+
+    const { data: pending, error: listError } = await query
+    this.throwIfError(listError)
+
+    const claimed: NonNullable<typeof pending> = []
+    for (const job of pending ?? []) {
+      const { data: row, error: claimError } = await this.ctx.supabase
+        .from('workflow_jobs')
+        .update({ status: 'processing', started_at: new Date().toISOString() })
+        .eq('id', job.id)
+        .in('status', ['pending', 'failed'])
+        .select('*')
+        .maybeSingle()
+      this.throwIfError(claimError)
+      if (row) claimed.push(row)
     }
 
-    const { data, error } = await query
+    return claimed
+  }
+
+  async listDeadLetterJobs(tenantId: string, limit = 50) {
+    const { data, error } = await this.ctx.supabase
+      .from('workflow_jobs')
+      .select('id, action_type, last_error, retry_count, created_at, run_id')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'dead_letter')
+      .order('created_at', { ascending: false })
+      .limit(limit)
     this.throwIfError(error)
     return data ?? []
   }
 
   async markJobProcessing(jobId: string): Promise<boolean> {
+    // Jobs are already marked processing by claim_workflow_jobs RPC
+    const { data } = await this.ctx.supabase
+      .from('workflow_jobs')
+      .select('id')
+      .eq('id', jobId)
+      .eq('status', 'processing')
+      .maybeSingle()
+    return !!data
+  }
+
+  async markJobProcessingLegacy(jobId: string): Promise<boolean> {
     const { data, error } = await this.ctx.supabase
       .from('workflow_jobs')
       .update({ status: 'processing', started_at: new Date().toISOString() })

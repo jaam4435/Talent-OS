@@ -8,6 +8,7 @@
 | `analytics` | [`lib/services/analytics.service.ts`](../../lib/services/analytics.service.ts) |
 | `assignment` | [`lib/services/assignment.service.ts`](../../lib/services/assignment.service.ts) |
 | `crm` | [`lib/services/crm.service.ts`](../../lib/services/crm.service.ts) |
+| `event-platform` | [`lib/services/event-platform.service.ts`](../../lib/services/event-platform.service.ts) |
 | `finance` | [`lib/services/finance.service.ts`](../../lib/services/finance.service.ts) |
 | `integration` | [`lib/services/integration.service.ts`](../../lib/services/integration.service.ts) |
 | `knowledge` | [`lib/services/knowledge.service.ts`](../../lib/services/knowledge.service.ts) |
@@ -21,4 +22,4 @@
 | `workflow-engine` | [`lib/services/workflow-engine.service.ts`](../../lib/services/workflow-engine.service.ts) |
 | `workflow` | [`lib/services/workflow.service.ts`](../../lib/services/workflow.service.ts) |
 
-**Total:** 17 services
+**Total:** 18 services

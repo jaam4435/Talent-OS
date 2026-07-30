@@ -233,6 +233,10 @@ export class WorkflowService {
     return this.repos.task.listOverdue(now)
   }
 
+  async listProcessingEvents(limit = 100) {
+    return this.repos.domainEvent.listProcessing(limit)
+  }
+
   async findEventByIdempotencyKey(idempotencyKey: string) {
     return this.repos.domainEvent.findByIdempotencyKey(idempotencyKey)
   }
