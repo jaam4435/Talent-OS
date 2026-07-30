@@ -1,6 +1,6 @@
-import { PageHeader } from '@/components/shared/page-header'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { OpportunityForm } from '@/components/opportunities/opportunity-form'
-import { requireManager } from '@/lib/auth/guards'
+import { requireManager } from '@/modules/core/services/guards'
 import { listCompanies } from '@/lib/companies/queries'
 
 export const metadata = { title: 'New opportunity' }

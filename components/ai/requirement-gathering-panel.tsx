@@ -3,9 +3,9 @@
 import { useState, useTransition } from 'react'
 import { Sparkles } from 'lucide-react'
 import { parseRequirementsFromText } from '@/app/actions/ai-pm'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/modules/core/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 import type { ParsedRequirements } from '@/lib/integrations/ai/types'
 
 interface RequirementGatheringPanelProps {

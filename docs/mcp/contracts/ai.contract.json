@@ -1,0 +1,131 @@
+{
+  "server": {
+    "id": "ai",
+    "name": "Talent OS AI",
+    "version": "1.0.0",
+    "description": "AI Gateway passthrough — matching, PM features, and structured completions. No direct LLM calls.",
+    "resourcePrefix": "talentos://ai"
+  },
+  "tools": [
+    {
+      "name": "ai_match_talent",
+      "title": "AI Talent Match",
+      "description": "Rank freelancers against an opportunity using the AI Gateway. Returns match scores and rationale.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_match_talent"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "ai_parse_brief",
+      "title": "AI Parse Brief",
+      "description": "Extract structured requirements from an opportunity brief.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_parse_brief"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "ai_project_summary",
+      "title": "AI Project Summary",
+      "description": "Generate an AI project health summary with highlights, blockers, and next actions.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_project_summary"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "ai_shortlist_summary",
+      "title": "AI Shortlist Summary",
+      "description": "Compare shortlisted candidates and recommend the best fit.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_shortlist_summary"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "ai_status_assessment",
+      "title": "AI Status Assessment",
+      "description": "Assess project delivery risk and suggest status transitions.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_status_assessment"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "ai_get_request_status",
+      "title": "Get AI Request Status",
+      "description": "Poll the status and result of an async AI request.",
+      "requiredPermission": "tenant:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_get_request_status"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "ai_complete",
+      "title": "AI Complete (Gateway)",
+      "description": "Low-level passthrough to the AI Gateway for custom structured completions. All LLM calls must use this tool.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_complete"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "ai_list_prompts",
+      "title": "List AI Prompts",
+      "description": "List registered prompt templates and versions from the AI Gateway Prompt Manager.",
+      "requiredPermission": "tenant:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#ai_list_prompts"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "talent_match",
+      "title": "talent_match",
+      "description": "Rank talent for an opportunity.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#talent_match"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "brief_parse",
+      "title": "brief_parse",
+      "description": "Parse a client brief into structured requirements.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/ai.server.ts#brief_parse"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

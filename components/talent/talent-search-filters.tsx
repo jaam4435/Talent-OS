@@ -1,10 +1,10 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { DISCIPLINES } from '@/lib/utils/constants'
+import { Button } from '@/modules/core/components/ui/button'
+import { Input } from '@/modules/core/components/ui/input'
+import { Label } from '@/modules/core/components/ui/label'
+import { DISCIPLINES } from '@/modules/core/utils/constants'
 
 export function TalentSearchFilters() {
   const router = useRouter()

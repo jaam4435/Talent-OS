@@ -15,6 +15,97 @@ talent-os/
 │       ├── ci.yml                    # Lint, type-check, test
 │       └── deploy-preview.yml        # Vercel preview on PR
 │
+├── modules/                          # Business domain modules
+│   ├── core/                         # Auth, RBAC, infra, shared UI
+│   │   ├── services/
+│   │   ├── repositories/
+│   │   ├── schemas/
+│   │   ├── types/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   └── utils/
+│   ├── knowledge/                    # Knowledge base domain types + validation
+│   │   ├── types.ts
+│   │   ├── validation.ts
+│   │   └── index.ts
+│   ├── agents/                       # Agent framework domain types + validation
+│   │   ├── types.ts
+│   │   ├── validation.ts
+│   │   └── index.ts
+│   └── marketplace/                  # Marketplace architecture (types + contracts)
+│       ├── types.ts
+│       ├── validation.ts
+│       ├── interfaces.ts
+│       └── index.ts
+│
+├── lib/
+│   ├── marketplace/                  # Marketplace boundary map
+│   │   └── boundaries.ts
+│   ├── ai/                           # AI Gateway — all LLM requests go here
+│   │   ├── gateway.ts
+│   │   ├── agent/                    # Agent framework (registry, tools, memory)
+│   │   ├── providers/
+│   │   ├── prompt/
+│   │   ├── logging/
+│   │   ├── middleware/
+│   │   ├── features/
+│   │   └── streaming/
+│   ├── mcp/                          # Model Context Protocol interfaces
+│   │   ├── types.ts
+│   │   ├── interfaces.ts
+│   │   ├── schemas/
+│   │   └── servers/                  # 10 domain MCP servers
+│   ├── repositories/                 # Data access layer (all Supabase CRUD)
+│   │   ├── base/
+│   │   ├── factory.ts                # createRepositories / createAdminRepositories
+│   │   ├── talent.repository.ts
+│   │   ├── project.repository.ts
+│   │   ├── task.repository.ts
+│   │   ├── lead.repository.ts
+│   │   ├── invoice.repository.ts
+│   │   └── ...
+│   ├── queries/                      # Read models for Server Components
+│   │   ├── projects.queries.ts
+│   │   ├── opportunities.queries.ts
+│   │   └── ...
+│   ├── services/                     # Business logic orchestrating repositories
+│   │   ├── factory.ts                # createServices / createAdminServices
+│   │   ├── project.service.ts
+│   │   ├── talent.service.ts
+│   │   ├── assignment.service.ts
+│   │   ├── crm.service.ts
+│   │   ├── workflow.service.ts
+│   │   ├── finance.service.ts
+│   │   ├── analytics.service.ts
+│   │   ├── notification.service.ts
+│   │   ├── ai.service.ts
+│   │   ├── integration.service.ts
+│   │   ├── whatsapp.service.ts
+│   │   ├── knowledge.service.ts
+│   │   └── agent.service.ts
+│   ├── workflows/                    # Workflow engine (triggers, conditions, actions)
+│   │   ├── registry.ts
+│   │   ├── engine.ts
+│   │   └── ...
+│   ├── whatsapp/                     # First-class WhatsApp interface
+│   │   ├── parser.ts
+│   │   ├── intents.ts
+│   │   ├── handlers.ts
+│   │   └── ...
+│   ├── domains/
+│
+├── tests/                            # Vitest test suite
+│   ├── setup.ts
+│   ├── helpers/                      # mock-supabase, mock-repositories
+│   ├── unit/
+│   ├── repository/
+│   ├── service/
+│   ├── workflow/
+│   └── integration/
+│
+├── vitest.config.ts
+│
 ├── app/                              # Next.js App Router
 │   ├── (auth)/                       # Auth layout group (no sidebar)
 │   │   ├── login/
@@ -235,6 +326,20 @@ talent-os/
 │       └── activity-feed.tsx
 │
 ├── lib/
+│   ├── core/                         # Shared domain foundation
+│   │   ├── context.ts                # Supabase client + RepositoryContext
+│   │   ├── errors.ts                 # DomainError, ErrorCodes
+│   │   ├── result.ts                 # ActionResult helpers
+│   │   ├── supabase-errors.ts        # PostgrestError mapping
+│   │   └── validation.ts             # Zod parse helpers
+│   ├── domains/                      # Domain-driven modules
+│   │   └── talent/                   # Freelancers, portfolio, ratings
+│   │       ├── factory.ts            # createTalentServices()
+│   │       ├── types/
+│   │       ├── validation/
+│   │       ├── mappers/
+│   │       ├── repositories/
+│   │       └── services/
 │   ├── supabase/
 │   │   ├── client.ts                 # Browser client
 │   │   ├── server.ts                 # Server component client
@@ -245,7 +350,7 @@ talent-os/
 │   │   ├── permissions.ts            # Role checks
 │   │   └── tenant-context.ts         # Resolve active tenant
 │   ├── validations/
-│   │   ├── freelancer.ts             # Zod schemas
+│   │   ├── freelancer.ts             # Zod schemas (legacy; talent uses lib/domains/talent)
 │   │   ├── opportunity.ts
 │   │   ├── project.ts
 │   │   ├── milestone.ts
@@ -295,7 +400,11 @@ talent-os/
 │   ├── 07-authentication-design.md
 │   ├── 08-multi-tenant-architecture.md
 │   ├── 09-n8n-workflows.md
-│   └── 10-whatsapp-integration.md
+│   ├── 10-whatsapp-integration.md
+│   └── 25-talent-domain-refactor.md  # Architecture refactor log
+│   └── 26-business-domains-refactor.md  # Business modules refactor log
+│   └── 27-ai-gateway.md              # AI Gateway architecture
+│   └── 28-mcp-architecture.md        # Model Context Protocol design
 │
 ├── n8n/                              # n8n workflow exports (JSON)
 │   ├── opportunity-broadcast.json

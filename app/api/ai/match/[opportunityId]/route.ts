@@ -1,7 +1,7 @@
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
-import { AppError, handleApiError, success } from '@/lib/api/response'
-import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { AppError, handleApiError, success } from '@/modules/core/api/response'
+import { getTalentMatchResults } from '@/lib/queries/ai.queries'
 
 export async function GET(
   _request: Request,
