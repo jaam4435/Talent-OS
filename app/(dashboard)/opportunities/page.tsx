@@ -3,22 +3,15 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/modules/core/components/ui/button'
 import { Badge } from '@/modules/core/components/ui/badge'
 import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
+import { getOpportunitiesForPage } from '@/lib/queries/opportunities.queries'
 
 export const metadata = { title: 'Opportunities' }
 
 export default async function OpportunitiesPage() {
   const { tenant } = await requireTenant()
-  const supabase = await createClient()
-
-  const { data: opportunities } = await supabase
-    .from('opportunities')
-    .select('id, title, status, budget, currency, client_name, response_deadline')
-    .eq('tenant_id', tenant.id)
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const opportunities = await getOpportunitiesForPage(tenant.id)
 
   return (
     <div>
@@ -33,7 +26,7 @@ export default async function OpportunitiesPage() {
         ) : null}
       </PageHeader>
 
-      {!opportunities?.length ? (
+      {!opportunities.length ? (
         <EmptyState
           title="No opportunities"
           description="Create an opportunity to start broadcasting gigs to your talent."

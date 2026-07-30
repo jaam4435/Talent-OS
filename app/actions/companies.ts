@@ -2,9 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireManager } from '@/modules/core/services/guards'
 import { requirePermission } from '@/modules/core/services/permissions'
+import { createRepositories } from '@/lib/repositories/factory'
+import { isDomainError } from '@/modules/core/utils/errors'
 
 const createCompanySchema = z.object({
   name: z.string().min(1, 'Company name is required'),
@@ -29,29 +30,24 @@ export async function createCompany(input: z.infer<typeof createCompanySchema>) 
     return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
   }
 
-  const supabase = await createClient()
-  const slug = slugify(parsed.data.name)
+  const repos = await createRepositories()
 
-  const { data, error } = await supabase
-    .from('companies')
-    .insert({
+  try {
+    const companyId = await repos.company.create({
       tenant_id: tenant.id,
       name: parsed.data.name,
-      slug,
+      slug: slugify(parsed.data.name),
       contact_email: parsed.data.contactEmail || null,
       contact_name: parsed.data.contactName || null,
       website: parsed.data.website || null,
     })
-    .select('id')
-    .single()
 
-  if (error) {
-    if (error.code === '23505') {
-      return { ok: false as const, error: 'A company with this name already exists.' }
+    revalidatePath('/companies')
+    return { ok: true as const, companyId }
+  } catch (error) {
+    if (isDomainError(error) && error.code === 'DUPLICATE') {
+      return { ok: false as const, error: error.message }
     }
-    return { ok: false as const, error: error.message }
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Create failed' }
   }
-
-  revalidatePath('/companies')
-  return { ok: true as const, companyId: data.id as string }
 }

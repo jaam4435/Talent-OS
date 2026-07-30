@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/modules/core/utils/supabase/admin'
+import { createAdminRepositories } from '@/lib/repositories/factory'
 
 export interface WhatsAppIntegrationConfig {
   phone_number_id: string
@@ -93,54 +93,21 @@ export function parseMetaWebhook(body: {
 export async function resolveTenantByPhoneNumberId(
   phoneNumberId: string
 ): Promise<string | null> {
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('integration_configs')
-    .select('tenant_id, config')
-    .eq('provider', 'whatsapp')
-    .eq('is_active', true)
-
-  for (const row of data ?? []) {
-    const config = row.config as Record<string, unknown>
-    if (config.phone_number_id === phoneNumberId) {
-      return row.tenant_id
-    }
-  }
-
-  return null
+  const repos = await createAdminRepositories()
+  return repos.integration.resolveTenantByWhatsAppPhoneNumberId(phoneNumberId)
 }
 
 export async function findFreelancerByPhone(tenantId: string, phone: string) {
-  const supabase = createAdminClient()
-  const normalized = normalizePhone(phone)
-
-  const { data } = await supabase
-    .from('freelancers')
-    .select('id, full_name, user_id, phone')
-    .eq('tenant_id', tenantId)
-    .or(`phone.eq.${normalized},phone.eq.${normalized.replace('+', '')}`)
-    .limit(1)
-    .maybeSingle()
-
-  return data
+  const repos = await createAdminRepositories()
+  return repos.talent.findByPhone(tenantId, phone)
 }
 
 export async function findPendingOpportunityRecipient(
   tenantId: string,
   freelancerId: string
 ) {
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('opportunity_recipients')
-    .select('id, opportunity_id, response')
-    .eq('tenant_id', tenantId)
-    .eq('freelancer_id', freelancerId)
-    .eq('response', 'pending')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  return data
+  const repos = await createAdminRepositories()
+  return repos.lead.findPendingRecipient(tenantId, freelancerId)
 }
 
 export async function processInboundQuickReply(input: {
@@ -151,36 +118,31 @@ export async function processInboundQuickReply(input: {
   body: string
   waMessageId: string
 }) {
-  const supabase = createAdminClient()
+  const repos = await createAdminRepositories()
   const response = parseQuickResponse(input.body)
 
-  await supabase.from('whatsapp_messages').insert({
+  await repos.whatsapp.createInbound({
     tenant_id: input.tenantId,
     freelancer_id: input.freelancerId,
-    direction: 'inbound',
     wa_message_id: input.waMessageId,
     phone: input.phone,
     body: input.body,
-    status: 'received',
   })
 
   if (!response) {
     return { handled: false as const, reason: 'unrecognized_message' }
   }
 
-  const recipient = await findPendingOpportunityRecipient(input.tenantId, input.freelancerId)
+  const recipient = await repos.lead.findPendingRecipient(input.tenantId, input.freelancerId)
   if (!recipient) {
     return { handled: false as const, reason: 'no_pending_opportunity' }
   }
 
-  await supabase
-    .from('opportunity_recipients')
-    .update({
-      response,
-      responded_at: new Date().toISOString(),
-      response_note: `Via WhatsApp: ${input.body}`,
-    })
-    .eq('id', recipient.id)
+  await repos.lead.updateRecipientResponse(recipient.id, {
+    response,
+    responded_at: new Date().toISOString(),
+    response_note: `Via WhatsApp: ${input.body}`,
+  })
 
   return {
     handled: true as const,
@@ -195,24 +157,10 @@ export async function updateDeliveryStatus(
   waMessageId: string,
   status: string
 ) {
-  const supabase = createAdminClient()
-  await supabase
-    .from('whatsapp_messages')
-    .update({ status })
-    .eq('wa_message_id', waMessageId)
+  const repos = await createAdminRepositories()
+  const recipientId = await repos.whatsapp.updateDeliveryStatus(waMessageId, status)
 
-  if (status === 'delivered') {
-    const { data: message } = await supabase
-      .from('whatsapp_messages')
-      .select('entity_id')
-      .eq('wa_message_id', waMessageId)
-      .maybeSingle()
-
-    if (message?.entity_id) {
-      await supabase
-        .from('opportunity_recipients')
-        .update({ whatsapp_delivered: true })
-        .eq('id', message.entity_id)
-    }
+  if (recipientId) {
+    await repos.lead.markWhatsAppDelivered(recipientId)
   }
 }

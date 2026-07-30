@@ -7,14 +7,12 @@ import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { Badge } from '@/modules/core/components/ui/badge'
 import { Button } from '@/modules/core/components/ui/button'
 import { runProjectSummary } from '@/app/actions/ai-pm'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
+import { getProjectDetail, mapProjectMilestones } from '@/lib/queries/projects.queries'
 import { getProjectSummaryResult } from '@/lib/integrations/ai/summary'
 import { getStatusAssessmentResult } from '@/lib/integrations/ai/status-assessment'
-import type { MilestoneRow } from '@/lib/projects/types'
 import type { ProjectStatus } from '@/modules/core/types/enums'
-import type { Tables } from '@/modules/core/types/database'
 
 export default async function ProjectDetailPage({
   params,
@@ -23,54 +21,13 @@ export default async function ProjectDetailPage({
 }) {
   const { id } = await params
   const { tenant } = await requireTenant()
-  const supabase = await createClient()
   const manager = isManager(tenant.role)
 
-  const { data: projectData } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', id)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
+  const detail = await getProjectDetail(id, tenant.id)
+  if (!detail) notFound()
 
-  const project = projectData as Tables<'projects'> | null
-
-  if (!project) notFound()
-
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('full_name, email')
-    .eq('id', project.freelancer_id)
-    .maybeSingle()
-
-  const { data: milestones } = await supabase
-    .from('milestones')
-    .select(
-      'id, title, description, status, due_date, amount, sort_order, submission_note, submitted_at, review_note'
-    )
-    .eq('project_id', id)
-    .order('sort_order')
-
-  const { data: activity } = await supabase
-    .from('activity_logs')
-    .select('action, metadata, created_at')
-    .eq('entity_type', 'project')
-    .eq('entity_id', id)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  const milestoneRows: MilestoneRow[] = (milestones ?? []).map((m) => ({
-    id: m.id,
-    title: m.title,
-    description: m.description,
-    amount: Number(m.amount),
-    dueDate: m.due_date,
-    status: m.status as MilestoneRow['status'],
-    sortOrder: m.sort_order,
-    submissionNote: m.submission_note,
-    submittedAt: m.submitted_at,
-    reviewNote: m.review_note,
-  }))
+  const { project, milestones, freelancer, activity } = detail
+  const milestoneRows = mapProjectMilestones(milestones)
 
   const pmData = manager
     ? await Promise.all([
@@ -159,7 +116,7 @@ export default async function ProjectDetailPage({
         currency={project.currency}
       />
 
-      {activity?.length ? (
+      {activity.length ? (
         <div className="mt-8 rounded-lg border">
           <div className="border-b p-4 font-medium">Recent activity</div>
           <ul className="divide-y">

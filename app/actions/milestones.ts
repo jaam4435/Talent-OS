@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireTenant } from '@/modules/core/services/session'
 import { requirePermission } from '@/modules/core/services/permissions'
 import { isManager } from '@/modules/core/services/permissions'
 import { emitEvent } from '@/lib/integrations/events'
 import type { MilestoneStatus } from '@/modules/core/types/enums'
+import { createRepositories } from '@/lib/repositories/factory'
 
 export async function updateMilestoneStatus(
   milestoneId: string,
@@ -14,15 +14,9 @@ export async function updateMilestoneStatus(
   note?: string
 ) {
   const { tenant, user } = await requireTenant()
-  const supabase = await createClient()
+  const repos = await createRepositories()
 
-  const { data: milestone } = await supabase
-    .from('milestones')
-    .select('id, project_id, status, tenant_id')
-    .eq('id', milestoneId)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
-
+  const milestone = await repos.task.findSummary(milestoneId, tenant.id)
   if (!milestone) {
     return { ok: false as const, error: 'Milestone not found' }
   }
@@ -30,36 +24,23 @@ export async function updateMilestoneStatus(
   if (isManager(tenant.role)) {
     requirePermission(tenant.role, 'projects:update')
   } else if (status === 'in_progress') {
-    const { data: project } = await supabase
-      .from('projects')
-      .select('freelancer_id')
-      .eq('id', milestone.project_id)
-      .maybeSingle()
-
+    const project = await repos.project.findSummary(milestone.project_id, tenant.id)
     if (!project) {
       return { ok: false as const, error: 'Project not found' }
     }
 
-    const { data: freelancer } = await supabase
-      .from('freelancers')
-      .select('user_id')
-      .eq('id', project.freelancer_id)
-      .maybeSingle()
-
-    if (freelancer?.user_id !== user.id) {
+    const freelancerUserId = await repos.talent.findUserIdByFreelancerId(project.freelancer_id)
+    if (freelancerUserId !== user.id) {
       return { ok: false as const, error: 'FORBIDDEN' }
     }
   } else {
     return { ok: false as const, error: 'FORBIDDEN' }
   }
 
-  const { error } = await supabase
-    .from('milestones')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', milestoneId)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  try {
+    await repos.task.update(milestoneId, { status, updated_at: new Date().toISOString() })
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Update failed' }
   }
 
   revalidatePath(`/projects/${milestone.project_id}`)
@@ -68,36 +49,20 @@ export async function updateMilestoneStatus(
 
 export async function submitMilestone(milestoneId: string, submissionNote?: string) {
   const { tenant, user } = await requireTenant()
-  const supabase = await createClient()
+  const repos = await createRepositories()
 
-  const { data: milestone } = await supabase
-    .from('milestones')
-    .select('id, project_id, title, status, tenant_id')
-    .eq('id', milestoneId)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
-
+  const milestone = await repos.task.findSummary(milestoneId, tenant.id)
   if (!milestone) {
     return { ok: false as const, error: 'Milestone not found' }
   }
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, title, assigned_by, freelancer_id')
-    .eq('id', milestone.project_id)
-    .maybeSingle()
-
+  const project = await repos.project.findById(milestone.project_id, tenant.id)
   if (!project) {
     return { ok: false as const, error: 'Project not found' }
   }
 
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('user_id')
-    .eq('id', project.freelancer_id)
-    .maybeSingle()
-
-  if (freelancer?.user_id !== user.id) {
+  const freelancerUserId = await repos.talent.findUserIdByFreelancerId(project.freelancer_id)
+  if (freelancerUserId !== user.id) {
     return { ok: false as const, error: 'Only the assigned freelancer can submit' }
   }
 
@@ -105,35 +70,24 @@ export async function submitMilestone(milestoneId: string, submissionNote?: stri
     return { ok: false as const, error: 'Milestone cannot be submitted in its current state' }
   }
 
-  const { error } = await supabase
-    .from('milestones')
-    .update({
-      status: 'submitted',
-      submission_note: submissionNote ?? null,
-      submitted_at: new Date().toISOString(),
-    })
-    .eq('id', milestoneId)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  try {
+    await repos.task.submit(milestoneId, submissionNote ?? null)
+    await repos.project.updateStatus(milestone.project_id, { status: 'in_review' })
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Submit failed' }
   }
 
-  await supabase.from('projects').update({ status: 'in_review' }).eq('id', milestone.project_id)
-
-  await supabase.from('activity_logs').insert({
+  await repos.activityLog.create({
     tenant_id: tenant.id,
     actor_id: user.id,
     entity_type: 'project',
     entity_id: milestone.project_id,
     action: 'milestone_submitted',
-    metadata: {
-      milestone_id: milestoneId,
-      milestone_title: milestone.title,
-    },
+    metadata: { milestone_id: milestoneId, milestone_title: milestone.title },
   })
 
-  if (project?.assigned_by) {
-    await supabase.from('notifications').insert({
+  if (project.assigned_by) {
+    await repos.notification.create({
       tenant_id: tenant.id,
       user_id: project.assigned_by,
       type: 'milestone_submitted',
@@ -153,7 +107,7 @@ export async function submitMilestone(milestoneId: string, submissionNote?: stri
     payload: {
       milestone_id: milestoneId,
       project_id: milestone.project_id,
-      project_title: project?.title,
+      project_title: project.title,
     },
   })
 
@@ -174,14 +128,8 @@ export async function reviewMilestone(
     return { ok: false as const, error: 'Revision feedback is required' }
   }
 
-  const supabase = await createClient()
-
-  const { data: milestone } = await supabase
-    .from('milestones')
-    .select('id, project_id, title, status, tenant_id')
-    .eq('id', milestoneId)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
+  const repos = await createRepositories()
+  const milestone = await repos.task.findSummary(milestoneId, tenant.id)
 
   if (!milestone) {
     return { ok: false as const, error: 'Milestone not found' }
@@ -193,21 +141,13 @@ export async function reviewMilestone(
 
   const newStatus = action === 'approve' ? 'approved' : 'revision'
 
-  const { error } = await supabase
-    .from('milestones')
-    .update({
-      status: newStatus,
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: user.id,
-      review_note: reviewNote ?? null,
-    })
-    .eq('id', milestoneId)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  try {
+    await repos.task.review(milestoneId, newStatus, user.id, reviewNote ?? null)
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Review failed' }
   }
 
-  await supabase.from('activity_logs').insert({
+  await repos.activityLog.create({
     tenant_id: tenant.id,
     actor_id: user.id,
     entity_type: 'project',
@@ -220,20 +160,15 @@ export async function reviewMilestone(
     },
   })
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('title, freelancer_id')
-    .eq('id', milestone.project_id)
-    .maybeSingle()
+  const project = await repos.project.findById(milestone.project_id, tenant.id)
+  const freelancerUserId = project
+    ? await repos.talent.findUserIdByFreelancerId(project.freelancer_id)
+    : null
 
-  const { data: freelancer } = project
-    ? await supabase.from('freelancers').select('user_id').eq('id', project.freelancer_id).maybeSingle()
-    : { data: null }
-
-  if (freelancer?.user_id) {
-    await supabase.from('notifications').insert({
+  if (freelancerUserId) {
+    await repos.notification.create({
       tenant_id: tenant.id,
-      user_id: freelancer.user_id,
+      user_id: freelancerUserId,
       type: action === 'approve' ? 'milestone_approved' : 'milestone_revision',
       title: action === 'approve' ? 'Milestone approved' : 'Revision requested',
       body:
@@ -245,22 +180,17 @@ export async function reviewMilestone(
   }
 
   if (action === 'approve') {
-    const { count } = await supabase
-      .from('milestones')
-      .select('id', { count: 'exact', head: true })
-      .eq('project_id', milestone.project_id)
-      .neq('status', 'approved')
-
-    if ((count ?? 0) === 0) {
-      await supabase
-        .from('projects')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', milestone.project_id)
+    const remaining = await repos.task.countNonApprovedByProject(milestone.project_id)
+    if (remaining === 0) {
+      await repos.project.updateStatus(milestone.project_id, {
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      })
     } else {
-      await supabase.from('projects').update({ status: 'active' }).eq('id', milestone.project_id)
+      await repos.project.updateStatus(milestone.project_id, { status: 'active' })
     }
   } else {
-    await supabase.from('projects').update({ status: 'active' }).eq('id', milestone.project_id)
+    await repos.project.updateStatus(milestone.project_id, { status: 'active' })
   }
 
   revalidatePath(`/projects/${milestone.project_id}`)

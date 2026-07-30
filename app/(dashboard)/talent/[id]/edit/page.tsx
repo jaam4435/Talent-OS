@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { TalentProfileForm } from '@/components/talent/talent-profile-form'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireManager } from '@/modules/core/services/guards'
+import { getTalentProfile } from '@/lib/queries/talent.queries'
 
 export default async function EditTalentPage({
   params,
@@ -12,15 +12,8 @@ export default async function EditTalentPage({
 }) {
   const { id } = await params
   const { tenant } = await requireManager()
-  const supabase = await createClient()
 
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('*')
-    .eq('id', id)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
-
+  const freelancer = await getTalentProfile(id, tenant.id)
   if (!freelancer) notFound()
 
   return (
@@ -38,13 +31,13 @@ export default async function EditTalentPage({
           fullName: freelancer.full_name,
           email: freelancer.email,
           phone: freelancer.phone ?? undefined,
-          discipline: freelancer.discipline,
+          discipline: freelancer.discipline as import('@/modules/core/types/enums').DisciplineType,
           skills: freelancer.skills ?? [],
           tags: freelancer.tags ?? [],
           dayRate: freelancer.day_rate ? Number(freelancer.day_rate) : undefined,
           bio: freelancer.bio ?? undefined,
           portfolioUrl: freelancer.portfolio_url ?? undefined,
-          availability: freelancer.availability,
+          availability: freelancer.availability as import('@/modules/core/types/enums').AvailabilityStatus,
           internalRating: freelancer.internal_rating ? Number(freelancer.internal_rating) : undefined,
           internalNotes: freelancer.internal_notes ?? undefined,
         }}

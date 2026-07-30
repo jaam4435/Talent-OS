@@ -277,6 +277,72 @@ export interface Database {
         created_at: string
         updated_at: string
       }>
+      activity_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        entity_type: string
+        entity_id: string
+        action: string
+        metadata: Json
+        created_at: string
+      }>
+      member_invites: TableDef<{
+        id: string
+        tenant_id: string
+        email: string
+        role: string
+        expires_at: string
+        created_at: string
+        accepted_at: string | null
+        revoked_at: string | null
+      }>
+      integration_configs: TableDef<{
+        id: string
+        tenant_id: string
+        provider: string
+        config: Json
+        is_active: boolean
+        created_at: string
+        updated_at: string
+      }>
+      webhook_deliveries: TableDef<{
+        id: string
+        tenant_id: string | null
+        source: string
+        idempotency_key: string
+        correlation_id: string | null
+        event_type: string | null
+        payload: Json
+        status: string
+        error_message: string | null
+        processed_at: string | null
+        created_at: string
+      }>
+      whatsapp_messages: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        direction: string
+        wa_message_id: string
+        phone: string
+        body: string
+        status: string
+        entity_id: string | null
+        created_at: string
+      }>
+      email_logs: TableDef<{
+        id: string
+        tenant_id: string
+        to_email: string | null
+        template_name: string | null
+        subject: string | null
+        status: string
+        provider_id: string | null
+        entity_type: string | null
+        entity_id: string | null
+        created_at: string
+      }>
     }
     Views: {
       v_dashboard_summary: TableDef<{

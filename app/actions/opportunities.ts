@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireManager } from '@/modules/core/services/guards'
 import { requirePermission } from '@/modules/core/services/permissions'
 import { requireTenant } from '@/modules/core/services/session'
@@ -16,6 +15,7 @@ import type {
   CreateOpportunityInput,
   OpportunityResponseInput,
 } from '@/lib/opportunities/types'
+import { createRepositories } from '@/lib/repositories/factory'
 
 export async function createOpportunity(input: CreateOpportunityInput) {
   const { tenant, user } = await requireManager()
@@ -26,23 +26,17 @@ export async function createOpportunity(input: CreateOpportunityInput) {
     return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
   }
 
-  const supabase = await createClient()
+  const repos = await createRepositories()
   const status = parsed.data.status ?? 'draft'
 
   let clientName = parsed.data.clientName ?? null
   if (parsed.data.companyId) {
-    const { data: company } = await supabase
-      .from('companies')
-      .select('name')
-      .eq('id', parsed.data.companyId)
-      .eq('tenant_id', tenant.id)
-      .maybeSingle()
-    if (company) clientName = company.name
+    const name = await repos.company.findName(parsed.data.companyId, tenant.id)
+    if (name) clientName = name
   }
 
-  const { data, error } = await supabase
-    .from('opportunities')
-    .insert({
+  try {
+    const opportunityId = await repos.lead.create({
       tenant_id: tenant.id,
       created_by: user.id,
       title: parsed.data.title,
@@ -57,15 +51,12 @@ export async function createOpportunity(input: CreateOpportunityInput) {
       response_deadline: parsed.data.responseDeadline || null,
       status,
     })
-    .select('id')
-    .single()
 
-  if (error) {
-    return { ok: false as const, error: error.message }
+    revalidatePath('/opportunities')
+    return { ok: true as const, opportunityId }
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Create failed' }
   }
-
-  revalidatePath('/opportunities')
-  return { ok: true as const, opportunityId: data.id as string }
 }
 
 export async function broadcastOpportunity(input: BroadcastOpportunityInput) {
@@ -77,14 +68,8 @@ export async function broadcastOpportunity(input: BroadcastOpportunityInput) {
     return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
   }
 
-  const supabase = await createClient()
-
-  const { data: opportunity } = await supabase
-    .from('opportunities')
-    .select('id, title, description, budget, currency, status, response_deadline')
-    .eq('id', parsed.data.opportunityId)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
+  const repos = await createRepositories()
+  const opportunity = await repos.lead.findBroadcastContext(parsed.data.opportunityId, tenant.id)
 
   if (!opportunity) {
     return { ok: false as const, error: 'Opportunity not found' }
@@ -94,13 +79,8 @@ export async function broadcastOpportunity(input: BroadcastOpportunityInput) {
     return { ok: false as const, error: 'Opportunity cannot be broadcast in its current status' }
   }
 
-  const { data: freelancers } = await supabase
-    .from('freelancers')
-    .select('id, full_name, phone, user_id, email')
-    .eq('tenant_id', tenant.id)
-    .in('id', parsed.data.freelancerIds)
-
-  if (!freelancers?.length) {
+  const freelancers = await repos.talent.findBroadcastTargets(tenant.id, parsed.data.freelancerIds)
+  if (!freelancers.length) {
     return { ok: false as const, error: 'No valid freelancers selected' }
   }
 
@@ -111,46 +91,36 @@ export async function broadcastOpportunity(input: BroadcastOpportunityInput) {
     response: 'pending' as const,
   }))
 
-  const { data: insertedRecipients, error: recipientError } = await supabase
-    .from('opportunity_recipients')
-    .upsert(recipientRows, { onConflict: 'opportunity_id,freelancer_id', ignoreDuplicates: false })
-    .select('id, freelancer_id')
-
-  if (recipientError) {
-    return { ok: false as const, error: recipientError.message }
+  let insertedRecipients: Array<{ id: string; freelancer_id: string }>
+  try {
+    insertedRecipients = await repos.lead.upsertRecipients(recipientRows)
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Broadcast failed' }
   }
 
   if (opportunity.status === 'draft') {
-    const { error: statusError } = await supabase
-      .from('opportunities')
-      .update({ status: 'open' })
-      .eq('id', opportunity.id)
-
-    if (statusError) {
-      return { ok: false as const, error: statusError.message }
+    try {
+      await repos.lead.updateStatus(opportunity.id, 'open')
+    } catch (error) {
+      return { ok: false as const, error: error instanceof Error ? error.message : 'Status update failed' }
     }
   }
 
   const freelancerMap = new Map(freelancers.map((f) => [f.id, f]))
-  const notifications = freelancers
-    .filter((f) => f.user_id)
-    .map((f) => ({
-      tenant_id: tenant.id,
-      user_id: f.user_id!,
-      type: 'opportunity_broadcast',
-      title: 'New opportunity',
-      body: opportunity.title,
-      data: {
-        opportunity_id: opportunity.id,
-        freelancer_id: f.id,
-      },
-    }))
+  await repos.notification.createMany(
+    freelancers
+      .filter((f) => f.user_id)
+      .map((f) => ({
+        tenant_id: tenant.id,
+        user_id: f.user_id!,
+        type: 'opportunity_broadcast',
+        title: 'New opportunity',
+        body: opportunity.title,
+        data: { opportunity_id: opportunity.id, freelancer_id: f.id },
+      }))
+  )
 
-  if (notifications.length) {
-    await supabase.from('notifications').insert(notifications)
-  }
-
-  const recipientsPayload = (insertedRecipients ?? []).map((r) => {
+  const recipientsPayload = insertedRecipients.map((r) => {
     const freelancer = freelancerMap.get(r.freelancer_id)
     return {
       recipient_id: r.id,
@@ -185,10 +155,7 @@ export async function broadcastOpportunity(input: BroadcastOpportunityInput) {
   revalidatePath(`/opportunities/${opportunity.id}`)
   revalidatePath(`/opportunities/${opportunity.id}/shortlist`)
 
-  return {
-    ok: true as const,
-    recipientCount: recipientsPayload.length,
-  }
+  return { ok: true as const, recipientCount: recipientsPayload.length }
 }
 
 export async function respondToOpportunity(input: OpportunityResponseInput) {
@@ -200,51 +167,31 @@ export async function respondToOpportunity(input: OpportunityResponseInput) {
     return { ok: false as const, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
   }
 
-  const supabase = await createClient()
+  const repos = await createRepositories()
+  const freelancerId = await repos.talent.findIdByUserId(user.id, tenant.id)
 
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
-
-  if (!freelancer) {
+  if (!freelancerId) {
     return { ok: false as const, error: 'No freelancer profile linked to your account' }
   }
 
-  const { data: recipient } = await supabase
-    .from('opportunity_recipients')
-    .select('id, opportunity_id')
-    .eq('opportunity_id', parsed.data.opportunityId)
-    .eq('freelancer_id', freelancer.id)
-    .maybeSingle()
-
+  const recipient = await repos.lead.findRecipient(parsed.data.opportunityId, freelancerId)
   if (!recipient) {
     return { ok: false as const, error: 'You were not invited to this opportunity' }
   }
 
-  const { error } = await supabase
-    .from('opportunity_recipients')
-    .update({
+  try {
+    await repos.lead.updateRecipient(recipient.id, {
       response: parsed.data.response,
       response_note: parsed.data.note ?? null,
       responded_at: new Date().toISOString(),
     })
-    .eq('id', recipient.id)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Response failed' }
   }
 
-  const { data: opportunity } = await supabase
-    .from('opportunities')
-    .select('created_by, title')
-    .eq('id', parsed.data.opportunityId)
-    .maybeSingle()
-
+  const opportunity = await repos.lead.findCreator(parsed.data.opportunityId)
   if (opportunity?.created_by) {
-    await supabase.from('notifications').insert({
+    await repos.notification.create({
       tenant_id: tenant.id,
       user_id: opportunity.created_by,
       type: 'opportunity_response',
@@ -252,7 +199,7 @@ export async function respondToOpportunity(input: OpportunityResponseInput) {
       body: `${parsed.data.response} — ${opportunity.title}`,
       data: {
         opportunity_id: parsed.data.opportunityId,
-        freelancer_id: freelancer.id,
+        freelancer_id: freelancerId,
         response: parsed.data.response,
       },
     })

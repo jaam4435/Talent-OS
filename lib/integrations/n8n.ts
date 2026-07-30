@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/modules/core/utils/supabase/admin'
+import { createAdminRepositories } from '@/lib/repositories/factory'
 import { signPayload } from '@/lib/integrations/encryption'
 
 export interface N8nEventEnvelope {
@@ -18,25 +18,8 @@ export interface N8nIntegrationConfig {
 }
 
 export async function getN8nConfig(tenantId: string): Promise<N8nIntegrationConfig | null> {
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('integration_configs')
-    .select('config, is_active')
-    .eq('tenant_id', tenantId)
-    .eq('provider', 'n8n')
-    .eq('is_active', true)
-    .maybeSingle()
-
-  if (!data?.config) return null
-
-  const config = data.config as Record<string, unknown>
-  if (!config.webhook_base_url || !config.webhook_secret) return null
-
-  return {
-    webhook_base_url: String(config.webhook_base_url).replace(/\/$/, ''),
-    webhook_secret: String(config.webhook_secret),
-    is_active: data.is_active,
-  }
+  const repos = await createAdminRepositories()
+  return repos.integration.getN8nConfig(tenantId)
 }
 
 export function buildN8nEnvelope(input: {

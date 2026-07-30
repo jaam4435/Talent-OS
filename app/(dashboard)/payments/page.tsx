@@ -1,45 +1,20 @@
 import { Badge } from '@/modules/core/components/ui/badge'
 import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireTenant } from '@/modules/core/services/session'
 import { formatCurrency } from '@/modules/core/utils/format'
+import { getPaymentsForPage } from '@/lib/queries/payments.queries'
 
 export const metadata = { title: 'Payments' }
 
 export default async function PaymentsPage() {
-  const { tenant } = await requireTenant()
-  const supabase = await createClient()
-
-  let query = supabase
-    .from('payments')
-    .select('id, amount, currency, status, created_at, freelancer_id')
-    .eq('tenant_id', tenant.id)
-    .order('created_at', { ascending: false })
-    .limit(50)
-
-  if (tenant.role === 'freelancer') {
-    const { data: freelancer } = await supabase
-      .from('freelancers')
-      .select('id')
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
-      .maybeSingle()
-
-    if (freelancer) query = query.eq('freelancer_id', freelancer.id)
-  }
-
-  const { data: payments } = await query
-
-  const freelancerIds = [...new Set(payments?.map((p) => p.freelancer_id) ?? [])]
-  const { data: freelancers } = freelancerIds.length
-    ? await supabase.from('freelancers').select('id, full_name').in('id', freelancerIds)
-    : { data: [] }
-  const freelancerMap = new Map(freelancers?.map((f) => [f.id, f]) ?? [])
+  const { tenant, user } = await requireTenant()
+  const { payments, freelancerMap } = await getPaymentsForPage(tenant.id, tenant.role, user.id)
 
   return (
     <div>
       <PageHeader title="Payments" description="Track payouts and approvals" />
 
-      {!payments?.length ? (
+      {!payments.length ? (
         <EmptyState
           title="No payments"
           description="Payments are created when milestones are approved."

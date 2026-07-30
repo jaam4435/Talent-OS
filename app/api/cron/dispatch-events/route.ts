@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import {
   buildN8nEnvelope,
   dispatchToN8n,
@@ -11,6 +10,7 @@ import {
   markEventProcessing,
 } from '@/lib/integrations/events'
 import { executeAiRequest } from '@/lib/integrations/ai/executor'
+import { createAdminRepositories } from '@/lib/repositories/factory'
 
 const DIRECT_AI_EVENTS = new Set([
   'ai.match_requested',
@@ -50,24 +50,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = createAdminClient()
-  const { data: events, error } = await supabase
-    .from('domain_events')
-    .select('*')
-    .in('status', ['pending', 'failed'])
-    .lte('scheduled_at', new Date().toISOString())
-    .order('created_at')
-    .limit(50)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
+  const repos = await createAdminRepositories()
+  const events = await repos.domainEvent.listPendingForDispatch(50)
   const results: Array<{ id: string; ok: boolean; error?: string }> = []
-
   const directAiMode = process.env.AI_EXECUTION_MODE === 'direct'
 
-  for (const event of events ?? []) {
+  for (const event of events) {
     await markEventProcessing(event.id)
 
     if (directAiMode && DIRECT_AI_EVENTS.has(event.event_type)) {

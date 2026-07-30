@@ -2,52 +2,34 @@ import Link from 'next/link'
 import { Briefcase, Building2, Megaphone, Users } from 'lucide-react'
 import { PageHeader, StatCard } from '@/modules/core/components/shared/page-header'
 import { Badge } from '@/modules/core/components/ui/badge'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireTenant } from '@/modules/core/services/session'
 import { isClientRole, isTalentRole } from '@/modules/core/services/permissions'
+import {
+  getClientDashboardContext,
+  getFreelancerDashboardContext,
+  getManagerDashboard,
+} from '@/lib/queries/dashboard.queries'
+import {
+  getClientDashboardProjects,
+  getProjectsForFreelancerDashboard,
+} from '@/lib/queries/projects.queries'
 
 export const metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
   const { tenant, user } = await requireTenant()
-  const supabase = await createClient()
 
   if (isClientRole(tenant.role)) {
-    const { data: membership } = await supabase
-      .from('tenant_members')
-      .select('company_id')
-      .eq('user_id', user.id)
-      .eq('tenant_id', tenant.id)
-      .maybeSingle()
-
-    let projectsQuery = supabase
-      .from('projects')
-      .select('id, title, status, client_name, budget, currency')
-      .eq('tenant_id', tenant.id)
-      .order('created_at', { ascending: false })
-      .limit(10)
-
-    if (membership?.company_id) {
-      projectsQuery = projectsQuery.eq('company_id', membership.company_id)
-    }
-
-    const { data: projects } = await projectsQuery
-
-    const { data: company } = membership?.company_id
-      ? await supabase
-          .from('companies')
-          .select('name')
-          .eq('id', membership.company_id)
-          .maybeSingle()
-      : { data: null }
+    const { companyName, companyId } = await getClientDashboardContext(user.id, tenant.id)
+    const projects = await getClientDashboardProjects(tenant.id, companyId)
 
     return (
       <div>
         <PageHeader
           title="Client dashboard"
-          description={company?.name ? `Projects for ${company.name}` : 'Your company projects'}
+          description={companyName ? `Projects for ${companyName}` : 'Your company projects'}
         />
-        {!projects?.length ? (
+        {!projects.length ? (
           <p className="text-sm text-muted-foreground">No projects yet for your company.</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -73,29 +55,16 @@ export default async function DashboardPage() {
   }
 
   if (isTalentRole(tenant.role)) {
-    const { data: freelancer } = await supabase
-      .from('freelancers')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('tenant_id', tenant.id)
-      .maybeSingle()
-
-    const { data: projects } = freelancer
-      ? await supabase
-          .from('projects')
-          .select('id, title, status')
-          .eq('freelancer_id', freelancer.id)
-          .order('created_at', { ascending: false })
-          .limit(5)
-      : { data: [] }
+    const { freelancerId } = await getFreelancerDashboardContext(user.id, tenant.id)
+    const projects = freelancerId ? await getProjectsForFreelancerDashboard(freelancerId) : []
 
     return (
       <div>
         <PageHeader title="Dashboard" description="Your assigned work" />
         <div className="grid gap-4 md:grid-cols-2">
-          <StatCard title="Assigned projects" value={projects?.length ?? 0} icon={Briefcase} />
+          <StatCard title="Assigned projects" value={projects.length} icon={Briefcase} />
         </div>
-        {projects?.length ? (
+        {projects.length ? (
           <ul className="mt-6 divide-y rounded-lg border">
             {projects.map((p) => (
               <li key={p.id} className="flex items-center justify-between p-4">
@@ -111,23 +80,7 @@ export default async function DashboardPage() {
     )
   }
 
-  const { data } = await supabase
-    .from('v_dashboard_summary')
-    .select('*')
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
-
-  const { count: companyCount } = await supabase
-    .from('companies')
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenant.id)
-
-  const summary = data as {
-    total_freelancers?: number
-    active_projects?: number
-    open_opportunities?: number
-    pending_payments?: number
-  } | null
+  const { summary, companyCount } = await getManagerDashboard(tenant.id)
 
   return (
     <div>

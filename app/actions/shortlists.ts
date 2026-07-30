@@ -1,10 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireManager } from '@/modules/core/services/guards'
 import { requirePermission } from '@/modules/core/services/permissions'
 import { getOrCreateShortlist } from '@/lib/shortlists/queries'
+import { createRepositories } from '@/lib/repositories/factory'
 
 function revalidateOpportunity(opportunityId: string) {
   revalidatePath(`/opportunities/${opportunityId}`)
@@ -19,29 +19,15 @@ export async function addToShortlist(opportunityId: string, freelancerIds: strin
     return { ok: false as const, error: 'Select at least one freelancer' }
   }
 
-  const supabase = await createClient()
-
-  const { data: opportunity } = await supabase
-    .from('opportunities')
-    .select('id')
-    .eq('id', opportunityId)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
-
-  if (!opportunity) {
+  const repos = await createRepositories()
+  const exists = await repos.lead.existsInTenant(opportunityId, tenant.id)
+  if (!exists) {
     return { ok: false as const, error: 'Opportunity not found' }
   }
 
   const shortlistId = await getOrCreateShortlist(opportunityId, tenant.id, user.id)
-
-  const { data: existingItems } = await supabase
-    .from('shortlist_items')
-    .select('rank')
-    .eq('shortlist_id', shortlistId)
-    .order('rank', { ascending: false })
-    .limit(1)
-
-  let nextRank = (existingItems?.[0]?.rank ?? 0) + 1
+  const maxRank = await repos.shortlist.findMaxRank(shortlistId)
+  let nextRank = maxRank + 1
 
   const rows = freelancerIds.map((freelancerId) => ({
     shortlist_id: shortlistId,
@@ -51,13 +37,10 @@ export async function addToShortlist(opportunityId: string, freelancerIds: strin
     status: 'active' as const,
   }))
 
-  const { error } = await supabase.from('shortlist_items').upsert(rows, {
-    onConflict: 'shortlist_id,freelancer_id',
-    ignoreDuplicates: true,
-  })
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  try {
+    await repos.shortlist.upsertItems(rows)
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Add failed' }
   }
 
   revalidateOpportunity(opportunityId)
@@ -72,20 +55,15 @@ export async function updateShortlistItem(
   const { tenant } = await requireManager()
   requirePermission(tenant.role, 'shortlists:manage')
 
-  const supabase = await createClient()
+  const repos = await createRepositories()
   const patch: Record<string, unknown> = {}
-
   if (input.rank !== undefined) patch.rank = input.rank
   if (input.notes !== undefined) patch.notes = input.notes || null
 
-  const { error } = await supabase
-    .from('shortlist_items')
-    .update(patch)
-    .eq('id', itemId)
-    .eq('tenant_id', tenant.id)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  try {
+    await repos.shortlist.updateItem(itemId, tenant.id, patch)
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Update failed' }
   }
 
   revalidateOpportunity(opportunityId)
@@ -104,19 +82,11 @@ export async function rejectShortlistCandidate(
     return { ok: false as const, error: 'Rejection reason is required' }
   }
 
-  const supabase = await createClient()
-
-  const { error } = await supabase
-    .from('shortlist_items')
-    .update({
-      status: 'rejected',
-      rejection_reason: reason.trim(),
-    })
-    .eq('id', itemId)
-    .eq('tenant_id', tenant.id)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  const repos = await createRepositories()
+  try {
+    await repos.shortlist.rejectItem(itemId, tenant.id, reason)
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Reject failed' }
   }
 
   revalidateOpportunity(opportunityId)
@@ -124,18 +94,12 @@ export async function rejectShortlistCandidate(
 }
 
 export async function addRespondentsToShortlist(opportunityId: string) {
-  const { tenant, user } = await requireManager()
+  const { tenant } = await requireManager()
   requirePermission(tenant.role, 'shortlists:manage')
 
-  const supabase = await createClient()
+  const repos = await createRepositories()
+  const freelancerIds = await repos.lead.listInterestedFreelancerIds(opportunityId)
 
-  const { data: recipients } = await supabase
-    .from('opportunity_recipients')
-    .select('freelancer_id')
-    .eq('opportunity_id', opportunityId)
-    .eq('response', 'interested')
-
-  const freelancerIds = recipients?.map((r) => r.freelancer_id) ?? []
   if (!freelancerIds.length) {
     return { ok: false as const, error: 'No interested responses to add' }
   }

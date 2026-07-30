@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireManager } from '@/modules/core/services/guards'
 import { requirePermission } from '@/modules/core/services/permissions'
 import { requireTenant } from '@/modules/core/services/session'
@@ -13,6 +12,8 @@ import {
   MANAGER_STATUS_TRANSITIONS,
 } from '@/lib/projects/types'
 import type { ProjectStatus } from '@/modules/core/types/enums'
+import { createRepositories } from '@/lib/repositories/factory'
+import { isDomainError } from '@/modules/core/utils/errors'
 
 function mapRpcError(message: string): string {
   if (message.includes('MILESTONES_REQUIRED')) return 'At least one milestone is required.'
@@ -38,7 +39,7 @@ export async function createProject(input: CreateProjectInput) {
     return { ok: false as const, error: budgetError }
   }
 
-  const supabase = await createClient()
+  const repos = await createRepositories()
   const milestonesPayload = parsed.data.milestones.map((m, index) => ({
     title: m.title,
     description: m.description ?? '',
@@ -48,45 +49,38 @@ export async function createProject(input: CreateProjectInput) {
     status: 'pending',
   }))
 
-  const { data: projectId, error } = await supabase.rpc('create_project_with_milestones', {
-    p_tenant_id: tenant.id,
-    p_assigned_by: user.id,
-    p_freelancer_id: parsed.data.freelancerId,
-    p_title: parsed.data.title,
-    p_milestones: milestonesPayload,
-    p_opportunity_id: parsed.data.opportunityId ?? null,
-    p_shortlist_id: parsed.data.shortlistId ?? null,
-    p_description: parsed.data.description ?? null,
-    p_client_name: parsed.data.clientName ?? null,
-    p_budget: parsed.data.budget ?? null,
-    p_currency: parsed.data.currency ?? tenant.currency,
-    p_status: parsed.data.status ?? 'active',
-    p_company_id: parsed.data.companyId ?? null,
-  })
-
-  if (error) {
-    return { ok: false as const, error: mapRpcError(error.message) }
+  let projectId: string
+  try {
+    projectId = await repos.project.createWithMilestones({
+      tenantId: tenant.id,
+      assignedBy: user.id,
+      freelancerId: parsed.data.freelancerId,
+      title: parsed.data.title,
+      milestones: milestonesPayload,
+      opportunityId: parsed.data.opportunityId ?? null,
+      shortlistId: parsed.data.shortlistId ?? null,
+      description: parsed.data.description ?? null,
+      clientName: parsed.data.clientName ?? null,
+      budget: parsed.data.budget ?? null,
+      currency: parsed.data.currency ?? tenant.currency,
+      status: parsed.data.status ?? 'active',
+      companyId: parsed.data.companyId ?? null,
+    })
+  } catch (error) {
+    const message = isDomainError(error) ? error.message : error instanceof Error ? error.message : 'Unknown error'
+    return { ok: false as const, error: mapRpcError(message) }
   }
 
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('full_name, email, phone, user_id')
-    .eq('id', parsed.data.freelancerId)
-    .maybeSingle()
-
-  const { data: firstMilestone } = await supabase
-    .from('milestones')
-    .select('due_date')
-    .eq('project_id', projectId as string)
-    .order('sort_order')
-    .limit(1)
-    .maybeSingle()
+  const [freelancer, firstMilestoneDue] = await Promise.all([
+    repos.talent.findContactById(parsed.data.freelancerId),
+    repos.task.findFirstDueDate(projectId),
+  ])
 
   await emitEvent({
     tenantId: tenant.id,
     eventType: 'project.assigned',
     aggregateType: 'project',
-    aggregateId: projectId as string,
+    aggregateId: projectId,
     idempotencyKey: `project-assigned:${projectId}`,
     actorId: user.id,
     payload: {
@@ -96,7 +90,7 @@ export async function createProject(input: CreateProjectInput) {
       freelancer_email: freelancer?.email,
       freelancer_phone: freelancer?.phone,
       title: parsed.data.title,
-      first_milestone_due: firstMilestone?.due_date ?? null,
+      first_milestone_due: firstMilestoneDue,
       project_url: `${process.env.NEXT_PUBLIC_APP_URL}/projects/${projectId}`,
     },
   })
@@ -107,21 +101,15 @@ export async function createProject(input: CreateProjectInput) {
     revalidatePath(`/opportunities/${parsed.data.opportunityId}/shortlist`)
   }
 
-  return { ok: true as const, projectId: projectId as string }
+  return { ok: true as const, projectId }
 }
 
 export async function updateProjectStatus(projectId: string, status: ProjectStatus) {
-  const { tenant, user } = await requireManager()
+  const { tenant } = await requireManager()
   requirePermission(tenant.role, 'projects:update')
 
-  const supabase = await createClient()
-
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, status, tenant_id')
-    .eq('id', projectId)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
+  const repos = await createRepositories()
+  const project = await repos.project.findSummary(projectId, tenant.id)
 
   if (!project) {
     return { ok: false as const, error: 'Project not found' }
@@ -140,10 +128,10 @@ export async function updateProjectStatus(projectId: string, status: ProjectStat
     patch.completed_at = new Date().toISOString()
   }
 
-  const { error } = await supabase.from('projects').update(patch).eq('id', projectId)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  try {
+    await repos.project.updateStatus(projectId, patch)
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Update failed' }
   }
 
   revalidatePath('/projects')
@@ -152,38 +140,21 @@ export async function updateProjectStatus(projectId: string, status: ProjectStat
 }
 
 export async function updateProjectStatusAsFreelancer(projectId: string, status: ProjectStatus) {
-  const { tenant } = await requireTenant()
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { ok: false as const, error: 'UNAUTHORIZED' }
-  }
+  const { tenant, user } = await requireTenant()
 
   if (tenant.role !== 'freelancer') {
     return { ok: false as const, error: 'FORBIDDEN' }
   }
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id, status, tenant_id, freelancer_id')
-    .eq('id', projectId)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
+  const repos = await createRepositories()
+  const project = await repos.project.findSummary(projectId, tenant.id)
 
   if (!project) {
     return { ok: false as const, error: 'Project not found' }
   }
 
-  const { data: freelancer } = await supabase
-    .from('freelancers')
-    .select('user_id')
-    .eq('id', project.freelancer_id)
-    .maybeSingle()
-
-  if (freelancer?.user_id !== user.id) {
+  const freelancerUserId = await repos.talent.findUserIdByFreelancerId(project.freelancer_id)
+  if (freelancerUserId !== user.id) {
     return { ok: false as const, error: 'FORBIDDEN' }
   }
 
@@ -192,10 +163,10 @@ export async function updateProjectStatusAsFreelancer(projectId: string, status:
     return { ok: false as const, error: `Cannot move project to ${status}` }
   }
 
-  const { error } = await supabase.from('projects').update({ status }).eq('id', projectId)
-
-  if (error) {
-    return { ok: false as const, error: error.message }
+  try {
+    await repos.project.updateStatus(projectId, { status })
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : 'Update failed' }
   }
 
   revalidatePath('/projects')

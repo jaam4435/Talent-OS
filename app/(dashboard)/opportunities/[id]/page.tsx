@@ -7,12 +7,11 @@ import { OpportunityRequirementsCard } from '@/components/opportunities/opportun
 import { AiMatchPanel } from '@/components/opportunities/ai-match-panel'
 import { BroadcastPanel } from '@/components/opportunities/broadcast-panel'
 import { OpportunityResponseForm } from '@/components/opportunities/opportunity-response-form'
-import { createClient } from '@/modules/core/utils/supabase/server'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
+import { getOpportunityPageData } from '@/lib/queries/opportunities.queries'
 import { getTalentMatchResults } from '@/lib/integrations/ai/matching'
 import { formatCurrency } from '@/modules/core/utils/format'
-import type { Tables } from '@/modules/core/types/database'
 import type { ParsedRequirements } from '@/lib/integrations/ai/types'
 
 export default async function OpportunityDetailPage({
@@ -22,59 +21,13 @@ export default async function OpportunityDetailPage({
 }) {
   const { id } = await params
   const { tenant, user } = await requireTenant()
-  const supabase = await createClient()
   const manager = isManager(tenant.role)
 
-  const { data } = await supabase
-    .from('opportunities')
-    .select('*')
-    .eq('id', id)
-    .eq('tenant_id', tenant.id)
-    .maybeSingle()
+  const pageData = await getOpportunityPageData(id, tenant.id, user.id, manager)
+  if (!pageData) notFound()
 
-  const opportunity = data as Tables<'opportunities'> | null
-  if (!opportunity) notFound()
-
-  const { data: recipients } = await supabase
-    .from('opportunity_recipients')
-    .select('id, response, freelancer_id, whatsapp_sent_at, whatsapp_delivered')
-    .eq('opportunity_id', id)
-
-  const freelancerIds = recipients?.map((r) => r.freelancer_id) ?? []
-  const { data: freelancers } = freelancerIds.length
-    ? await supabase
-        .from('freelancers')
-        .select('id, full_name, email')
-        .in('id', freelancerIds)
-    : { data: [] }
-
-  const freelancerMap = new Map(freelancers?.map((f) => [f.id, f]) ?? [])
-
-  let ownRecipient: { response: string } | null = null
-  if (!manager) {
-    const { data: ownFreelancer } = await supabase
-      .from('freelancers')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('tenant_id', tenant.id)
-      .maybeSingle()
-
-    ownRecipient =
-      recipients?.find((r) => r.freelancer_id === ownFreelancer?.id) ?? null
-  }
-
+  const { opportunity, recipients, freelancerMap, roster, ownRecipient, freelancerIds } = pageData
   const matchResults = manager ? await getTalentMatchResults(id, tenant.id) : null
-
-  const { data: roster } = manager
-    ? await supabase
-        .from('freelancers')
-        .select('id, full_name, email, discipline, availability')
-        .eq('tenant_id', tenant.id)
-        .in('availability', ['available', 'busy'])
-        .order('full_name')
-        .limit(100)
-    : { data: [] }
-
   const canBroadcast = manager && ['draft', 'open'].includes(opportunity.status)
 
   return (
@@ -138,7 +91,7 @@ export default async function OpportunityDetailPage({
         <div className="mb-6">
           <BroadcastPanel
             opportunityId={id}
-            freelancers={roster ?? []}
+            freelancers={roster}
             existingRecipientIds={freelancerIds}
             canBroadcast={canBroadcast}
           />
@@ -156,7 +109,7 @@ export default async function OpportunityDetailPage({
 
       <div className="rounded-lg border">
         <div className="border-b p-4 font-medium">Broadcast log</div>
-        {!recipients?.length ? (
+        {!recipients.length ? (
           <p className="p-4 text-sm text-muted-foreground">No recipients yet</p>
         ) : (
           <ul className="divide-y">

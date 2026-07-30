@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/modules/core/utils/supabase/admin'
 import { verifyMetaSignature } from '@/lib/integrations/encryption'
 import {
   parseMetaWebhook,
@@ -9,6 +8,8 @@ import {
   updateDeliveryStatus,
 } from '@/lib/integrations/whatsapp'
 import { buildN8nEnvelope, dispatchToN8n } from '@/lib/integrations/n8n'
+import { createAdminRepositories } from '@/lib/repositories/factory'
+import type { Json } from '@/modules/core/types/database'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -34,20 +35,14 @@ export async function POST(request: Request) {
 
   const body = JSON.parse(rawBody)
   const { inbound, statuses } = parseMetaWebhook(body)
-  const supabase = createAdminClient()
+  const repos = await createAdminRepositories()
 
   for (const status of statuses) {
     const idempotencyKey = `wa-status:${status.waMessageId}:${status.status}`
-    const { data: existing } = await supabase
-      .from('webhook_deliveries')
-      .select('id')
-      .eq('source', 'whatsapp')
-      .eq('idempotency_key', idempotencyKey)
-      .maybeSingle()
-
+    const existing = await repos.webhookDelivery.findByIdempotency('whatsapp', idempotencyKey)
     if (existing) continue
 
-    await supabase.from('webhook_deliveries').insert({
+    await repos.webhookDelivery.create({
       source: 'whatsapp',
       idempotency_key: idempotencyKey,
       event_type: 'status_update',
@@ -61,12 +56,7 @@ export async function POST(request: Request) {
 
   for (const message of inbound) {
     const idempotencyKey = `wa-inbound:${message.waMessageId}`
-    const { data: existing } = await supabase
-      .from('webhook_deliveries')
-      .select('id')
-      .eq('source', 'whatsapp')
-      .eq('idempotency_key', idempotencyKey)
-      .maybeSingle()
+    const existing = await repos.webhookDelivery.findByIdempotency('whatsapp', idempotencyKey)
 
     if (existing) {
       return NextResponse.json({ status: 'duplicate' })
@@ -74,10 +64,10 @@ export async function POST(request: Request) {
 
     const tenantId = await resolveTenantByPhoneNumberId(message.phoneNumberId)
     if (!tenantId) {
-      await supabase.from('webhook_deliveries').insert({
+      await repos.webhookDelivery.create({
         source: 'whatsapp',
         idempotency_key: idempotencyKey,
-        payload: message,
+        payload: message as unknown as Json,
         status: 'failed',
         error_message: 'tenant_not_found',
       })
@@ -86,11 +76,11 @@ export async function POST(request: Request) {
 
     const freelancer = await findFreelancerByPhone(tenantId, message.phone)
     if (!freelancer) {
-      await supabase.from('webhook_deliveries').insert({
+      await repos.webhookDelivery.create({
         tenant_id: tenantId,
         source: 'whatsapp',
         idempotency_key: idempotencyKey,
-        payload: message,
+        payload: message as unknown as Json,
         status: 'failed',
         error_message: 'freelancer_not_found',
       })
@@ -115,12 +105,12 @@ export async function POST(request: Request) {
       waMessageId: message.waMessageId,
     })
 
-    await supabase.from('webhook_deliveries').insert({
+    await repos.webhookDelivery.create({
       tenant_id: tenantId,
       source: 'whatsapp',
       idempotency_key: idempotencyKey,
       event_type: 'inbound_message',
-      payload: { message, result },
+      payload: { message, result } as unknown as Json,
       status: 'processed',
       processed_at: new Date().toISOString(),
     })

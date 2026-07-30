@@ -1,4 +1,4 @@
-import { createClient } from '@/modules/core/utils/supabase/server'
+import { createRepositoryContext } from '@/lib/repositories/context'
 import { FreelancerRepository } from '@/lib/domains/talent/repositories/freelancer.repository'
 import { PortfolioRepository } from '@/lib/domains/talent/repositories/portfolio.repository'
 import { RatingRepository } from '@/lib/domains/talent/repositories/rating.repository'
@@ -12,8 +12,7 @@ export interface TalentServices {
 }
 
 export async function createTalentServices(): Promise<TalentServices> {
-  const supabase = await createClient()
-  const context = { supabase }
+  const context = await createRepositoryContext()
 
   const freelancerRepository = new FreelancerRepository(context)
   const portfolioRepository = new PortfolioRepository(context)

@@ -40,6 +40,19 @@ talent-os/
 │   │   ├── interfaces.ts
 │   │   ├── schemas/
 │   │   └── servers/                  # 10 domain MCP servers
+│   ├── repositories/                 # Data access layer (all Supabase CRUD)
+│   │   ├── base/
+│   │   ├── factory.ts                # createRepositories / createAdminRepositories
+│   │   ├── talent.repository.ts
+│   │   ├── project.repository.ts
+│   │   ├── task.repository.ts
+│   │   ├── lead.repository.ts
+│   │   ├── invoice.repository.ts
+│   │   └── ...
+│   ├── queries/                      # Read models for Server Components
+│   │   ├── projects.queries.ts
+│   │   ├── opportunities.queries.ts
+│   │   └── ...
 │   ├── domains/
 │
 ├── app/                              # Next.js App Router
