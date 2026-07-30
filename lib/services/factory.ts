@@ -15,6 +15,7 @@ import { AIService } from '@/lib/services/ai.service'
 import { IntegrationService } from '@/lib/services/integration.service'
 import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
 import { WhatsAppService } from '@/lib/services/whatsapp.service'
+import { KnowledgeService } from '@/lib/services/knowledge.service'
 
 export interface Services {
   project: ProjectService
@@ -24,6 +25,7 @@ export interface Services {
   workflow: WorkflowService
   workflowEngine: WorkflowEngineService
   whatsapp: WhatsAppService
+  knowledge: KnowledgeService
   finance: FinanceService
   analytics: AnalyticsService
   notification: NotificationService
@@ -40,6 +42,7 @@ function buildServices(repos: Repositories): Services {
   const project = new ProjectService(repos, workflow)
   const integration = new IntegrationService(repos, crm, ai)
   const whatsapp = new WhatsAppService(repos, integration, crm, talent, workflow, project)
+  const knowledge = new KnowledgeService(repos)
 
   let services!: Services
   const workflowEngine = new WorkflowEngineService(repos, async () => services)
@@ -49,6 +52,7 @@ function buildServices(repos: Repositories): Services {
     workflow,
     workflowEngine,
     whatsapp,
+    knowledge,
     ai,
     crm,
     talent,

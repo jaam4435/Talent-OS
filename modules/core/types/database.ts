@@ -267,6 +267,52 @@ export interface Database {
         created_at: string
         updated_at: string
       }>
+      knowledge_entries: TableDef<{
+        id: string
+        tenant_id: string
+        category:
+          | 'meeting_note'
+          | 'sop'
+          | 'client_preference'
+          | 'project_history'
+          | 'deliverable'
+          | 'feedback'
+          | 'document'
+        title: string
+        content: string | null
+        summary: string | null
+        entity_type: string | null
+        entity_id: string | null
+        company_id: string | null
+        project_id: string | null
+        opportunity_id: string | null
+        freelancer_id: string | null
+        milestone_id: string | null
+        storage_bucket: string | null
+        storage_path: string | null
+        mime_type: string | null
+        file_size_bytes: number | null
+        tags: string[]
+        metadata: Json
+        embedding_status: 'pending' | 'processing' | 'indexed' | 'failed' | 'skipped'
+        created_by: string | null
+        updated_by: string | null
+        created_at: string
+        updated_at: string
+      }>
+      knowledge_embeddings: TableDef<{
+        id: string
+        tenant_id: string
+        entry_id: string
+        chunk_index: number
+        content: string
+        token_count: number | null
+        embedding: string | null
+        model: string | null
+        model_version: string | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
@@ -499,6 +545,77 @@ export interface Database {
           p_offset?: number | null
         }
         Returns: Tables<'freelancers'>[]
+      }
+      search_knowledge_entries: {
+        Args: {
+          p_tenant_id: string
+          p_query: string
+          p_categories?:
+            | (
+                | 'meeting_note'
+                | 'sop'
+                | 'client_preference'
+                | 'project_history'
+                | 'deliverable'
+                | 'feedback'
+                | 'document'
+              )[]
+            | null
+          p_entity_type?: string | null
+          p_entity_id?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Array<{
+          id: string
+          category:
+            | 'meeting_note'
+            | 'sop'
+            | 'client_preference'
+            | 'project_history'
+            | 'deliverable'
+            | 'feedback'
+            | 'document'
+          title: string
+          summary: string | null
+          content: string | null
+          entity_type: string | null
+          entity_id: string | null
+          rank: number
+        }>
+      }
+      search_knowledge_vector: {
+        Args: {
+          p_tenant_id: string
+          p_query_embedding: string
+          p_categories?:
+            | (
+                | 'meeting_note'
+                | 'sop'
+                | 'client_preference'
+                | 'project_history'
+                | 'deliverable'
+                | 'feedback'
+                | 'document'
+              )[]
+            | null
+          p_limit?: number
+        }
+        Returns: Array<{
+          entry_id: string
+          chunk_id: string
+          category:
+            | 'meeting_note'
+            | 'sop'
+            | 'client_preference'
+            | 'project_history'
+            | 'deliverable'
+            | 'feedback'
+            | 'document'
+          title: string
+          chunk_content: string
+          similarity: number
+        }>
       }
     }
     Enums: Record<string, never>

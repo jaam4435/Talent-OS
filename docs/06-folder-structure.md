@@ -16,15 +16,19 @@ talent-os/
 │       └── deploy-preview.yml        # Vercel preview on PR
 │
 ├── modules/                          # Business domain modules
-│   └── core/                         # Auth, RBAC, infra, shared UI
-│       ├── services/
-│       ├── repositories/
-│       ├── schemas/
-│       ├── types/
-│       ├── api/
-│       ├── components/
-│       ├── hooks/
-│       └── utils/
+│   ├── core/                         # Auth, RBAC, infra, shared UI
+│   │   ├── services/
+│   │   ├── repositories/
+│   │   ├── schemas/
+│   │   ├── types/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   └── utils/
+│   └── knowledge/                    # Knowledge base domain types + validation
+│       ├── types.ts
+│       ├── validation.ts
+│       └── index.ts
 │
 ├── lib/
 │   ├── ai/                           # AI Gateway — all LLM requests go here
@@ -64,7 +68,9 @@ talent-os/
 │   │   ├── analytics.service.ts
 │   │   ├── notification.service.ts
 │   │   ├── ai.service.ts
-│   │   └── integration.service.ts
+│   │   ├── integration.service.ts
+│   │   ├── whatsapp.service.ts
+│   │   └── knowledge.service.ts
 │   ├── workflows/                    # Workflow engine (triggers, conditions, actions)
 │   │   ├── registry.ts
 │   │   ├── engine.ts

@@ -60,6 +60,9 @@ export { WorkflowRepository } from '@/lib/repositories/workflow.repository'
 
 export { WhatsappConversationRepository } from '@/lib/repositories/whatsapp-conversation.repository'
 
+export { KnowledgeRepository } from '@/lib/repositories/knowledge.repository'
+export { KnowledgeEmbeddingRepository } from '@/lib/repositories/knowledge-embedding.repository'
+
 export {
   IntegrationConfigRepository,
   WebhookDeliveryRepository,

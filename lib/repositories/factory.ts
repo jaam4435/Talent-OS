@@ -26,6 +26,8 @@ import { PortfolioRepository } from '@/lib/domains/talent/repositories/portfolio
 import { RatingRepository } from '@/lib/domains/talent/repositories/rating.repository'
 import { WorkflowRepository } from '@/lib/repositories/workflow.repository'
 import { WhatsappConversationRepository } from '@/lib/repositories/whatsapp-conversation.repository'
+import { KnowledgeRepository } from '@/lib/repositories/knowledge.repository'
+import { KnowledgeEmbeddingRepository } from '@/lib/repositories/knowledge-embedding.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -51,6 +53,8 @@ export interface Repositories {
   rating: RatingRepository
   workflow: WorkflowRepository
   whatsappConversation: WhatsappConversationRepository
+  knowledge: KnowledgeRepository
+  knowledgeEmbedding: KnowledgeEmbeddingRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -78,6 +82,8 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     rating: new RatingRepository(ctx),
     workflow: new WorkflowRepository(ctx),
     whatsappConversation: new WhatsappConversationRepository(ctx),
+    knowledge: new KnowledgeRepository(ctx),
+    knowledgeEmbedding: new KnowledgeEmbeddingRepository(ctx),
   }
 }
 
