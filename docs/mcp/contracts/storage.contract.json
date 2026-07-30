@@ -1,0 +1,83 @@
+{
+  "server": {
+    "id": "storage",
+    "name": "Talent OS Storage",
+    "version": "1.0.0",
+    "description": "Supabase Storage operations for portfolio, deliverables, and attachments.",
+    "resourcePrefix": "talentos://storage"
+  },
+  "tools": [
+    {
+      "name": "storage_upload_file",
+      "title": "Upload File",
+      "description": "Upload a file to Supabase Storage and return the storage path.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/storage.server.ts#storage_upload_file"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "storage_get_signed_url",
+      "title": "Get Signed URL",
+      "description": "Generate a time-limited signed URL for private file access.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/storage.server.ts#storage_get_signed_url"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "storage_get_public_url",
+      "title": "Get Public URL",
+      "description": "Return the public URL for a file in a public bucket.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/storage.server.ts#storage_get_public_url"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "storage_delete_file",
+      "title": "Delete File",
+      "description": "Remove a file from storage.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/storage.server.ts#storage_delete_file"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "storage_list_files",
+      "title": "List Files",
+      "description": "List files in a storage bucket path prefix.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/storage.server.ts#storage_list_files"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "storage_move_file",
+      "title": "Move File",
+      "description": "Move or rename a file within a bucket.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/storage.server.ts#storage_move_file"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

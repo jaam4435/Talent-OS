@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { hashInviteToken } from '@/lib/auth/invites'
-import { success, handleApiError, AppError } from '@/lib/api/response'
-import { formatRole } from '@/lib/auth/roles'
+import { createClient } from '@/modules/core/utils/supabase/server'
+import { hashInviteToken } from '@/modules/core/services/invites'
+import { success, handleApiError, AppError } from '@/modules/core/api/response'
+import { formatRole } from '@/modules/core/services/roles'
 
 export async function GET(
   _request: Request,

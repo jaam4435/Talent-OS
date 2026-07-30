@@ -1,0 +1,83 @@
+{
+  "server": {
+    "id": "analytics",
+    "name": "Talent OS Analytics",
+    "version": "1.0.0",
+    "description": "Operational KPIs, fill rate, utilization, and AI usage metrics.",
+    "resourcePrefix": "talentos://analytics"
+  },
+  "tools": [
+    {
+      "name": "analytics_dashboard_summary",
+      "title": "Dashboard Summary",
+      "description": "Retrieve high-level KPIs: active projects, open opportunities, talent count, pending payments.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/analytics.server.ts#analytics_dashboard_summary"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "analytics_fill_rate",
+      "title": "Opportunity Fill Rate",
+      "description": "Calculate opportunity-to-project conversion and time-to-fill metrics.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/analytics.server.ts#analytics_fill_rate"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "analytics_talent_utilization",
+      "title": "Talent Utilization",
+      "description": "Report on freelancer utilization, availability, and assignment load.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/analytics.server.ts#analytics_talent_utilization"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "analytics_payment_aging",
+      "title": "Payment Aging Analytics",
+      "description": "Analyze outstanding payment volumes by age bucket and freelancer.",
+      "requiredPermission": "analytics:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/analytics.server.ts#analytics_payment_aging"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "analytics_ai_usage",
+      "title": "AI Usage Analytics",
+      "description": "Summarize AI request volume, token usage, and estimated cost by feature.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/analytics.server.ts#analytics_ai_usage"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "analytics_pipeline_health",
+      "title": "Pipeline Health",
+      "description": "Opportunity pipeline metrics: open, stale, overdue responses, and shortlist conversion.",
+      "requiredPermission": "analytics:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/analytics.server.ts#analytics_pipeline_health"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

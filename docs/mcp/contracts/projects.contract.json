@@ -1,0 +1,95 @@
+{
+  "server": {
+    "id": "projects",
+    "name": "Talent OS Projects",
+    "version": "1.0.0",
+    "description": "Project lifecycle, milestones, and deliverable workflows.",
+    "resourcePrefix": "talentos://projects"
+  },
+  "tools": [
+    {
+      "name": "projects_list",
+      "title": "List Projects",
+      "description": "List projects for the tenant with optional status and freelancer filters.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/projects.server.ts#projects_list"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "projects_get",
+      "title": "Get Project",
+      "description": "Retrieve project details including milestones and assigned talent.",
+      "requiredPermission": "projects:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/projects.server.ts#projects_get"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "projects_create",
+      "title": "Create Project",
+      "description": "Create a project with optional initial milestones.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/projects.server.ts#projects_create"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "projects_update_status",
+      "title": "Update Project Status",
+      "description": "Transition a project to a new lifecycle status.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/projects.server.ts#projects_update_status"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "projects_list_milestones",
+      "title": "List Milestones",
+      "description": "List milestones for a project ordered by sort order.",
+      "requiredPermission": "projects:read",
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/projects.server.ts#projects_list_milestones"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "projects_submit_milestone",
+      "title": "Submit Milestone",
+      "description": "Freelancer submits deliverables for milestone review.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/projects.server.ts#projects_submit_milestone"
+      },
+      "serviceLayer": true
+    },
+    {
+      "name": "projects_review_milestone",
+      "title": "Review Milestone",
+      "description": "Manager approves or requests revision on a submitted milestone.",
+      "requiredPermission": null,
+      "destructive": false,
+      "inputSchema": {
+        "type": "object",
+        "$ref": "lib/mcp/servers/projects.server.ts#projects_review_milestone"
+      },
+      "serviceLayer": true
+    }
+  ]
+}

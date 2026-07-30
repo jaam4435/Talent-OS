@@ -4,10 +4,10 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { MessageSquare } from 'lucide-react'
 import { respondToOpportunity } from '@/app/actions/opportunities'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/modules/core/components/ui/button'
+import { Input } from '@/modules/core/components/ui/input'
+import { Label } from '@/modules/core/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 
 interface OpportunityResponseFormProps {
   opportunityId: string

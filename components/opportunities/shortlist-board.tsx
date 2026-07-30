@@ -8,10 +8,10 @@ import {
   rejectShortlistCandidate,
   updateShortlistItem,
 } from '@/app/actions/shortlists'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { formatCurrency } from '@/lib/utils/format'
+import { Button } from '@/modules/core/components/ui/button'
+import { Badge } from '@/modules/core/components/ui/badge'
+import { Input } from '@/modules/core/components/ui/input'
+import { formatCurrency } from '@/modules/core/utils/format'
 import type { ShortlistItemView } from '@/lib/shortlists/queries'
 
 const REJECTION_REASONS = [
