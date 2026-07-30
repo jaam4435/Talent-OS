@@ -19,6 +19,7 @@ Central documentation hub for Talent OS. Guides are maintained manually; referen
 | Roadmap | [19 Roadmap](./Platform/19%20Roadmap.md) |
 | Security | [13 Security Model](./Platform/13%20Security%20Model.md) |
 | Staff audit | [FINAL Audit](./FINAL_AUDIT.md) |
+| Gap analysis | [Architecture Gap Analysis](./Platform/Architecture%20Gap%20Analysis.md) |
 
 ---
 

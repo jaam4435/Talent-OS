@@ -42,6 +42,13 @@ This folder is the **authoritative architectural blueprint** for evolving Talent
 | 19 | [Roadmap](19%20Roadmap.md) | Phased delivery plan |
 | 20 | [Technical Decisions](20%20Technical%20Decisions.md) | ADRs and decision log |
 
+### Analysis
+
+| Document | Summary |
+|----------|---------|
+| [Architecture Gap Analysis](Architecture%20Gap%20Analysis.md) | Repository vs blueprint — module maturity, gaps, remediation backlog |
+| [FINAL Audit](../FINAL_AUDIT.md) | Point-in-time security and technical findings |
+
 ---
 
 ## Reading Order
