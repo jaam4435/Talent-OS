@@ -81,6 +81,11 @@ export interface Database {
         tags: string[]
         metadata: Json
         last_active_at: string | null
+        marketplace_visibility: 'private' | 'tenant' | 'marketplace'
+        public_slug: string | null
+        marketplace_headline: string | null
+        marketplace_bio: string | null
+        marketplace_published_at: string | null
         created_at: string
         updated_at: string
       }>
@@ -392,6 +397,109 @@ export interface Database {
         created_at: string
         updated_at: string
       }>
+      talent_availability_blocks: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        block_type: 'available' | 'busy' | 'booked' | 'time_off'
+        starts_at: string
+        ends_at: string
+        capacity_pct: number
+        timezone: string
+        notes: string | null
+        created_at: string
+        updated_at: string
+      }>
+      marketplace_ratings: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        source: 'internal' | 'client' | 'peer' | 'project_completion'
+        rating: number
+        reviewer_type: string
+        reviewer_id: string | null
+        project_id: string | null
+        visibility: 'private' | 'tenant' | 'marketplace'
+        review_text: string | null
+        created_at: string
+      }>
+      marketplace_contracts: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string | null
+        opportunity_id: string | null
+        status:
+          | 'draft'
+          | 'sent'
+          | 'viewed'
+          | 'signed'
+          | 'active'
+          | 'completed'
+          | 'terminated'
+          | 'canceled'
+        title: string
+        terms: Json
+        document_path: string | null
+        effective_date: string | null
+        expires_at: string | null
+        signed_at: string | null
+        created_by: string | null
+        created_at: string
+        updated_at: string
+      }>
+      marketplace_contract_parties: TableDef<{
+        id: string
+        contract_id: string
+        party_type: 'agency' | 'client' | 'freelancer' | 'witness'
+        entity_type: string
+        entity_id: string
+        signed_at: string | null
+        signature_reference: string | null
+        created_at: string
+      }>
+      marketplace_contract_events: TableDef<{
+        id: string
+        contract_id: string
+        event_type: string
+        actor_id: string | null
+        metadata: Json
+        created_at: string
+      }>
+      marketplace_invitations: TableDef<{
+        id: string
+        tenant_id: string
+        type: 'broadcast' | 'direct' | 'application' | 'marketplace'
+        opportunity_id: string | null
+        freelancer_id: string
+        listing_id: string | null
+        status: 'pending' | 'viewed' | 'accepted' | 'declined' | 'expired' | 'withdrawn'
+        proposal: Json | null
+        message: string | null
+        expires_at: string | null
+        responded_at: string | null
+        created_by: string | null
+        created_at: string
+        updated_at: string
+      }>
+      marketplace_recommendations: TableDef<{
+        id: string
+        tenant_id: string
+        type:
+          | 'talent_for_opportunity'
+          | 'opportunity_for_talent'
+          | 'similar_talent'
+          | 're_engagement'
+        source_entity_type: string
+        source_entity_id: string
+        target_entity_type: string
+        target_entity_id: string
+        score: number
+        rationale: string | null
+        metadata: Json
+        expires_at: string | null
+        dismissed_at: string | null
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
@@ -422,6 +530,8 @@ export interface Database {
         rationale: string | null
         skill_overlap: string[]
         rank: number | null
+        match_source: 'ai' | 'rule_based' | 'marketplace' | 'manual'
+        match_context: Json
         created_at: string
       }>
       freelancer_portfolio_items: TableDef<{
@@ -433,6 +543,8 @@ export interface Database {
         project_url: string | null
         image_path: string | null
         sort_order: number
+        is_marketplace_visible: boolean
+        featured: boolean
         created_at: string
         updated_at: string
       }>
@@ -694,6 +806,17 @@ export interface Database {
           title: string
           chunk_content: string
           similarity: number
+        }>
+      }
+      check_talent_availability: {
+        Args: {
+          p_freelancer_id: string
+          p_starts_at: string
+          p_ends_at: string
+        }
+        Returns: Array<{
+          available: boolean
+          conflicting_block_count: number
         }>
       }
     }
