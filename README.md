@@ -48,6 +48,7 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 11 | [WhatsApp Integration](docs/10-whatsapp-integration.md) | Templates, webhooks, inbound parsing |
 | 12 | [Enterprise System Architecture](docs/11-enterprise-system-architecture.md) | HLD, components, events, webhooks, security, scale |
 | 13 | [**WhatsApp + n8n Integration**](docs/12-whatsapp-n8n-integration-architecture.md) | **Unified messaging orchestration architecture** |
+| 24 | [**Technical Audit**](docs/24-technical-audit.md) | Codebase audit: architecture, schema, debt, AI roadmap |
 
 ## Enterprise Architecture Highlights
 
