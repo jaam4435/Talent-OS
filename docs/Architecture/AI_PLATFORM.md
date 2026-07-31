@@ -67,7 +67,8 @@ This document defines that shared platform: a **multi-tenant, provider-agnostic 
 | [Billing Platform](./BILLING_PLATFORM.md) | Plan entitlements drive AI budgets; usage meters feed invoicing |
 | [Feature Flags Platform](./FEATURE_FLAGS_PLATFORM.md) | Entitlement-gated org overrides; AI kill switches and prompt A/B |
 | [Search Platform](./SEARCH_PLATFORM.md) | Hybrid retrieval consumes Embedding Platform; unified query API |
-| [Audit Platform](./AUDIT_PLATFORM.md) | Append-only compliance trail; complements domain events outbox |
+| [Audit Platform](./AUDIT_PLATFORM.md) | Append-only compliance trail; transitions emit audit records |
+| [Workflow Platform](./WORKFLOW_PLATFORM.md) | Declarative pipeline; Execution Engine runs transition actions |
 
 ---
 

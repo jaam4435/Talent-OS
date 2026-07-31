@@ -577,6 +577,27 @@ Full analysis: [AUDIT_PLATFORM.md](./AUDIT_PLATFORM.md).
 
 ---
 
+## Workflow Platform Gap (cross-cutting)
+
+Full analysis: [WORKFLOW_PLATFORM.md](./WORKFLOW_PLATFORM.md).
+
+| Pipeline stage | Current | Target | Gap |
+|----------------|:-------:|:------:|:---:|
+| Lead | 0% | `leads` + declarative stage | Critical |
+| Opportunity | 70% | Process-bound | Medium |
+| Proposal | 0% | `proposals` + declarative stage | Critical |
+| Project | 75% | Process-bound | Medium |
+| Assignment | 60% | Declarative transition | Medium |
+| QA | 65% | Gate in pipeline | Low |
+| Delivery | 60% | Declarative transition | Medium |
+| Invoice | 55% | Process-bound payment stage | Medium |
+
+**Overall workflow platform maturity: ~20%** — strong execution engine (`lib/workflows/`), weak declarative process layer. PR-W01 through PR-W08 in Wave 0f.
+
+**Key gap:** `WORKFLOW_REGISTRY` in TypeScript — every pipeline change requires code deploy.
+
+---
+
 ## Appendix — File Reference (current AI code)
 
 | Path | Role | Platform subsystem |

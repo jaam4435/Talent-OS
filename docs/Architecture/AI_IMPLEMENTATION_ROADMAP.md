@@ -1,17 +1,17 @@
 # AI Platform — Implementation Roadmap
 
-**Document version:** 1.5.0  
+**Document version:** 1.6.0  
 **Date:** July 31, 2026  
-**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0 · [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) v1.0.0 · [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md) v1.0.0 · [AUDIT_PLATFORM.md](./AUDIT_PLATFORM.md) v1.0.0  
+**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0 · [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) v1.0.0 · [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md) v1.0.0 · [AUDIT_PLATFORM.md](./AUDIT_PLATFORM.md) v1.0.0 · [WORKFLOW_PLATFORM.md](./WORKFLOW_PLATFORM.md) v1.0.0  
 **Scope:** Planning only — no code in this document  
-**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing) · `cursor/ff-pr-FFXX-<slug>-5fb1` (Feature Flags) · `cursor/search-pr-SXX-<slug>-5fb1` (Search) · `cursor/audit-pr-AXX-<slug>-5fb1` (Audit)  
-**Changelog:** v1.5.0 — Added Wave 0e Audit Platform (PR-A01–PR-A08); v1.4.0 — Search Wave 0d; v1.3.0 — Feature Flags Wave 0c; v1.2.0 — Billing Wave 0b; v1.1.0 — PR-00 Platform Core
+**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing) · `cursor/ff-pr-FFXX-<slug>-5fb1` (Feature Flags) · `cursor/search-pr-SXX-<slug>-5fb1` (Search) · `cursor/audit-pr-AXX-<slug>-5fb1` (Audit) · `cursor/workflow-pr-WXX-<slug>-5fb1` (Workflow)  
+**Changelog:** v1.6.0 — Added Wave 0f Workflow Platform (PR-W01–PR-W08); v1.5.0 — Audit Wave 0e; v1.4.0 — Search; v1.3.0 — Feature Flags; v1.2.0 — Billing; v1.1.0 — PR-00
 
 ---
 
 ## Overview
 
-This roadmap implements the **AI Platform** (43 PRs) and four **Platform waves** (8 PRs each): Billing, Feature Flags, Search, and Audit — **75 PRs total**. **PR-00 (Platform Core) is mandatory first**. Waves **0b–0e** run in parallel with AI waves where dependencies allow.
+This roadmap implements the **AI Platform** (43 PRs) and **six Platform waves** (8 PRs each): Billing, Feature Flags, Search, Audit, and Workflow — **83 PRs total**. **PR-00 (Platform Core) is mandatory first**. Waves **0b–0f** run in parallel with AI waves where dependencies allow.
 
 ### Confirmed architecture decisions (apply throughout)
 
@@ -49,11 +49,13 @@ flowchart LR
     W00 --> W0c[Wave 0c\nFeature Flags]
     W00 --> W0d[Wave 0d\nSearch]
     W00 --> W0e[Wave 0e\nAudit]
+    W00 --> W0f[Wave 0f\nWorkflow]
     W0 --> W1[Wave 1\nGateway Security]
     W0b --> W1
     W0c --> W1
     W0d --> W1
     W0e --> W1
+    W0f --> W1
     W1 --> W2[Wave 2\nAI Gateway Ext]
     W2 --> W3[Wave 3\nPrompt + Cost]
     W3 --> W4[Wave 4\nEmbeddings]
@@ -65,6 +67,7 @@ flowchart LR
     W0d -.->|semantic| W4
     W4 -.->|vectors| W0d
     W0e -.->|capture| W0
+    W0f -.->|transitions| W0e
 ```
 
 | Wave | PRs | Theme |
@@ -74,6 +77,7 @@ flowchart LR
 | **0c** | **PR-FF01 – PR-FF08** | **Feature Flags — feature → environment → org → rollout → experiment** |
 | **0d** | **PR-S01 – PR-S08** | **Search — search → keyword → semantic → hybrid → filters → saved search** |
 | **0e** | **PR-A01 – PR-A08** | **Audit — actor → action → object → before → after → timestamp → source** |
+| **0f** | **PR-W01 – PR-W08** | **Workflow — lead → opportunity → proposal → project → assignment → QA → delivery → invoice** |
 | 0 | PR-01 – PR-05 | Test harness, schema, execution path, audit integrity |
 | 1 | PR-06 – PR-10 | Pipeline, circuit breakers, guardrails, PII |
 | 2 | PR-11 – PR-15 | AI client, Azure, routing, cache |
@@ -160,7 +164,8 @@ flowchart LR
 | Document | Update |
 |----------|--------|
 | `docs/Architecture/PLATFORM_CORE.md` | **New** — architecture, folder structure, usage examples |
-| `docs/Architecture/AUDIT_PLATFORM.md` | **Reference** — Wave 0e; complements domain events outbox |
+| `docs/Architecture/WORKFLOW_PLATFORM.md` | **Reference** — Wave 0f; declarative pipeline replaces hard-coded registry |
+| `docs/Architecture/AUDIT_PLATFORM.md` | **Reference** — Wave 0e; transitions emit audit records |
 | `docs/Architecture/SEARCH_PLATFORM.md` | **Reference** — Wave 0d; semantic depends on Embedding Platform |
 | `docs/Architecture/FEATURE_FLAGS_PLATFORM.md` | **Reference** — PR-00 MVP extended by Wave 0c |
 | `docs/Architecture/BILLING_PLATFORM.md` | **Reference** — billing depends on Platform Core org context |
@@ -798,6 +803,160 @@ Wave 0e can start after **PR-00**. PR-A05 aligns with **PR-05** (unified AI ledg
 PR-00 → PR-A01 → PR-A02 → PR-A03 → PR-A04 → PR-A06 → PR-A07 → PR-A08
                     ↘ PR-A05 ↔ PR-05 (unified AI ledger)
 PR-A04 → PR-B06, PR-FF08, PR-S07 (platform waves emit audits)
+```
+
+---
+
+## Wave 0f — Workflow Platform
+
+> **Process pipeline:** Lead → Opportunity → Proposal → Project → Assignment → QA → Delivery → Invoice  
+> Full architecture: [WORKFLOW_PLATFORM.md](./WORKFLOW_PLATFORM.md)
+
+Wave 0f elevates workflow from hard-coded `WORKFLOW_REGISTRY` to **declarative process definitions**. PR-W01–W04 can start after **PR-00**. PR-W05 integrates **PR-A04** (audit on transition). PR-W06 bridges to existing `lib/workflows/engine.ts`. PR-W08 migrates opportunity/project/milestone status jumps to `platform.process.advance()`.
+
+### PR-W01: Process definition schema
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Create `process_definitions`, `process_instances`, `process_instance_history`; seed `talent_os.default_pipeline` v1.0.0 JSON. |
+| **Gap IDs** | Workflow platform ~20%; no declarative pipeline |
+| **Files affected** | `supabase/migrations/034_workflow_platform.sql` (new), `modules/workflow/process/types/definition.ts`, `lib/repositories/process-definition.repository.ts`, `processes/talent_os/default.pipeline.yaml` |
+| **Dependencies** | **PR-00** |
+| **Risk level** | **Medium** — new core tables |
+| **Migration notes** | Migration `034` after `033_audit_platform`; seed published platform definition. |
+| **Testing requirements** | Definition validates against JSON schema; published version loads. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §6, §13–14; `MIGRATIONS_INDEX.md`. |
+| **Acceptance criteria** | Default pipeline JSON seeded with 8 stages; instance CRUD via repository. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-W02: Lead and Proposal domain entities
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Add `leads` and `proposals` tables, repositories, basic CRUD; bind to pipeline stages. |
+| **Gap IDs** | Missing Lead and Proposal stages |
+| **Files affected** | `034_workflow_platform.sql` (leads, proposals), `lib/repositories/lead.repository.ts`, `proposal.repository.ts`, `modules/workflow/process/stages/registry.ts` |
+| **Dependencies** | PR-W01 |
+| **Risk level** | **Low** — additive domain |
+| **Migration notes** | RLS on leads/proposals; link proposal → opportunity FK. |
+| **Testing requirements** | Create lead → qualify creates opportunity stub in context. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §7; `03-database-schema.md` (future sync). |
+| **Acceptance criteria** | Lead and proposal entities exist; stage registry maps entity types. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-W03: Transition engine
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `TransitionEngine.advance()` — evaluate conditions, apply side effects, update instance stage/history. |
+| **Gap IDs** | Hard-coded status transitions |
+| **Files affected** | `modules/workflow/process/transitions/engine.ts`, reuse `lib/workflows/conditions.ts` |
+| **Dependencies** | PR-W02 |
+| **Risk level** | **High** — core business path |
+| **Migration notes** | Feature flag `process.declarative.enabled`; dry-run mode for testing. |
+| **Testing requirements** | Unit tests per transition in default pipeline; invalid transition rejected. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §8. |
+| **Acceptance criteria** | `advance({ transitionKey: 'lead_qualify' })` moves instance opportunity → creates opportunity entity. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-W04: Declarative definition loader and validator
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Load published definitions from DB; JSON schema validation; org override resolution; CI validates YAML in repo. |
+| **Gap IDs** | Definitions in TypeScript only |
+| **Files affected** | `modules/workflow/process/definition/loader.ts`, `validator.ts`, `schema.json`, `.github/workflows/ci.yml`, `scripts/validate-process-definitions.ts` |
+| **Dependencies** | PR-W01 |
+| **Risk level** | **Low** |
+| **Migration notes** | Platform default beats org override by version; draft definitions not loaded at runtime. |
+| **Testing requirements** | Invalid YAML fails CI; org clone overrides one transition. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §14. |
+| **Acceptance criteria** | Runtime loads only `published` definitions; schema validation in CI. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-W05: Gate evaluator and approval integration
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `GateEvaluator` for approval, role, field, entitlement gates; integrate existing `approval_requests`. |
+| **Gap IDs** | Gates not unified with pipeline |
+| **Files affected** | `modules/workflow/process/gates/evaluator.ts`, wire to `app/actions/approvals.ts`, audit on gate pass/fail |
+| **Dependencies** | PR-W03, **PR-A04** (audit source capture) |
+| **Risk level** | **Medium** |
+| **Migration notes** | QA stage uses same approval flow as `wf-milestone-submitted`. |
+| **Testing requirements** | Blocked advance returns reason; approval resumes transition. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §9; `31-workflow-engine.md`. |
+| **Acceptance criteria** | Proposal accept blocked until approval; QA pass requires manager gate. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-W06: Workflow execution bridge
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `WorkflowBridge` maps transition `actions[]` to Execution Engine jobs; refactor shared types to `modules/workflow/execution/`. |
+| **Gap IDs** | Registry disconnected from pipeline |
+| **Files affected** | `modules/workflow/process/bridge/workflow-bridge.ts`, move `lib/workflows/*` → `modules/workflow/execution/` (re-export for compat) |
+| **Dependencies** | PR-W03 |
+| **Risk level** | **Medium** — execution path refactor |
+| **Migration notes** | `@/lib/workflows` re-exports from `@/modules/workflow/execution` during deprecation window. |
+| **Testing requirements** | Transition fires `notify` + `dispatch_n8n` jobs; existing cron still processes queue. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §10, §19; `31-workflow-engine.md` — Process vs Execution layers. |
+| **Acceptance criteria** | Declarative action refs enqueue workflow_jobs; no regression on existing registry workflows. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-W07: Process API, SDK, and pipeline board
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `POST /api/process/instances/:id/advance`, board Kanban API, `platform.process.*` SDK. |
+| **Gap IDs** | No process API |
+| **Files affected** | `app/api/process/**`, `modules/workflow/process/sdk/process-client.ts`, `modules/workflow/process/instances/service.ts`, OpenAPI |
+| **Dependencies** | PR-W05, PR-W06 |
+| **Risk level** | **Medium** |
+| **Migration notes** | Board groups by `current_stage`; permissions per stage in definition. |
+| **Testing requirements** | E2E: start lead → advance through opportunity; board returns grouped instances. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §15; `05-api-architecture.md`. |
+| **Acceptance criteria** | SDK advance works; board API returns 8 columns for default pipeline. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-W08: Migrate hard-coded flows and backfill instances
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Replace direct status updates in opportunity/project services with `process.advance()`; backfill `process_instances` for active projects; deprecate redundant registry entries. |
+| **Gap IDs** | Implicit pipeline in services |
+| **Files affected** | `lib/services/project.service.ts`, opportunity services, `lib/workflows/registry.ts` (trim migrated entries), `scripts/backfill-process-instances.ts` |
+| **Dependencies** | PR-W07, **PR-FF03** (optional gates via entitlements) |
+| **Risk level** | **High** — production business flow |
+| **Migration notes** | `process.lead_stage.enabled=false` starts at opportunity for existing tenants; backfill infers stage from entity status. |
+| **Testing requirements** | Parity tests: legacy project flow == declarative flow; Playwright critical workflow updated. |
+| **Documentation updates** | `WORKFLOW_PLATFORM.md` §18; `AI_GAP_ANALYSIS.md`; `README.md`. |
+| **Acceptance criteria** | No direct `project.status =` in services without process engine; workflow platform maturity ≥80%. |
+| **Estimated effort** | **L** |
+
+---
+
+### Workflow critical path
+
+```
+PR-00 → PR-W01 → PR-W02 → PR-W03 → PR-W04 → PR-W05 → PR-W06 → PR-W07 → PR-W08
+PR-W05 → PR-A04 (audit on transition)
+PR-W06 → lib/workflows/engine (execution layer)
+PR-W03 + PR-FF03 (entitlement gates on transitions)
 ```
 
 ---
@@ -1621,6 +1780,14 @@ flowchart TD
 | **PR-A06** | **Migrate activity_logs + domains** | **0e** | **L** | **Med** | **P1** |
 | **PR-A07** | **Query API + export + MCP audit** | **0e** | **M** | **Low** | **P1** |
 | **PR-A08** | **Observability + retention policy** | **0e** | **M** | **Low** | **P1** |
+| **PR-W01** | **Process definition schema** | **0f** | **M** | **Med** | **P0** |
+| **PR-W02** | **Lead + Proposal entities** | **0f** | **M** | **Low** | **P1** |
+| **PR-W03** | **Transition engine** | **0f** | **L** | **High** | **P0** |
+| **PR-W04** | **Definition loader + validator** | **0f** | **M** | **Low** | **P0** |
+| **PR-W05** | **Gate evaluator + approvals** | **0f** | **M** | **Med** | **P0** |
+| **PR-W06** | **Workflow execution bridge** | **0f** | **L** | **Med** | **P0** |
+| **PR-W07** | **Process API + board + SDK** | **0f** | **L** | **Med** | **P0** |
+| **PR-W08** | **Migrate hard-coded flows** | **0f** | **L** | **High** | **P0** |
 | PR-01 | MockProvider + AI tests | 0 | M | Low | P1 |
 | PR-02 | ai_requests schema extend | 0 | M | Med | P1 |
 | PR-03 | Direct execution default | 0 | S | Med | P0 |
@@ -1664,7 +1831,7 @@ flowchart TD
 | PR-41 | OpenTelemetry export | 7 | M | Low | P3 |
 | PR-42 | Deprecate getAiGateway | 7 | S | Med | P1 |
 
-**Total PRs:** 75 (PR-00 + PR-B01–B08 + PR-FF01–FF08 + PR-S01–S08 + PR-A01–A08 + PR-01–PR-42) · **Estimated aggregate effort:** ~95–105 developer-days (sequential).
+**Total PRs:** 83 (PR-00 + platform waves 0b–0f + PR-01–PR-42) · **Estimated aggregate effort:** ~105–115 developer-days (sequential).
 
 ### PR numbering note
 
@@ -1682,6 +1849,7 @@ flowchart TD
 | `031_embedding_namespaces.sql` | PR-38 |
 | `032_search_platform.sql` | PR-S01 |
 | `033_audit_platform.sql` | PR-A01 |
+| `034_workflow_platform.sql` | PR-W01 |
 
 ---
 
@@ -1711,6 +1879,7 @@ flowchart TD
 | Feature flags platform complete | PR-FF08 acceptance criteria | Precedence tests + cache benchmarks |
 | Search platform complete | PR-S08 acceptance criteria | Hybrid E2E + knowledge migration |
 | Audit platform complete | PR-A08 acceptance criteria | Immutability + export + MCP audit |
+| Workflow platform complete | PR-W08 acceptance criteria | Declarative pipeline + migration parity |
 | Platform maturity | ≥85% vs AI_PLATFORM.md | Updated gap analysis |
 | All LLM via single ledger | 100% | PR-05 audit query |
 | MCP agent tool success rate | >90% read tools | PR-28 E2E agent test |
@@ -1736,6 +1905,6 @@ After each merged PR:
 
 **Status: Ready for implementation approval — no code in this document.**
 
-*Begin with PR-00 Platform Core, then parallel tracks: PR-B01, PR-FF01, PR-S01, PR-A01, PR-01.*
+*Begin with PR-00 Platform Core, then parallel tracks: PR-B01, PR-FF01, PR-S01, PR-A01, PR-W01, PR-01.*
 
-*End of AI Platform Implementation Roadmap v1.5.0*
+*End of AI Platform Implementation Roadmap v1.6.0*
