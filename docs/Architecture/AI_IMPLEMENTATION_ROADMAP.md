@@ -1,16 +1,17 @@
 # AI Platform — Implementation Roadmap
 
-**Document version:** 1.0.0  
+**Document version:** 1.1.0  
 **Date:** July 31, 2026  
 **Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0  
 **Scope:** Planning only — no code in this document  
-**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1`
+**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1`  
+**Changelog:** v1.1.0 — Added PR-00 Platform Core (prerequisite for all AI PRs)
 
 ---
 
 ## Overview
 
-This roadmap implements the AI Platform in **42 small pull requests**, ordered by dependency and risk. Each PR is independently reviewable, deployable, and reversible where possible.
+This roadmap implements the AI Platform in **43 small pull requests**, ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first** — it provides shared infrastructure consumed by every subsequent PR. Each PR is independently reviewable, deployable, and reversible where possible.
 
 ### Confirmed architecture decisions (apply throughout)
 
@@ -43,31 +44,132 @@ This roadmap implements the AI Platform in **42 small pull requests**, ordered b
 
 ```mermaid
 flowchart LR
-    W0[Wave 0\nFoundation] --> W1[Wave 1\nGateway Security]
-    W1 --> W2[Wave 2\nPlatform Core]
+    W00[PR-00\nPlatform Core] --> W0[Wave 0\nFoundation]
+    W0 --> W1[Wave 1\nGateway Security]
+    W1 --> W2[Wave 2\nAI Gateway Ext]
     W2 --> W3[Wave 3\nPrompt + Cost]
     W3 --> W4[Wave 4\nEmbeddings]
     W4 --> W5[Wave 5\nMCP + Agents]
-    W5 --> W6[Wave 6\nMemory + Multi-product]
+    W5 --> W6[Wave 6\nMemory + Client]
     W6 --> W7[Wave 7\nQuality + Scale]
 ```
 
 | Wave | PRs | Theme |
 |------|-----|-------|
+| **0a** | **PR-00** | **Platform Core — shared SDK, context, registry, events** |
 | 0 | PR-01 – PR-05 | Test harness, schema, execution path, audit integrity |
 | 1 | PR-06 – PR-10 | Pipeline, circuit breakers, guardrails, PII |
-| 2 | PR-11 – PR-15 | SDK shell, Azure, routing, cache |
+| 2 | PR-11 – PR-15 | AI client, Azure, routing, cache |
 | 3 | PR-16 – PR-21 | Prompt Platform DB, budgets, alerts |
 | 4 | PR-22 – PR-25 | Embedding generation and semantic search |
 | 5 | PR-26 – PR-28 | MCP adapters |
-| 6 | PR-29 – PR-32 | Memory Platform, product registration |
+| 6 | PR-29 – PR-32 | Memory Platform, AI feature namespaces, client migration |
 | 7 | PR-33 – PR-42 | Observability, quality, optimization, deprecation |
+
+---
+
+## PR-00 — Platform Core (prerequisite)
+
+> **Most important missing piece.** All AI PRs depend on this shared infrastructure layer. Delivers the cross-product foundation that Talent OS, Media Intelligence, and AI Ad Studio will share.
+
+### PR-00: Platform Core — shared infrastructure
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Create shared platform infrastructure consumed by the AI Platform, domain services, agents, and future products. Establishes a single SDK, organization context, product registry, feature flags, configuration, events, contracts, and types — with no AI-specific logic beyond registration hooks. |
+| **Gap IDs** | M-001, M-016, M-017, TD-012; closes multi-product gap (5%) and DevEx gap (35%) foundations |
+| **Deliverables** | See [Deliverables breakdown](#pr-00-deliverables-breakdown) below |
+
+#### Files affected
+
+| Area | Paths (new unless noted) |
+|------|--------------------------|
+| **Platform SDK** | `modules/platform/sdk/index.ts`, `modules/platform/sdk/client.ts`, `modules/platform/sdk/factory.ts` |
+| **Organization Context** | `modules/platform/context/organization.ts`, `modules/platform/context/resolver.ts` (wraps session + tenant from `modules/core/api/context.ts`) |
+| **Product Registry** | `modules/platform/products/registry.ts`, `modules/platform/products/types.ts`, `modules/platform/products/talent-os.ts`, `media-intel.ts`, `ad-studio.ts` |
+| **Feature Flags** | `modules/platform/features/flags.ts`, `modules/platform/features/registry.ts`, `lib/repositories/platform-feature.repository.ts` |
+| **Configuration Service** | `modules/platform/config/service.ts`, `modules/platform/config/schema.ts`, `lib/repositories/platform-config.repository.ts` |
+| **Platform Events** | `modules/platform/events/catalog.ts`, `modules/platform/events/types.ts`, `modules/platform/events/emitter.ts` (wraps `emitEvent` / domain outbox) |
+| **Shared Contracts** | `modules/platform/contracts/platform-client.ts`, `config-provider.ts`, `feature-flag-provider.ts`, `event-emitter.ts` |
+| **Shared Types** | `modules/platform/types/index.ts` — `ProductId`, `OrganizationContext`, `PlatformFeatureFlag`, `PlatformConfigScope`, `PlatformEventType` |
+| **Database** | `supabase/migrations/022_platform_core.sql` — `platform_product_registry`, `platform_feature_flags`, `platform_config` (org overrides) |
+| **Tests** | `tests/unit/platform/*.test.ts` |
+| **Docs** | `docs/Architecture/PLATFORM_CORE.md` (new) |
+
+#### PR-00 deliverables breakdown
+
+| # | Deliverable | Description | Primary module |
+|---|-------------|-------------|----------------|
+| 1 | **Platform SDK** | `createPlatformClient({ productId, getContext })` — entry point for all platform capabilities; AI client (PR-11) extends this | `modules/platform/sdk/` |
+| 2 | **Organization Context** | Immutable `OrganizationContext`: `organizationId`, `userId`, `role`, `permissions`, `correlationId`, `requestId`, `productId` | `modules/platform/context/` |
+| 3 | **Product Registry** | Register and resolve `talent_os`, `media_intel`, `ad_studio`; validate productId; expose metadata (name, enabled, default config) | `modules/platform/products/` |
+| 4 | **Feature Flags** | Unified flag service: env → platform default → org override; replaces ad-hoc AI-only flags over time | `modules/platform/features/` |
+| 5 | **Configuration Service** | Layered config: env vars → platform defaults → org `platform_config` row → request override; used by AI routing, budgets, guardrails later | `modules/platform/config/` |
+| 6 | **Platform Events** | Typed event catalog (`platform.*`, `ai.*` namespaces); `PlatformEventEmitter.emit()` wraps domain outbox with productId + org context | `modules/platform/events/` |
+| 7 | **Shared Contracts** | Interfaces for DI and testing: `IPlatformClient`, `IConfigService`, `IFeatureFlagService`, `IProductRegistry`, `IPlatformEventEmitter` | `modules/platform/contracts/` |
+| 8 | **Shared Types** | Canonical types exported from `@/modules/platform/types` — no duplicate ProductId/OrgContext definitions elsewhere | `modules/platform/types/` |
+
+#### Dependencies
+
+| Dependency | Notes |
+|------------|-------|
+| **None** | First PR in the roadmap; builds on existing `modules/core/api/context.ts`, RLS, and Redis from P0 production work |
+
+#### Risk level
+
+**Medium** — new module boundary and DB tables; no breaking changes to existing APIs if additive.
+
+#### Migration notes
+
+- Seed `platform_product_registry` with three products; only `talent_os` has `enabled: true`.
+- Existing `tenant.settings` AI flags remain; Platform Feature Flags read tenant settings as fallback until PR-11 migrates AI flags.
+- Migration number `022_platform_core.sql` — renumber AI migration PR-02 to `023_ai_requests_extend.sql` to avoid collision (update PR-02 accordingly).
+- Export path: `@/modules/platform` (barrel); `@/lib/ai-platform` created in PR-11 as AI extension.
+
+#### Testing requirements
+
+| Test | Requirement |
+|------|-------------|
+| Product registry | Unknown `productId` throws; `talent_os` resolves |
+| Organization context | Resolver maps session → `OrganizationContext` |
+| Feature flags | Precedence: env > platform default > org override |
+| Config service | Layered merge returns expected values |
+| Platform events | Emit includes `productId`, `organizationId`, `correlationId` |
+| SDK factory | `createPlatformClient` returns client with registered product |
+| Coverage | ≥15 unit tests; `npm test` green |
+
+#### Documentation updates
+
+| Document | Update |
+|----------|--------|
+| `docs/Architecture/PLATFORM_CORE.md` | **New** — architecture, folder structure, usage examples |
+| `docs/Architecture/AI_PLATFORM.md` | §13 — reference Platform Core as dependency |
+| `docs/Architecture/AI_GAP_ANALYSIS.md` | Mark multi-product and DevEx foundations partial |
+| `docs/06-folder-structure.md` | Add `modules/platform/` tree |
+| `README.md` | Link to Platform Core doc |
+
+#### Acceptance criteria
+
+- [ ] `@/modules/platform` exports SDK, types, contracts, and services
+- [ ] `ProductId` type is `'talent_os' | 'media_intel' | 'ad_studio'` — single source of truth
+- [ ] `createPlatformClient({ productId: 'talent_os', getContext })` instantiates without error
+- [ ] Organization context resolves from existing session/tenant middleware patterns
+- [ ] Product registry lists 3 products; unknown product rejected at SDK boundary
+- [ ] Feature flag and config services have unit tests with precedence rules
+- [ ] Platform event emit wraps domain outbox; event payload includes product + org
+- [ ] Migration `022_platform_core.sql` applies; RLS on org-scoped config/flags
+- [ ] No changes to existing user-facing behavior or UI
+- [ ] PR-01 can depend on `@/modules/platform/types` and test DI
+
+#### Estimated effort
+
+**L** (4–5 days) — foundational; quality here reduces rework in all 42 downstream PRs.
 
 ---
 
 ## Wave 0 — Foundation & Quick Wins
 
----
+*Requires PR-00 merged.*
 
 ### PR-01: AI test harness and MockProvider
 
@@ -76,7 +178,7 @@ flowchart LR
 | **Objective** | Establish CI-safe AI testing infrastructure before changing gateway behavior. |
 | **Gap IDs** | M-023, P1-012 |
 | **Files affected** | `lib/ai/providers/mock.provider.ts` (new), `lib/ai/providers/index.ts`, `tests/unit/ai/mock-provider.test.ts` (new), `tests/unit/ai/gateway.test.ts` (new), `vitest.config.ts` (if needed) |
-| **Dependencies** | None |
+| **Dependencies** | **PR-00** (Platform SDK, shared types, test DI via contracts) |
 | **Risk level** | **Low** |
 | **Migration notes** | None — additive only. |
 | **Testing requirements** | MockProvider returns deterministic structured output; gateway completes without network; existing `npm test` green. |
@@ -92,8 +194,8 @@ flowchart LR
 |-------|--------|
 | **Objective** | Add `product_id`, full `provider_id`, and `prompt_version` columns for multi-product attribution and accurate provider tracking. |
 | **Gap IDs** | M-016, P1-002, P1-010, TD-004, TD-005 |
-| **Files affected** | `supabase/migrations/022_ai_requests_extend.sql` (new), `modules/core/types/database.ts`, `lib/repositories/ai-request.repository.ts`, `lib/ai/types.ts`, `lib/ai/config.ts`, `scripts/push-supabase-schema.sh` |
-| **Dependencies** | None |
+| **Files affected** | `supabase/migrations/023_ai_requests_extend.sql` (new), `modules/core/types/database.ts`, `lib/repositories/ai-request.repository.ts`, `modules/platform/types/index.ts` (ProductId), `lib/ai/types.ts`, `lib/ai/config.ts`, `scripts/push-supabase-schema.sh` |
+| **Dependencies** | **PR-00** (ProductId type, product registry) |
 | **Risk level** | **Medium** — DB migration |
 | **Migration notes** | Add nullable `product_id TEXT DEFAULT 'talent_os'`; extend `ai_provider` enum with `gemini`, `openrouter`, `azure_openai` (keep `openai`, `claude`); backfill existing rows with `product_id = 'talent_os'`. `mapProviderToDb()` deprecated in favor of direct enum write. |
 | **Testing requirements** | Integration test: create/read `ai_requests` with new columns; typecheck passes. |
@@ -243,23 +345,25 @@ flowchart LR
 
 ---
 
-## Wave 2 — Platform Core
+## Wave 2 — AI Gateway Extensions
+
+*Extends Platform Core (PR-00) with AI-specific client and gateway capabilities.*
 
 ---
 
-### PR-11: `lib/ai-platform` SDK shell and `productId`
+### PR-11: AI Platform client (extends Platform SDK)
 
 | Field | Detail |
 |-------|--------|
-| **Objective** | Introduce `createAiPlatformClient({ productId })` facade; default `talent_os`; delegate to gateway internally. |
+| **Objective** | Add `createAiPlatformClient()` as an AI extension of `createPlatformClient()`; wires organization context and productId into the AI gateway. |
 | **Gap IDs** | M-001, M-016, P1-001, P1-002 |
-| **Files affected** | `lib/ai-platform/index.ts` (new), `lib/ai-platform/client.ts` (new), `lib/ai-platform/context.ts` (new), `lib/ai/types.ts`, `lib/ai/gateway/gateway.ts` |
-| **Dependencies** | PR-02, PR-06 |
+| **Files affected** | `lib/ai-platform/index.ts` (new), `lib/ai-platform/client.ts` (new), `lib/ai-platform/context.ts` (new), `modules/platform/sdk/client.ts` (extend), `lib/ai/types.ts`, `lib/ai/gateway/gateway.ts` |
+| **Dependencies** | **PR-00**, PR-02, PR-06 |
 | **Risk level** | **Low** — parallel API |
-| **Migration notes** | `getAiGateway()` remains exported; new code should import `@/lib/ai-platform`. All requests default `productId: 'talent_os'`. |
-| **Testing requirements** | Unit test: client sets productId on context; existing gateway tests unchanged. |
-| **Documentation updates** | `docs/27-ai-gateway.md` — migration note; `AI_PLATFORM.md` §13.1. |
-| **Acceptance criteria** | `createAiPlatformClient({ productId: 'talent_os' }).complete(...)` works; productId persisted on new `ai_requests` rows. |
+| **Migration notes** | `getAiGateway()` remains exported; new code uses `createAiPlatformClient()` from `@/lib/ai-platform`, which delegates to `@/modules/platform` for context and product registry. Default `productId: 'talent_os'`. |
+| **Testing requirements** | Unit test: AI client inherits platform context; productId from registry validated; existing gateway tests unchanged. |
+| **Documentation updates** | `docs/27-ai-gateway.md`, `docs/Architecture/PLATFORM_CORE.md` — AI extension section; `AI_PLATFORM.md` §13.1. |
+| **Acceptance criteria** | `createAiPlatformClient({ productId: 'talent_os' }).complete(...)` works; productId persisted on `ai_requests`; invalid productId rejected by registry. |
 | **Estimated effort** | **M** |
 
 ---
@@ -604,20 +708,20 @@ flowchart LR
 
 ---
 
-### PR-31: Product registration and feature namespaces
+### PR-31: AI feature namespaces (extends Product Registry)
 
 | Field | Detail |
 |-------|--------|
-| **Objective** | Register `talent_os`, `media_intel`, `ad_studio` with feature namespaces and default budgets. |
+| **Objective** | Register AI-specific feature namespaces per product (`talent_match`, `content_analysis`, etc.) on top of PR-00 Product Registry; wire default budgets. |
 | **Gap IDs** | M-017, P2-013 |
-| **Files affected** | `lib/ai-platform/products/registry.ts` (new), `lib/ai-platform/products/talent-os.ts`, `media-intel.ts`, `ad-studio.ts`, `lib/ai/features/registry.ts` (new) |
-| **Dependencies** | PR-11, PR-19 |
+| **Files affected** | `lib/ai-platform/features/registry.ts` (new), `lib/ai-platform/features/talent-os.ts`, `media-intel.ts`, `ad-studio.ts`, `modules/platform/products/registry.ts` (extend) |
+| **Dependencies** | **PR-00**, PR-11, PR-19 |
 | **Risk level** | **Low** |
-| **Migration notes** | Only `talent_os` features active; other products registered but gated off (`enabled: false`). |
-| **Testing requirements** | Unit test: unknown productId rejected; talent_os features resolve. |
-| **Documentation updates** | `AI_PLATFORM.md` §17.2; `AI_GAP_ANALYSIS.md` multi-product partial. |
-| **Acceptance criteria** | Product registry lists 3 products; metrics and ledger attribute product_id correctly. |
-| **Estimated effort** | **M** |
+| **Migration notes** | Product registry from PR-00 owns products; this PR adds AI feature lists per product. Only `talent_os` AI features enabled; `media_intel` and `ad_studio` registered but gated off. |
+| **Testing requirements** | Unit test: AI features resolve per product; unknown feature rejected; cross-product isolation. |
+| **Documentation updates** | `AI_PLATFORM.md` §17.2; `PLATFORM_CORE.md` — AI feature extension. |
+| **Acceptance criteria** | AI feature registry lists features per product; metrics and ledger attribute `product_id` + feature correctly. |
+| **Estimated effort** | **S** |
 
 ---
 
@@ -816,10 +920,12 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    PR01[PR-01 Tests] --> PR06[PR-06 Pipeline]
+    PR00[PR-00 Platform Core] --> PR01[PR-01 Tests]
+    PR00 --> PR02[PR-02 Schema]
+    PR00 --> PR11[PR-11 AI Client]
+    PR01 --> PR06[PR-06 Pipeline]
     PR01 --> PR12[PR-12 Azure]
-    PR02[PR-02 Schema] --> PR05[PR-05 Ledger]
-    PR02 --> PR11[PR-11 SDK]
+    PR02 --> PR05[PR-05 Ledger]
     PR05 --> PR06
     PR06 --> PR07[PR-07 Circuit breaker]
     PR06 --> PR08[PR-08 Guardrails]
@@ -836,9 +942,10 @@ flowchart TD
     PR25 --> PR28
     PR11 --> PR28
     PR29[PR-29 Memory schema] --> PR30[PR-30 Memory svc]
+    PR00 --> PR31[PR-31 AI features]
 ```
 
-**Critical path:** PR-01 → PR-02 → PR-05 → PR-06 → PR-08 → PR-09 → PR-11 → PR-22 → PR-24 → PR-26 → PR-28
+**Critical path:** PR-00 → PR-01 → PR-02 → PR-05 → PR-06 → PR-08 → PR-09 → PR-11 → PR-22 → PR-24 → PR-26 → PR-28
 
 ---
 
@@ -846,6 +953,7 @@ flowchart TD
 
 | PR | Title | Wave | Effort | Risk | Gap priority |
 |----|-------|:----:|:------:|:----:|:------------:|
+| **PR-00** | **Platform Core infrastructure** | **0a** | **L** | **Med** | **P0/P1** |
 | PR-01 | MockProvider + AI tests | 0 | M | Low | P1 |
 | PR-02 | ai_requests schema extend | 0 | M | Med | P1 |
 | PR-03 | Direct execution default | 0 | S | Med | P0 |
@@ -856,7 +964,7 @@ flowchart TD
 | PR-08 | Input guardrails | 1 | M | High | P0 |
 | PR-09 | PII redaction | 1 | M | High | P0 |
 | PR-10 | Output guardrails | 1 | M | Med | P0 |
-| PR-11 | ai-platform SDK shell | 2 | M | Low | P1 |
+| PR-11 | AI client (extends Platform SDK) | 2 | M | Low | P1 |
 | PR-12 | Azure OpenAI provider | 2 | M | Med | P1 |
 | PR-13 | Routing policies schema | 2 | S | Low | P1 |
 | PR-14 | Policy routing engine | 2 | M | Med | P1 |
@@ -876,7 +984,7 @@ flowchart TD
 | PR-28 | AI + knowledge MCP | 5 | M | Med | P0 |
 | PR-29 | Memory schema | 6 | M | Med | P1 |
 | PR-30 | Memory Platform service | 6 | L | Med | P1 |
-| PR-31 | Product registration | 6 | M | Low | P2 |
+| PR-31 | AI feature namespaces | 6 | S | Low | P2 |
 | PR-32 | Migrate to platform client | 6 | M | Med | P1 |
 | PR-33 | AI trace sub-spans | 7 | M | Low | P2 |
 | PR-34 | Provider health | 7 | M | Low | P2 |
@@ -889,7 +997,11 @@ flowchart TD
 | PR-41 | OpenTelemetry export | 7 | M | Low | P3 |
 | PR-42 | Deprecate getAiGateway | 7 | S | Med | P1 |
 
-**Total PRs:** 42 · **Estimated aggregate effort:** ~45–55 developer-days (sequential); parallelizable across waves after PR-06.
+**Total PRs:** 43 (PR-00 + PR-01–PR-42) · **Estimated aggregate effort:** ~50–60 developer-days (sequential); PR-00 is on the critical path for all work.
+
+### PR numbering note
+
+Migration `022_platform_core.sql` is reserved for PR-00. AI schema PR-02 uses `023_ai_requests_extend.sql`; subsequent AI migrations shift +1 from v1.0.0 roadmap numbers (documented in each PR).
 
 ---
 
@@ -901,7 +1013,7 @@ flowchart TD
 | AI Platform admin UI | Phase 4 per AI_PLATFORM.md |
 | MCP HTTP/SSE transport | P3 — SEC-009 |
 | Fine-tuning pipeline | Phase 4 |
-| Media Intelligence / Ad Studio product apps | Register only in PR-31; apps are separate repos/phases |
+| Media Intelligence / Ad Studio product apps | Products registered in PR-00; AI features in PR-31; apps are separate repos/phases |
 | n8n AI node removal | Document deprecation in PR-03; physical removal after PR-32 stable |
 | Agent parallel tool execution | P3 performance |
 | Durable agent step queue (Inngest) | Phase 4 |
@@ -912,6 +1024,7 @@ flowchart TD
 
 | Metric | Target | Validated by |
 |--------|--------|--------------|
+| Platform Core complete | PR-00 acceptance criteria | Unit tests + migration |
 | Platform maturity | ≥85% vs AI_PLATFORM.md | Updated gap analysis |
 | All LLM via single ledger | 100% | PR-05 audit query |
 | MCP agent tool success rate | >90% read tools | PR-28 E2E agent test |
@@ -937,4 +1050,6 @@ After each merged PR:
 
 **Status: Ready for implementation approval — no code in this document.**
 
-*End of AI Platform Implementation Roadmap v1.0.0*
+*Begin with PR-00 Platform Core, then PR-01.*
+
+*End of AI Platform Implementation Roadmap v1.1.0*
