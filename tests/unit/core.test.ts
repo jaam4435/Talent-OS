@@ -35,9 +35,9 @@ describe('toPaginatedResult', () => {
 })
 
 describe('rate limiting', () => {
-  it('allows requests under the limit', () => {
+  it('allows requests under the limit', async () => {
     const key = rateLimitKey({ ip: 'test-ip-unique-1' })
-    const result = checkRateLimit(key, 'auth')
+    const result = await checkRateLimit(key, 'auth')
     expect(result.allowed).toBe(true)
   })
 })

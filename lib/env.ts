@@ -22,6 +22,8 @@ const productionSecretsSchema = z.object({
   ENCRYPTION_KEY: z.string().length(64),
   WHATSAPP_APP_SECRET: z.string().min(8),
   N8N_WEBHOOK_SECRET: z.string().min(8),
+  UPSTASH_REDIS_REST_URL: z.string().url(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(8),
 })
 
 /**
@@ -36,6 +38,8 @@ export function assertProductionSecrets(): void {
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET,
     N8N_WEBHOOK_SECRET: process.env.N8N_WEBHOOK_SECRET,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
   })
 
   if (!result.success) {

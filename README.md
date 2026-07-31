@@ -39,7 +39,7 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 2 | [User Stories](docs/02-user-stories.md) | 36 stories across 9 epics with acceptance criteria |
 | 3 | [Database Schema](docs/03-database-schema.md) | ERD, tables, enums, views, storage buckets |
 | 4 | [**Complete Supabase Schema**](docs/04-supabase-complete-schema.md) | Tables, FKs, RLS matrix, triggers, migrations |
-| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–020 |
+| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–021 |
 | 6 | [API Architecture](docs/05-api-architecture.md) | REST endpoints, server actions, event contracts |
 | 7 | [Folder Structure](docs/06-folder-structure.md) | Next.js project tree and conventions |
 | 8 | [Authentication Design](docs/07-authentication-design.md) | Auth flows, RBAC, session management |
@@ -51,6 +51,8 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 24 | [**Technical Audit**](docs/24-technical-audit.md) | Codebase audit: architecture, schema, debt, AI roadmap |
 | — | [**Enterprise Readiness Review**](docs/Platform/ENTERPRISE_READINESS_REVIEW.md) | Production readiness assessment |
 | — | [**Gap Analysis Study Pack**](docs/Platform/GAP_ANALYSIS_STUDY_PACK.md) | Curated docs + code index for gap review |
+| — | [**Production Readiness Report**](docs/Platform/PRODUCTION_READINESS_REPORT.md) | Post-P0 readiness assessment (v3) |
+| — | [**Distributed State Architecture**](docs/Platform/DISTRIBUTED_STATE_ARCHITECTURE.md) | Redis + Postgres distributed state |
 | — | [SECURITY.md](SECURITY.md) | Security policy and controls |
 
 ## Enterprise Architecture Highlights
@@ -74,7 +76,7 @@ Run all migrations in order against your Supabase project:
 
 ```bash
 supabase db push
-# Migrations 001–020 (see supabase/migrations/)
+# Migrations 001–021 (see supabase/migrations/)
 ```
 
 ## Quick Start (Development)
@@ -105,6 +107,9 @@ Open [http://localhost:3000](http://localhost:3000) — redirects to `/login` or
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript check |
+| `npm test` | Unit + integration tests (Vitest) |
+| `npm run test:e2e` | E2E tests (Playwright) |
+| `npm run test:all` | Run all test suites |
 
 ## License
 

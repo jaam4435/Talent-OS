@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Push local migrations (001–020) to the linked Supabase project.
+# Push local migrations (001–021) to the linked Supabase project.
 # Requires the database password from Dashboard → Project Settings → Database.
 set -euo pipefail
 

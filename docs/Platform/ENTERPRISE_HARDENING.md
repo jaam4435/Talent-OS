@@ -61,19 +61,28 @@
 - Distributed Redis rate limiting (new infrastructure)
 - pgvector pipeline (new feature)
 
+## Follow-up: P0 Production Blockers (July 31, 2026)
+
+Subsequent work on `cursor/p0-production-blockers-5fb1` resolved remaining P0 items from the post-hardening gap analysis:
+
+- Distributed rate limiting, caching (Upstash Redis)
+- API idempotency (migration 021)
+- CodeQL, Gitleaks, Trivy, Dependabot CI
+- RLS integration tests + Playwright E2E
+- Complete OpenAPI documentation
+
+See [PRODUCTION_READINESS_REPORT.md](./PRODUCTION_READINESS_REPORT.md) and [DISTRIBUTED_STATE_ARCHITECTURE.md](./DISTRIBUTED_STATE_ARCHITECTURE.md).
+
 ## Verification Commands
 
 ```bash
-npm test
+npm run test:all
 npm run typecheck
 npm run lint
 npm run build
-supabase db push   # applies migration 020
+supabase db push   # applies migrations 020–021
 ```
 
 ## Production Checklist
 
-- [ ] Apply migration 020 to production Supabase
-- [ ] Set all required secrets (see SECURITY.md)
-- [ ] Verify `/api/health` returns 200
-- [ ] Verify Vercel crons authenticated with `CRON_SECRET`
+See [PRODUCTION_CHECKLIST.md](../../PRODUCTION_CHECKLIST.md) for the full pre-deploy checklist.

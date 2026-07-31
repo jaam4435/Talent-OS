@@ -1,40 +1,26 @@
+import { checkRateLimit } from '@/modules/core/api/rate-limit'
 import { AiRateLimitError } from '@/lib/ai/errors'
 import type { RateLimitState } from '@/lib/ai/types'
 
-interface BucketEntry {
-  timestamps: number[]
-}
-
+/** Distributed AI gateway rate limiter (uses shared Redis/memory store). */
 export class RateLimiter {
-  private readonly buckets = new Map<string, BucketEntry>()
-
   constructor(private readonly requestsPerMinute: number) {}
 
-  check(key = 'global'): RateLimitState {
-    const now = Date.now()
-    const windowMs = 60_000
-    const bucket = this.buckets.get(key) ?? { timestamps: [] }
-
-    bucket.timestamps = bucket.timestamps.filter((ts) => now - ts < windowMs)
-    this.buckets.set(key, bucket)
-
-    const remaining = Math.max(0, this.requestsPerMinute - bucket.timestamps.length)
-    const resetAt = new Date(now + windowMs)
+  async check(key = 'global'): Promise<RateLimitState> {
+    const result = await checkRateLimit(`ai:${key}`, 'ai')
+    const resetAt = new Date(result.resetAt)
 
     return {
-      remaining,
+      remaining: result.remaining,
       resetAt,
-      limited: remaining <= 0,
+      limited: !result.allowed,
     }
   }
 
-  consume(key = 'global'): void {
-    const state = this.check(key)
+  async consume(key = 'global'): Promise<void> {
+    const state = await this.check(key)
     if (state.limited) {
       throw new AiRateLimitError(state.resetAt)
     }
-
-    const bucket = this.buckets.get(key)!
-    bucket.timestamps.push(Date.now())
   }
 }

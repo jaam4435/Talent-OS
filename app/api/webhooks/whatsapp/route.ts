@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
       request.headers.get('x-real-ip') ??
       'unknown'
-    const rl = checkRateLimit(rateLimitKey({ ip }), 'webhook')
+    const rl = await checkRateLimit(rateLimitKey({ ip }), 'webhook')
     if (!rl.allowed) {
       throw new AppError('RATE_LIMITED', 'Too many requests', 429)
     }

@@ -82,7 +82,7 @@ export function withApiHandler<T>(
           userId: ctx.userId,
           ip: clientIp(request),
         })
-        const rl = checkRateLimit(key, options.rateLimit)
+        const rl = await checkRateLimit(key, options.rateLimit)
         if (!rl.allowed) {
           throw new AppError('RATE_LIMITED', 'Too many requests', 429, {
             limit: rl.limit,
@@ -110,7 +110,7 @@ export function withApiHandler<T>(
         validateQuery(options.validate.query, url.searchParams)
       }
 
-      const params = await routeCtx.params
+      const params = (routeCtx?.params ? await routeCtx.params : {}) ?? {}
       const resolvedParams = Object.keys(params).length > 0 ? params : undefined
 
       if (options.idempotency && ctx.idempotencyKey) {
@@ -121,7 +121,7 @@ export function withApiHandler<T>(
           url.pathname
         )
         if (idemKey) {
-          const cached = getIdempotentResponse(idemKey)
+          const cached = await getIdempotentResponse(idemKey)
           if (cached) {
             const response = NextResponse.json(cached.body, { status: cached.status })
             response.headers.set('X-Request-ID', ctx.requestId)
@@ -158,7 +158,11 @@ export function withApiHandler<T>(
             request.method,
             url.pathname
           )
-          if (idemKey) storeIdempotentResponse(idemKey, 200, payload)
+          if (idemKey) await storeIdempotentResponse(idemKey, 200, payload, {
+            tenantId: ctx.tenantId,
+            method: request.method,
+            path: url.pathname,
+          })
         }
         instrumentApiRequest({
           method: request.method,
@@ -187,7 +191,16 @@ export function withApiHandler<T>(
           url.pathname
         )
         if (idemKey) {
-          storeIdempotentResponse(idemKey, 200, { data: payload, meta })
+          await storeIdempotentResponse(
+            idemKey,
+            200,
+            { data: payload, meta },
+            {
+              tenantId: ctx.tenantId,
+              method: request.method,
+              path: url.pathname,
+            }
+          )
         }
       }
 

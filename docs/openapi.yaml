@@ -19,6 +19,7 @@ tags:
   - name: Webhooks
   - name: Cron
   - name: Internal
+  - name: Observability
 components:
   headers:
     X-API-Version:
@@ -216,12 +217,110 @@ paths:
   /analytics/dashboard:
     get:
       tags: [Analytics]
-      summary: Dashboard analytics summary
+      summary: Dashboard analytics summary (managers only)
       operationId: getDashboardAnalytics
       security: [{ sessionCookie: [] }]
       responses:
         '200':
           description: Dashboard data
+        '401':
+          description: Unauthorized
+        '403':
+          description: Requires manager role and analytics:read permission
+  /openapi:
+    get:
+      tags: [System]
+      summary: OpenAPI specification
+      operationId: getOpenApiSpec
+      responses:
+        '200':
+          description: OpenAPI YAML document
+  /observability/dashboard:
+    get:
+      tags: [Observability]
+      summary: Observability dashboard metrics
+      operationId: getObservabilityDashboard
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Observability dashboard payload
+        '401':
+          description: Unauthorized
+        '403':
+          description: Managers only
+  /observability/alerts:
+    get:
+      tags: [Observability]
+      summary: List platform alerts
+      operationId: listObservabilityAlerts
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, acknowledged, resolved]
+      responses:
+        '200':
+          description: Alert list
+  /observability/logs:
+    get:
+      tags: [Observability]
+      summary: Query structured platform logs
+      operationId: queryObservabilityLogs
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: level
+          in: query
+          schema: { type: string }
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100 }
+      responses:
+        '200':
+          description: Log entries
+  /observability/traces/{correlationId}:
+    get:
+      tags: [Observability]
+      summary: Trace spans by correlation ID
+      operationId: getObservabilityTrace
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: correlationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Trace spans
+  /cron/evaluate-alerts:
+    get:
+      tags: [Cron]
+      summary: Evaluate platform alert rules
+      operationId: cronEvaluateAlerts
+      security: [{ cronBearer: [] }]
+      responses:
+        '200':
+          description: Alert evaluation results
+  /auth/signout:
+    post:
+      tags: [Auth]
+      summary: Sign out current session
+      operationId: signOut
+      responses:
+        '200':
+          description: Signed out
+  /auth/callback:
+    get:
+      tags: [Auth]
+      summary: OAuth / magic link callback
+      operationId: authCallback
+      responses:
+        '302':
+          description: Redirect after authentication
   /team/members:
     get:
       tags: [Team]

@@ -61,6 +61,8 @@ describe('assertProductionSecrets', () => {
     vi.stubEnv('ENCRYPTION_KEY', 'a'.repeat(64))
     vi.stubEnv('WHATSAPP_APP_SECRET', 'whatsapp-secret')
     vi.stubEnv('N8N_WEBHOOK_SECRET', 'n8n-secret')
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://redis.example.upstash.io')
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'token-secret')
     expect(() => assertProductionSecrets()).not.toThrow()
   })
 })

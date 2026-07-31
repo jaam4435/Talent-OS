@@ -1,3 +1,7 @@
+import { Ratelimit } from '@upstash/ratelimit'
+import { getRedisClient } from '@/lib/redis/client'
+import { memoryStore, resetMemoryStore } from '@/lib/redis/memory-store'
+
 /** Rate limit categories aligned with docs/05-api-architecture.md */
 export type RateLimitCategory =
   | 'default'
@@ -15,18 +19,11 @@ interface RateLimitConfig {
 export const RATE_LIMITS: Record<RateLimitCategory, RateLimitConfig> = {
   default: { maxRequests: 120, windowMs: 60_000 },
   auth: { maxRequests: 10, windowMs: 60_000 },
-  ai: { maxRequests: 30, windowMs: 60_000 },
+  ai: { maxRequests: 60, windowMs: 60_000 },
   webhook: { maxRequests: 300, windowMs: 60_000 },
   cron: { maxRequests: 10, windowMs: 60_000 },
   search: { maxRequests: 60, windowMs: 60_000 },
 }
-
-interface Bucket {
-  count: number
-  resetAt: number
-}
-
-const buckets = new Map<string, Bucket>()
 
 export interface RateLimitResult {
   allowed: boolean
@@ -35,51 +32,67 @@ export interface RateLimitResult {
   resetAt: number
 }
 
-export function checkRateLimit(
+const RATE_LIMIT_PREFIX = 'rl:'
+
+const upstashLimiters = new Map<RateLimitCategory, Ratelimit>()
+
+function getUpstashLimiter(category: RateLimitCategory): Ratelimit | null {
+  const redis = getRedisClient()
+  if (!redis) return null
+
+  let limiter = upstashLimiters.get(category)
+  if (!limiter) {
+    const config = RATE_LIMITS[category]
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(config.maxRequests, `${config.windowMs} ms`),
+      prefix: `${RATE_LIMIT_PREFIX}${category}`,
+      analytics: false,
+    })
+    upstashLimiters.set(category, limiter)
+  }
+  return limiter
+}
+
+export async function checkRateLimit(
   key: string,
   category: RateLimitCategory = 'default'
-): RateLimitResult {
+): Promise<RateLimitResult> {
   const config = RATE_LIMITS[category]
-  const now = Date.now()
   const bucketKey = `${category}:${key}`
-  const existing = buckets.get(bucketKey)
 
-  if (!existing || now >= existing.resetAt) {
-    const resetAt = now + config.windowMs
-    buckets.set(bucketKey, { count: 1, resetAt })
+  const upstash = getUpstashLimiter(category)
+  if (upstash) {
+    const result = await upstash.limit(bucketKey)
     return {
-      allowed: true,
+      allowed: result.success,
       limit: config.maxRequests,
-      remaining: config.maxRequests - 1,
-      resetAt,
+      remaining: result.remaining,
+      resetAt: result.reset,
     }
   }
 
-  if (existing.count >= config.maxRequests) {
-    return {
-      allowed: false,
-      limit: config.maxRequests,
-      remaining: 0,
-      resetAt: existing.resetAt,
-    }
-  }
-
-  existing.count += 1
+  const { count, resetAt } = await memoryStore.incr(bucketKey, config.windowMs)
   return {
-    allowed: true,
+    allowed: count <= config.maxRequests,
     limit: config.maxRequests,
-    remaining: config.maxRequests - existing.count,
-    resetAt: existing.resetAt,
+    remaining: Math.max(0, config.maxRequests - count),
+    resetAt,
   }
 }
 
-export function rateLimitKey(ctx: { tenantId?: string | null; userId?: string | null; ip?: string }) {
+export function rateLimitKey(ctx: {
+  tenantId?: string | null
+  userId?: string | null
+  ip?: string
+}) {
   return ctx.tenantId && ctx.userId
     ? `${ctx.tenantId}:${ctx.userId}`
     : (ctx.ip ?? 'anonymous')
 }
 
-/** Reset buckets — for testing. */
+/** Reset rate limit state — for testing. */
 export function resetRateLimits(): void {
-  buckets.clear()
+  upstashLimiters.clear()
+  resetMemoryStore()
 }

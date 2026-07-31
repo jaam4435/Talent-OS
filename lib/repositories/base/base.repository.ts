@@ -29,14 +29,14 @@ export abstract class BaseRepository {
     fn: () => Promise<T>
   ): Promise<T> {
     if (ttlMs && ttlMs > 0) {
-      const cached = this.cache.get<T>(key)
+      const cached = await this.cache.get<T>(key)
       if (cached !== undefined) return cached
     }
 
     const result = await fn()
 
     if (ttlMs && ttlMs > 0) {
-      this.cache.set(key, result, ttlMs)
+      await this.cache.set(key, result, ttlMs)
     }
 
     return result
@@ -51,7 +51,7 @@ export abstract class BaseRepository {
   }
 
   protected invalidateTable(table: string): void {
-    this.cache.invalidate(`${table}:`)
+    void this.cache.invalidate(`${table}:`)
   }
 
   protected get options(): RepositoryQueryOptions | undefined {

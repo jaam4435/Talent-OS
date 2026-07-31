@@ -45,7 +45,9 @@ We aim to acknowledge reports within 5 business days.
 ### API Security
 
 - Standardized error envelopes via `withApiHandler`
-- Per-category rate limiting (in-memory; per-instance on serverless)
+- Per-category **distributed** rate limiting via Upstash Redis (`@upstash/ratelimit`)
+- API idempotency persisted to PostgreSQL (`api_idempotency_responses`, migration 021)
+- Repository cache distributed via Upstash Redis
 - Cron/internal routes protected by `CRON_SECRET` (min 16 chars in production)
 - Production middleware fails closed when Supabase env vars are missing
 
@@ -59,6 +61,8 @@ Required in production:
 | `ENCRYPTION_KEY` | Integration credential encryption (64 hex chars) |
 | `WHATSAPP_APP_SECRET` | Meta webhook HMAC |
 | `N8N_WEBHOOK_SECRET` | n8n inbound webhook HMAC |
+| `UPSTASH_REDIS_REST_URL` | Distributed rate limits and cache |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis authentication |
 
 Validated at runtime via `lib/env.ts` on webhook and cron paths.
 
@@ -70,14 +74,16 @@ Validated at runtime via `lib/env.ts` on webhook and cron paths.
 
 ## Known Limitations
 
-- In-memory rate limits and idempotency caches are per serverless instance (not distributed)
 - No MFA/SSO in current release
 - MCP tool adapters are stubs — agent tool-use is not production-functional
+- Live Supabase RLS runtime tests require a test database (migration/policy tests exist)
 
-See `docs/Platform/ENTERPRISE_READINESS_REVIEW.md` for full gap analysis.
+See `docs/Platform/PRODUCTION_READINESS_REPORT.md` for full readiness assessment.
 
 ## Secure Development
 
-- CI runs typecheck, lint, tests, and production build on every PR
-- Run `npm test` before submitting changes
-- Apply database migrations in order (`001`–`020`)
+- CI runs typecheck, lint, unit/integration tests, E2E tests, and production build on every PR
+- CodeQL, Gitleaks, Trivy, and npm audit run via `.github/workflows/security.yml`
+- Dependabot configured for npm and GitHub Actions
+- Run `npm test` and `npm run test:e2e` before submitting changes
+- Apply database migrations in order (`001`–`021`)

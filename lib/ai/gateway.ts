@@ -89,7 +89,7 @@ export class AiGateway {
     }
 
     const rateLimitKey = request.tenantId ?? 'global'
-    this.rateLimiter.consume(rateLimitKey)
+    await this.rateLimiter.consume(rateLimitKey)
 
     const providers = this.resolveProviderChain(request)
     const params = this.toProviderParams(request)
@@ -151,7 +151,7 @@ export class AiGateway {
     }
 
     const rateLimitKey = request.tenantId ?? 'global'
-    this.rateLimiter.consume(rateLimitKey)
+    await this.rateLimiter.consume(rateLimitKey)
 
     const providers = this.resolveProviderChain(request)
     if (!providers.some((provider) => provider.isConfigured())) {
