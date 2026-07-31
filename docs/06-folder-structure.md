@@ -301,7 +301,7 @@ talent-os/
 │   ├── payments/
 │   │   ├── payment-table.tsx
 │   │   ├── payment-status-badge.tsx
-│   │   └── approve-payment-dialog.tsx
+│   │   └── payment-actions.tsx
 │   ├── analytics/
 │   │   ├── dashboard-cards.tsx
 │   │   ├── fill-rate-chart.tsx

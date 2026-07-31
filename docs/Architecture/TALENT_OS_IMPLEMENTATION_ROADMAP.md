@@ -22,12 +22,16 @@
 | PR | Title | Status |
 |----|-------|--------|
 | **T-01** | Merge P0 to main (migrations 014–021, CI, Redis, tests) | **Done** — merged PR #42 |
+| **T-02** | Simplify Platform Core (single-product migration 022) | **Done** — PR #56 |
+| **T-03** | Payment approve/pay workflow UI | **Done** — PR #56 |
+| **T-04** | API route standardization completion | **Done** — PR #56 |
+| **T-05** | Documentation truth pass | **Done** — PR #56 |
 
 ### In progress
 
 | PR | Title | Status |
 |----|-------|--------|
-| **T-02** | Simplify Platform Core (single-product migration 022) | This branch |
+| — | Phase B — AI security & integrity (T-06+) | Next |
 
 ---
 
@@ -120,7 +124,7 @@ See [docs/Archive/README.md](../Archive/README.md).
 | Migration | PR | Status |
 |-----------|-----|--------|
 | 001–021 | P0 | On `main` |
-| 022_platform_core.sql | T-02 | Single-product (no product registry) |
+| 022_platform_core.sql | T-02 | Single-product (no product registry) — merged in PR #56 |
 | 023+ | T-07+ | AI schema extensions |
 
 ---

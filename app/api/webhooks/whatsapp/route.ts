@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { runInstrumentedRoute } from '@/modules/core/api/handler'
 import { handleApiError, AppError } from '@/modules/core/api/response'
 import { checkRateLimit, rateLimitKey } from '@/modules/core/api/rate-limit'
 import { verifyMetaSignature } from '@/lib/integrations/encryption'
@@ -11,16 +12,18 @@ import { createTraceIds } from '@/lib/observability/context'
 import type { Json } from '@/modules/core/types/database'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const mode = searchParams.get('hub.mode')
-  const token = searchParams.get('hub.verify_token')
-  const challenge = searchParams.get('hub.challenge')
+  return runInstrumentedRoute(request, { path: '/api/webhooks/whatsapp', rateLimit: 'webhook' }, async () => {
+    const { searchParams } = new URL(request.url)
+    const mode = searchParams.get('hub.mode')
+    const token = searchParams.get('hub.verify_token')
+    const challenge = searchParams.get('hub.challenge')
 
-  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-    return new NextResponse(challenge, { status: 200 })
-  }
+    if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+      return new NextResponse(challenge, { status: 200 })
+    }
 
-  return new NextResponse('Forbidden', { status: 403 })
+    return new NextResponse('Forbidden', { status: 403 })
+  })
 }
 
 export async function POST(request: Request) {
