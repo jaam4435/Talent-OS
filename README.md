@@ -90,8 +90,8 @@ The [enterprise architecture document](docs/11-enterprise-system-architecture.md
 Run all migrations in order against your Supabase project:
 
 ```bash
-supabase db push
-# Migrations 001–021 (see supabase/migrations/)
+SUPABASE_DB_PASSWORD='your-db-password' ./scripts/push-supabase-schema.sh
+# Migrations 001–022 (see supabase/migrations/)
 ```
 
 ## Quick Start (Development)
@@ -105,8 +105,8 @@ npm install
 cp .env.local.example .env.local
 # Fill in Supabase URL, anon key, service role key
 
-# Run Supabase migrations
-supabase db push
+# Run Supabase migrations (requires database password — see docs/21-supabase-connection.md)
+SUPABASE_DB_PASSWORD='your-db-password' ./scripts/push-supabase-schema.sh
 
 # Start dev server
 npm run dev
