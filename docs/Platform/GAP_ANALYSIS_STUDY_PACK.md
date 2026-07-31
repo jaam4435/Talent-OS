@@ -2,8 +2,18 @@
 
 **Purpose:** Curated reading guide and file index for studying Talent OS and identifying production gaps.  
 **Audience:** Staff engineers, tech leads, security reviewers, and enterprise stakeholders.  
-**Last updated:** July 30, 2026  
-**Status:** Review only — no implementation.
+**Last updated:** July 31, 2026 (post-hardening)  
+**Status:** Hardening complete — see [CRITICAL_ANALYSIS_POST_HARDENING.md](./CRITICAL_ANALYSIS_POST_HARDENING.md)
+
+---
+
+## Post-Hardening Documents (Updated — start here)
+
+| File | Purpose |
+|------|---------|
+| [CRITICAL_ANALYSIS_POST_HARDENING.md](./CRITICAL_ANALYSIS_POST_HARDENING.md) | Updated scorecard (6.4/10), resolved/open risks |
+| [GAP_RESOLUTION_TRACKER.md](./GAP_RESOLUTION_TRACKER.md) | Gap IDs: RESOLVED / PARTIAL / OPEN |
+| [ENTERPRISE_HARDENING.md](./ENTERPRISE_HARDENING.md) | Implementation summary (PR #41) |
 
 ---
 
