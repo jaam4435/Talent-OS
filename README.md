@@ -62,6 +62,7 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | [AI Platform](docs/Architecture/AI_PLATFORM.md) | Shared AI gateway, prompts, embeddings, cost, observability |
 | [AI Gap Analysis](docs/Architecture/AI_GAP_ANALYSIS.md) | Implementation maturity vs target (~38%) |
 | [AI Implementation Roadmap](docs/Architecture/AI_IMPLEMENTATION_ROADMAP.md) | 83 PRs: Platform Core + 6 platform waves + AI |
+| [Platform Core](docs/Architecture/PLATFORM_CORE.md) | Shared SDK: org context, products, flags MVP, config, events |
 | [Engineering Execution Plan](docs/Architecture/ENGINEERING_EXECUTION_PLAN.md) | 5 sprints × 3 weeks — PR assignment, release, and demo plan |
 | [Billing Platform](docs/Architecture/BILLING_PLATFORM.md) | SaaS billing: org → subscription → plan → seats → usage → invoice → payments |
 | [Feature Flags Platform](docs/Architecture/FEATURE_FLAGS_PLATFORM.md) | Feature → environment → org → rollout → experiment |
