@@ -59,9 +59,22 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 
 | Document | Description |
 |----------|-------------|
+<<<<<<< HEAD
 | [**Talent OS Scope Review**](docs/Architecture/TALENT_OS_SCOPE_REVIEW.md) | Single-product scope audit — **approved** |
 | [**Implementation Roadmap**](docs/Architecture/TALENT_OS_IMPLEMENTATION_ROADMAP.md) | **Active** — ~28 PRs for Talent OS |
 | [Archived: 83-PR platform program](docs/Archive/README.md) | Retired multi-product roadmap |
+=======
+| [AI Platform](docs/Architecture/AI_PLATFORM.md) | Shared AI gateway, prompts, embeddings, cost, observability |
+| [AI Gap Analysis](docs/Architecture/AI_GAP_ANALYSIS.md) | Implementation maturity vs target (~38%) |
+| [AI Implementation Roadmap](docs/Architecture/AI_IMPLEMENTATION_ROADMAP.md) | 83 PRs: Platform Core + 6 platform waves + AI |
+| [Platform Core](docs/Architecture/PLATFORM_CORE.md) | Shared SDK: org context, products, flags MVP, config, events |
+| [Engineering Execution Plan](docs/Architecture/ENGINEERING_EXECUTION_PLAN.md) | 5 sprints × 3 weeks — PR assignment, release, and demo plan |
+| [Billing Platform](docs/Architecture/BILLING_PLATFORM.md) | SaaS billing: org → subscription → plan → seats → usage → invoice → payments |
+| [Feature Flags Platform](docs/Architecture/FEATURE_FLAGS_PLATFORM.md) | Feature → environment → org → rollout → experiment |
+| [Search Platform](docs/Architecture/SEARCH_PLATFORM.md) | Search → keyword → semantic → hybrid → filters → saved search |
+| [Audit Platform](docs/Architecture/AUDIT_PLATFORM.md) | Actor → action → object → before → after → timestamp → source |
+| [Workflow Platform](docs/Architecture/WORKFLOW_PLATFORM.md) | Lead → opportunity → proposal → project → assignment → QA → delivery → invoice |
+>>>>>>> 207ba1c (feat(platform): implement PR-00 Platform Core SDK)
 
 ## Enterprise Architecture Highlights
 
