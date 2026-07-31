@@ -625,7 +625,7 @@ flowchart LR
 | **Objective** | Adapter registry pattern; implement read-only tools (talent_search, projects_list, analytics_dashboard). |
 | **Gap IDs** | M-022, P0-003 |
 | **Files affected** | `lib/mcp/adapters/registry.ts` (new), `lib/mcp/adapters/talent.adapter.ts` (new), `lib/mcp/adapters/projects.adapter.ts` (new), `lib/mcp/gateway.ts`, `tests/unit/mcp/adapters.test.ts` (new) |
-| **Dependencies** | PR-01 |
+| **Dependencies** | **PR-00** (OrganizationContext, PlatformEventEmitter), PR-01 |
 | **Risk level** | **Medium** |
 | **Migration notes** | `McpGateway.invoke()` routes to adapter when registered; stub remains for unimplemented tools. |
 | **Testing requirements** | Unit tests: authorized invoke returns data; forbidden returns error; unknown tool error. |
