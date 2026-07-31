@@ -61,8 +61,9 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 |----------|-------------|
 | [AI Platform](docs/Architecture/AI_PLATFORM.md) | Shared AI gateway, prompts, embeddings, cost, observability |
 | [AI Gap Analysis](docs/Architecture/AI_GAP_ANALYSIS.md) | Implementation maturity vs target (~38%) |
-| [AI Implementation Roadmap](docs/Architecture/AI_IMPLEMENTATION_ROADMAP.md) | 51 PRs: Platform Core, Billing, AI waves |
+| [AI Implementation Roadmap](docs/Architecture/AI_IMPLEMENTATION_ROADMAP.md) | 59 PRs: Platform Core, Billing, Feature Flags, AI waves |
 | [Billing Platform](docs/Architecture/BILLING_PLATFORM.md) | SaaS billing: org → subscription → plan → seats → usage → invoice → payments |
+| [Feature Flags Platform](docs/Architecture/FEATURE_FLAGS_PLATFORM.md) | Feature → environment → org → rollout → experiment |
 
 ## Enterprise Architecture Highlights
 

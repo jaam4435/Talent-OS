@@ -65,6 +65,7 @@ This document defines that shared platform: a **multi-tenant, provider-agnostic 
 | [Observability](../Platform/OBSERVABILITY_ARCHITECTURE.md) | Extended by AI Observability |
 | [Workflow Engine](../31-workflow-engine.md) | Async AI execution orchestrator |
 | [Billing Platform](./BILLING_PLATFORM.md) | Plan entitlements drive AI budgets; usage meters feed invoicing |
+| [Feature Flags Platform](./FEATURE_FLAGS_PLATFORM.md) | Entitlement-gated org overrides; AI kill switches and prompt A/B |
 
 ---
 
@@ -193,7 +194,7 @@ The AI Platform occupies **L4 Integration** and a new **L4.5 Intelligence** slic
 | Prompt manager (in-memory) | **40%** | `lib/ai/prompt/manager.ts` | Versioning; no DB registry or eval |
 | Token logging | **65%** | `lib/ai/logging/token-logger.ts` | → `ai_requests` table |
 | Cost tracker (in-memory) | **35%** | `lib/ai/logging/cost-tracker.ts` | No budgets or alerts |
-| Feature flags | **50%** | `lib/ai/features/flags.ts` | Tenant settings + env toggles |
+| Feature flags | **15%** | `lib/ai/features/flags.ts` | Tenant settings + env; no rollouts/experiments — see [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) |
 | Agent framework | **55%** | `lib/ai/agent/` | Reasoning loop; MCP stubs |
 | Knowledge / embeddings schema | **30%** | `016_knowledge_module.sql` | pgvector ready; no generation pipeline |
 | AI observability | **45%** | `lib/observability/instrumentation.ts` | Metrics + `ai_requests`; no tracing standard |

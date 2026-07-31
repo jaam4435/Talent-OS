@@ -469,7 +469,8 @@ Capabilities defined in AI_PLATFORM.md with no meaningful implementation.
 3. **P1 platform shell** — SDK, productId, pipeline refactor, Prompt Platform DB, Azure, budgets
 4. **P1 cache + routing** — Response cache, policy routing, AI tests
 5. **P2 quality + multi-product** — Eval CI, traces, health, namespaces for future products
-6. **Billing Platform (Wave 0b)** — SaaS subscription, usage metering, invoicing — see [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) and [AI_IMPLEMENTATION_ROADMAP.md](./AI_IMPLEMENTATION_ROADMAP.md) PR-B01–B08
+6. **Billing Platform (Wave 0b)** — SaaS subscription, usage metering, invoicing — see [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) and PR-B01–B08
+7. **Feature Flags Platform (Wave 0c)** — progressive delivery, rollouts, experiments — see [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) and PR-FF01–FF08
 
 ---
 
@@ -496,6 +497,30 @@ The **Billing Platform** is separate from the AI Platform but shares organizatio
 | Budget defaults from plan | PR-19/20 Cost Platform | PR-B02 entitlements |
 | Usage for invoicing | AI gateway ledger | PR-B04 usage meters |
 | Tier limits scattered | `tenant.settings` | PR-B07 subscription service |
+
+---
+
+## Feature Flags Platform Gap (cross-cutting)
+
+Full analysis: [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md).
+
+| Flow stage | Current | Target | Gap |
+|------------|:-------:|:------:|:---:|
+| Feature | 10% (string keys in code) | `feature_definitions` catalog | High |
+| Environment | 20% (`AI_FEATURE_*` env) | `feature_environments` + defaults | High |
+| Organization | 40% (`tenant.settings.features`) | Overrides + entitlement gate | Medium |
+| Rollout | 0% | Percentage bucketing | Critical |
+| Experiment | 0% | Variants + exposure events | Critical |
+
+**Overall feature flags maturity: ~15%** — PR-00 MVP + PR-FF01 through PR-FF08 in roadmap Wave 0c.
+
+**Cross-platform integration:**
+
+| Gap | Consumer | Feature Flags dependency |
+|-----|----------|--------------------------|
+| AI kill switches | `lib/ai/features/flags.ts` | PR-FF07 migrate to platform |
+| Plan-gated features | Billing entitlements | PR-FF03 entitlement gate |
+| Prompt A/B | AI Prompt Platform | PR-FF05 experiments |
 
 ---
 

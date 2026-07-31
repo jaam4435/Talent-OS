@@ -1,17 +1,17 @@
 # AI Platform — Implementation Roadmap
 
-**Document version:** 1.2.0  
+**Document version:** 1.3.0  
 **Date:** July 31, 2026  
-**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0  
+**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0 · [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) v1.0.0  
 **Scope:** Planning only — no code in this document  
-**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing)  
-**Changelog:** v1.2.0 — Added Wave 0b Billing Platform (PR-B01–PR-B08); v1.1.0 — Added PR-00 Platform Core
+**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing) · `cursor/ff-pr-FFXX-<slug>-5fb1` (Feature Flags)  
+**Changelog:** v1.3.0 — Added Wave 0c Feature Flags Platform (PR-FF01–PR-FF08); v1.2.0 — Billing Wave 0b; v1.1.0 — PR-00 Platform Core
 
 ---
 
 ## Overview
 
-This roadmap implements the **AI Platform** (43 PRs) and **Billing Platform** (8 PRs), ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first** — it provides shared infrastructure consumed by every subsequent PR. **Wave 0b (Billing)** runs in parallel with AI Wave 0–3 where dependencies allow. Each PR is independently reviewable, deployable, and reversible where possible.
+This roadmap implements the **AI Platform** (43 PRs), **Billing Platform** (8 PRs), and **Feature Flags Platform** (8 PRs), ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first** — it provides shared infrastructure including feature flags MVP. **Wave 0b (Billing)** and **Wave 0c (Feature Flags)** run in parallel with AI waves where dependencies allow. Each PR is independently reviewable, deployable, and reversible where possible.
 
 ### Confirmed architecture decisions (apply throughout)
 
@@ -45,9 +45,11 @@ This roadmap implements the **AI Platform** (43 PRs) and **Billing Platform** (8
 ```mermaid
 flowchart LR
     W00[PR-00\nPlatform Core] --> W0[Wave 0\nFoundation]
-    W00 --> W0b[Wave 0b\nBilling Platform]
+    W00 --> W0b[Wave 0b\nBilling]
+    W00 --> W0c[Wave 0c\nFeature Flags]
     W0 --> W1[Wave 1\nGateway Security]
     W0b --> W1
+    W0c --> W1
     W1 --> W2[Wave 2\nAI Gateway Ext]
     W2 --> W3[Wave 3\nPrompt + Cost]
     W3 --> W4[Wave 4\nEmbeddings]
@@ -55,12 +57,15 @@ flowchart LR
     W5 --> W6[Wave 6\nMemory + Client]
     W6 --> W7[Wave 7\nQuality + Scale]
     W0b -.->|usage meters| W3
+    W0c -.->|entitlements| W0b
+    W0c -.->|evaluate| W2
 ```
 
 | Wave | PRs | Theme |
 |------|-----|-------|
-| **0a** | **PR-00** | **Platform Core — shared SDK, context, registry, events** |
+| **0a** | **PR-00** | **Platform Core — shared SDK, context, registry, events, flags MVP** |
 | **0b** | **PR-B01 – PR-B08** | **Billing Platform — org → subscription → plan → seats → usage → invoice → payments** |
+| **0c** | **PR-FF01 – PR-FF08** | **Feature Flags — feature → environment → org → rollout → experiment** |
 | 0 | PR-01 – PR-05 | Test harness, schema, execution path, audit integrity |
 | 1 | PR-06 – PR-10 | Pipeline, circuit breakers, guardrails, PII |
 | 2 | PR-11 – PR-15 | AI client, Azure, routing, cache |
@@ -107,7 +112,7 @@ flowchart LR
 | 1 | **Platform SDK** | `createPlatformClient({ productId, getContext })` — entry point for all platform capabilities; AI client (PR-11) extends this | `modules/platform/sdk/` |
 | 2 | **Organization Context** | Immutable `OrganizationContext`: `organizationId`, `userId`, `role`, `permissions`, `correlationId`, `requestId`, `productId` | `modules/platform/context/` |
 | 3 | **Product Registry** | Register and resolve `talent_os`, `media_intel`, `ad_studio`; validate productId; expose metadata (name, enabled, default config) | `modules/platform/products/` |
-| 4 | **Feature Flags** | Unified flag service: env → platform default → org override; replaces ad-hoc AI-only flags over time | `modules/platform/features/` |
+| 4 | **Feature Flags (MVP)** | Unified flag service: env → platform default → org override; **Wave 0c extends to full five-layer platform** — see [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) | `modules/platform/features/` |
 | 5 | **Configuration Service** | Layered config: env vars → platform defaults → org `platform_config` row → request override; used by AI routing, budgets, guardrails later | `modules/platform/config/` |
 | 6 | **Platform Events** | Typed event catalog (`platform.*`, `ai.*` namespaces); `PlatformEventEmitter.emit()` wraps domain outbox with productId + org context | `modules/platform/events/` |
 | 7 | **Shared Contracts** | Interfaces for DI and testing: `IPlatformClient`, `IConfigService`, `IFeatureFlagService`, `IProductRegistry`, `IPlatformEventEmitter` | `modules/platform/contracts/` |
@@ -147,6 +152,7 @@ flowchart LR
 | Document | Update |
 |----------|--------|
 | `docs/Architecture/PLATFORM_CORE.md` | **New** — architecture, folder structure, usage examples |
+| `docs/Architecture/FEATURE_FLAGS_PLATFORM.md` | **Reference** — PR-00 MVP extended by Wave 0c |
 | `docs/Architecture/BILLING_PLATFORM.md` | **Reference** — billing depends on Platform Core org context |
 | `docs/Architecture/AI_PLATFORM.md` | §13 — reference Platform Core as dependency |
 | `docs/Architecture/AI_GAP_ANALYSIS.md` | Mark multi-product and DevEx foundations partial |
@@ -321,6 +327,160 @@ Wave 0b can start immediately after **PR-00**. PR-B04 (usage metering) integrate
 PR-00 → PR-B01 → PR-B02 → PR-B03 → PR-B04 → PR-B05 → PR-B06 → PR-B07 → PR-B08
                               ↘ PR-19 (AI cost) → PR-B04
 PR-B02 → PR-20 (AI budget uses plan entitlements)
+```
+
+---
+
+## Wave 0c — Feature Flags Platform
+
+> **Feature flag flow:** Feature → Environment → Organization → Rollout → Experiment  
+> Full architecture: [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md)
+
+Wave 0c extends PR-00's feature flags MVP. PR-FF01–FF03 can start after **PR-00**. PR-FF03 integrates **PR-B02** (billing entitlements gate). PR-FF07 migrates `lib/ai/features/flags.ts` before **PR-11** (AI client).
+
+### PR-FF01: Feature catalog and registry
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Create `feature_definitions` catalog, `FeatureRegistry`, seed platform feature keys. |
+| **Gap IDs** | Feature flags maturity ~15%; no catalog |
+| **Files affected** | `supabase/migrations/025_feature_flags_platform.sql` (new), `modules/platform/features/registry/service.ts`, `catalog.ts`, `types/evaluation.ts`, `lib/repositories/feature-definition.repository.ts` |
+| **Dependencies** | **PR-00** (Platform SDK, ProductId) |
+| **Risk level** | **Low** — additive schema |
+| **Migration notes** | Seed `ai.matching`, `ai.summaries`, `whatsapp.enabled`, etc.; migration `025` follows `024_billing_platform`. |
+| **Testing requirements** | Registry resolves known keys; unknown key returns safe default (off). |
+| **Documentation updates** | `FEATURE_FLAGS_PLATFORM.md` §6, §13; `MIGRATIONS_INDEX.md`. |
+| **Acceptance criteria** | Feature catalog queryable; dot-namespaced keys enforced; ≥10 seed features. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-FF02: Environment layer and kill switches
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `feature_environments` + defaults; `EnvironmentResolver`; `FEATURE_KILL_*` / `FEATURE_FORCE_*` env overrides. |
+| **Gap IDs** | Implicit NODE_ENV only |
+| **Files affected** | `modules/platform/features/environments/resolver.ts`, `kill-switch.ts`, `lib/repositories/feature-environment.repository.ts`, `lib/env.ts` |
+| **Dependencies** | PR-FF01 |
+| **Risk level** | **Low** |
+| **Migration notes** | Seed dev/staging/production; production defaults conservative (AI flags off). |
+| **Testing requirements** | Kill switch overrides DB; dev env defaults differ from production. |
+| **Documentation updates** | `FEATURE_FLAGS_PLATFORM.md` §7. |
+| **Acceptance criteria** | `PLATFORM_ENV` drives defaults; kill switch tested in unit tests. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-FF03: Organization overrides and entitlement gate
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `feature_organization_overrides` with TTL; billing entitlement hard-gate; dual-read `tenant.settings.features` fallback. |
+| **Gap IDs** | Org flags in JSON blob |
+| **Files affected** | `modules/platform/features/organizations/resolver.ts`, `entitlement-gate.ts`, `lib/repositories/feature-organization-override.repository.ts` |
+| **Dependencies** | PR-FF02, **PR-B02** (can stub entitlements until billing merges) |
+| **Risk level** | **Medium** — entitlement deny affects access |
+| **Migration notes** | Org override requires `tenant:billing` or `platform:admin`; pilot TTL optional. |
+| **Testing requirements** | Entitlement deny beats org override; org override beats env default. |
+| **Documentation updates** | `FEATURE_FLAGS_PLATFORM.md` §8; `BILLING_PLATFORM.md` §8.2. |
+| **Acceptance criteria** | Org pilot flag works; plan without `ai_matching` blocks even with override attempt. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-FF04: Rollout engine
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Percentage rollouts with deterministic murmurhash3 bucketing; allow/block lists; rollout lifecycle. |
+| **Gap IDs** | No progressive delivery |
+| **Files affected** | `modules/platform/features/rollouts/engine.ts`, `bucketing.ts`, `lib/repositories/feature-rollout.repository.ts` |
+| **Dependencies** | PR-FF03 |
+| **Risk level** | **Medium** — affects prod traffic split |
+| **Migration notes** | Rollout at 0% = no effect; 100% promotes to env default. |
+| **Testing requirements** | Same orgId always same bucket; allowlist bypasses percentage; blocklist excludes. |
+| **Documentation updates** | `FEATURE_FLAGS_PLATFORM.md` §9. |
+| **Acceptance criteria** | 25% rollout enables ~25% of orgs (statistical test with fixed seed); salt rotation documented. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-FF05: Experiment framework
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Multivariate experiments, variant assignment, exposure events for analytics. |
+| **Gap IDs** | A/B mentioned in AI_PLATFORM; not implemented |
+| **Files affected** | `modules/platform/features/experiments/engine.ts`, `variants.ts`, `exposure.ts`, `lib/repositories/feature-experiment.repository.ts`, `modules/platform/events/catalog.ts` |
+| **Dependencies** | PR-FF04 |
+| **Risk level** | **Medium** — experiment misconfiguration affects UX |
+| **Migration notes** | Exposure events sampled 100% initially; configurable throttle later. |
+| **Testing requirements** | Control/treatment weights respected; exposure event emitted once per evaluate (idempotent per request). |
+| **Documentation updates** | `FEATURE_FLAGS_PLATFORM.md` §10; `AI_PLATFORM.md` §7 A/B. |
+| **Acceptance criteria** | `evaluate()` returns variant; `feature.experiment.exposure` in event catalog; prompt A/B path documented. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-FF06: Evaluation service and Redis cache
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `FeatureFlagService.evaluate()` orchestrates all layers; Redis cache with invalidation; bulk evaluate. |
+| **Gap IDs** | No unified evaluation API |
+| **Files affected** | `modules/platform/features/evaluation/service.ts`, `cache/redis.ts`, `modules/platform/contracts/feature-flag-provider.ts` (extend), `modules/platform/sdk/client.ts` |
+| **Dependencies** | PR-FF03 (PR-FF04/05 can merge before or after — engine supports rollouts/experiments when present) |
+| **Risk level** | **Medium** — hot path for all requests |
+| **Migration notes** | Cache TTLs per layer; invalidate org on override change. |
+| **Testing requirements** | Full precedence unit tests (11 cases); p99 cached evaluation benchmark; cache invalidation test. |
+| **Documentation updates** | `FEATURE_FLAGS_PLATFORM.md` §11, §14. |
+| **Acceptance criteria** | Single `platform.features.evaluate()` API; precedence table verified; Redis fallback to DB on miss. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-FF07: Migrate AI and tenant.settings flags
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Replace `lib/ai/features/flags.ts` and `tenant.settings.features` reads with Platform SDK; deprecate AI-only flag module. |
+| **Gap IDs** | M-001 partial; scattered flag reads |
+| **Files affected** | `lib/ai/features/flags.ts` (thin wrapper → platform), `lib/ai/gateway.ts`, `lib/integrations/ai/governance.ts`, `lib/repositories/tenant.repository.ts`, `scripts/backfill-feature-overrides.ts` |
+| **Dependencies** | PR-FF06, PR-FF04, PR-FF05 |
+| **Risk level** | **High** — AI gateway behavior |
+| **Migration notes** | Dual-read period: platform first, tenant.settings fallback; remove fallback after validation. |
+| **Testing requirements** | AI gateway tests pass with platform flags; tenant with `ai_matching: false` still blocked. |
+| **Documentation updates** | `27-ai-gateway.md`; `AI_GAP_ANALYSIS.md` — feature flags partial → resolved. |
+| **Acceptance criteria** | Zero direct `tenant.settings.features` reads in `lib/ai/`; `assertFeatureEnabled` uses platform evaluate. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-FF08: Admin API, events, and observability
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Platform admin API for flags/rollouts/experiments; complete event catalog; metrics; OpenAPI. |
+| **Gap IDs** | No admin API |
+| **Files affected** | `app/api/platform/features/**`, `app/api/platform/experiments/**`, `lib/observability/metrics.ts`, `docs/openapi.yaml` |
+| **Dependencies** | PR-FF07 |
+| **Risk level** | **Low** |
+| **Migration notes** | `platform:admin` permission for global rollouts; org admins limited to org overrides. |
+| **Testing requirements** | API integration tests; metrics exported for evaluate latency and cache hit rate. |
+| **Documentation updates** | `FEATURE_FLAGS_PLATFORM.md` §15–16; `README.md`. |
+| **Acceptance criteria** | Admin can create rollout and inspect evaluation debug; feature flags maturity ≥85%; ≥25 unit tests. |
+| **Estimated effort** | **M** |
+
+---
+
+### Feature flags critical path
+
+```
+PR-00 → PR-FF01 → PR-FF02 → PR-FF03 → PR-FF06 → PR-FF04 → PR-FF05 → PR-FF07 → PR-FF08
+                              ↘ PR-B02 (entitlement gate)
+PR-FF07 → PR-11 (AI client uses platform.features)
+PR-FF05 → PR-17 (prompt A/B via experiments)
 ```
 
 ---
@@ -549,7 +709,7 @@ PR-B02 → PR-20 (AI budget uses plan entitlements)
 |-------|--------|
 | **Objective** | Database table for org/feature routing policies (foundation for policy engine). |
 | **Gap IDs** | M-018 |
-| **Files affected** | `supabase/migrations/023_ai_routing_policies.sql` (new), `lib/repositories/ai-routing.repository.ts` (new), `modules/core/types/database.ts` |
+| **Files affected** | `supabase/migrations/027_ai_routing_policies.sql` (new), `lib/repositories/ai-routing.repository.ts` (new), `modules/core/types/database.ts` |
 | **Dependencies** | PR-02 |
 | **Risk level** | **Low** — schema only, unused at runtime |
 | **Migration notes** | Seed platform defaults for `talent_match`, `brief_parse`; org override rows optional. |
@@ -604,7 +764,7 @@ PR-B02 → PR-20 (AI budget uses plan entitlements)
 |-------|--------|
 | **Objective** | Create `ai_prompts`, `ai_prompt_versions`, `ai_prompt_assignments` tables. |
 | **Gap IDs** | M-010, P1-005 |
-| **Files affected** | `supabase/migrations/024_ai_prompt_platform.sql` (new), `modules/core/types/database.ts`, `scripts/push-supabase-schema.sh` |
+| **Files affected** | `supabase/migrations/028_ai_prompt_platform.sql` (new), `modules/core/types/database.ts`, `scripts/push-supabase-schema.sh` |
 | **Dependencies** | PR-02 |
 | **Risk level** | **Low** |
 | **Migration notes** | Seed rows from current `registerDefaultPrompts()` content as version `1.0.0` published. |
@@ -655,7 +815,7 @@ PR-B02 → PR-20 (AI budget uses plan entitlements)
 |-------|--------|
 | **Objective** | Create `ai_budgets`, `ai_cost_aggregates` tables and `CostPlatformService` for USD roll-ups. |
 | **Gap IDs** | M-012, P1-004 |
-| **Files affected** | `supabase/migrations/025_ai_cost_budgets.sql` (new), `lib/ai/cost/budgets.ts` (new), `lib/ai/cost/aggregates.ts` (new), `lib/repositories/ai-budget.repository.ts` (new), `lib/ai/logging/cost-tracker.ts` |
+| **Files affected** | `supabase/migrations/026_ai_cost_budgets.sql` (new), `lib/ai/cost/budgets.ts` (new), `lib/ai/cost/aggregates.ts` (new), `lib/repositories/ai-budget.repository.ts` (new), `lib/ai/logging/cost-tracker.ts` |
 | **Dependencies** | PR-02, PR-05 |
 | **Risk level** | **Low** — schema + read path |
 | **Migration notes** | Seed default org budget from tier; migrate monthly request limit as secondary cap optional. Budget limits read from **PR-B02** `PlanService.resolveEntitlements()` when available. |
@@ -838,7 +998,7 @@ PR-B02 → PR-20 (AI budget uses plan entitlements)
 |-------|--------|
 | **Objective** | Generalize `agent_memory_entries` → `ai_memory_entries` with full scope enum. |
 | **Gap IDs** | M-014, P1-014 |
-| **Files affected** | `supabase/migrations/026_ai_memory_unified.sql` (new), `modules/core/types/database.ts`, `lib/repositories/ai-memory.repository.ts` (new) |
+| **Files affected** | `supabase/migrations/029_ai_memory_unified.sql` (new), `modules/core/types/database.ts`, `lib/repositories/ai-memory.repository.ts` (new) |
 | **Dependencies** | PR-02 |
 | **Risk level** | **Medium** — data migration |
 | **Migration notes** | Copy `agent_memory_entries` → `ai_memory_entries`; keep view/compatibility on old table or rename with alias; scopes: user, org, session, entity, agent. |
@@ -961,7 +1121,7 @@ PR-B02 → PR-20 (AI budget uses plan entitlements)
 |-------|--------|
 | **Objective** | `ai_quality_reports` table; API to record user feedback and schema validation failures. |
 | **Gap IDs** | M-021, P2-004 |
-| **Files affected** | `supabase/migrations/027_ai_quality_reports.sql` (new), `lib/repositories/ai-quality.repository.ts` (new), `app/api/ai/feedback/route.ts` (new), `lib/ai/gateway/gateway.ts` |
+| **Files affected** | `supabase/migrations/030_ai_quality_reports.sql` (new), `lib/repositories/ai-quality.repository.ts` (new), `app/api/ai/feedback/route.ts` (new), `lib/ai/gateway/gateway.ts` |
 | **Dependencies** | PR-10, PR-02 |
 | **Risk level** | **Low** — no UI |
 | **Migration notes** | Feedback API auth: tenant session; links to `ai_request_id`. |
@@ -995,7 +1155,7 @@ PR-B02 → PR-20 (AI budget uses plan entitlements)
 |-------|--------|
 | **Objective** | Namespace column on embeddings; prepare `media.content` and `creative.assets` tables (schema only for non-talent products). |
 | **Gap IDs** | M-025, P2-006 |
-| **Files affected** | `supabase/migrations/028_embedding_namespaces.sql` (new), `lib/ai/embedding/service.ts`, `lib/repositories/knowledge-embedding.repository.ts` |
+| **Files affected** | `supabase/migrations/031_embedding_namespaces.sql` (new), `lib/ai/embedding/service.ts`, `lib/repositories/knowledge-embedding.repository.ts` |
 | **Dependencies** | PR-23, PR-31 |
 | **Risk level** | **Low** |
 | **Migration notes** | Existing rows namespace `talent.knowledge`; search filtered by product namespace. |
@@ -1120,6 +1280,14 @@ flowchart TD
 | **PR-B06** | **Stripe integration** | **0b** | **L** | **High** | **P1** |
 | **PR-B07** | **Subscription lifecycle + middleware** | **0b** | **M** | **High** | **P0** |
 | **PR-B08** | **Billing API + events + observability** | **0b** | **M** | **Low** | **P1** |
+| **PR-FF01** | **Feature catalog + registry** | **0c** | **M** | **Low** | **P0** |
+| **PR-FF02** | **Environment layer + kill switches** | **0c** | **M** | **Low** | **P0** |
+| **PR-FF03** | **Org overrides + entitlement gate** | **0c** | **M** | **Med** | **P0** |
+| **PR-FF04** | **Rollout engine** | **0c** | **M** | **Med** | **P1** |
+| **PR-FF05** | **Experiment framework** | **0c** | **L** | **Med** | **P1** |
+| **PR-FF06** | **Evaluation service + Redis cache** | **0c** | **L** | **Med** | **P0** |
+| **PR-FF07** | **Migrate AI + tenant.settings flags** | **0c** | **M** | **High** | **P0** |
+| **PR-FF08** | **Admin API + events + observability** | **0c** | **M** | **Low** | **P1** |
 | PR-01 | MockProvider + AI tests | 0 | M | Low | P1 |
 | PR-02 | ai_requests schema extend | 0 | M | Med | P1 |
 | PR-03 | Direct execution default | 0 | S | Med | P0 |
@@ -1163,11 +1331,22 @@ flowchart TD
 | PR-41 | OpenTelemetry export | 7 | M | Low | P3 |
 | PR-42 | Deprecate getAiGateway | 7 | S | Med | P1 |
 
-**Total PRs:** 51 (PR-00 + PR-B01–B08 + PR-01–PR-42) · **Estimated aggregate effort:** ~65–75 developer-days (sequential); PR-00 and PR-B01–B02 are on critical paths for AI budgets and entitlements.
+**Total PRs:** 59 (PR-00 + PR-B01–B08 + PR-FF01–FF08 + PR-01–PR-42) · **Estimated aggregate effort:** ~75–85 developer-days (sequential).
 
 ### PR numbering note
 
-Migration `022_platform_core.sql` is reserved for PR-00. AI schema PR-02 uses `023_ai_requests_extend.sql`. Billing schema PR-B01 uses `024_billing_platform.sql`; subsequent AI migrations shift +1 from v1.0.0 roadmap numbers where they collide (documented in each PR).
+| Migration | PR |
+|-----------|-----|
+| `022_platform_core.sql` | PR-00 |
+| `023_ai_requests_extend.sql` | PR-02 |
+| `024_billing_platform.sql` | PR-B01 |
+| `025_feature_flags_platform.sql` | PR-FF01 |
+| `026_ai_cost_budgets.sql` | PR-19 |
+| `027_ai_routing_policies.sql` | PR-13 |
+| `028_ai_prompt_platform.sql` | PR-16 |
+| `029_ai_memory_unified.sql` | PR-29 |
+| `030_ai_quality_reports.sql` | PR-36 |
+| `031_embedding_namespaces.sql` | PR-38 |
 
 ---
 
@@ -1194,6 +1373,7 @@ Migration `022_platform_core.sql` is reserved for PR-00. AI schema PR-02 uses `0
 |--------|--------|--------------|
 | Platform Core complete | PR-00 acceptance criteria | Unit tests + migration |
 | Billing platform complete | PR-B08 acceptance criteria | API tests + Stripe test mode |
+| Feature flags platform complete | PR-FF08 acceptance criteria | Precedence tests + cache benchmarks |
 | Platform maturity | ≥85% vs AI_PLATFORM.md | Updated gap analysis |
 | All LLM via single ledger | 100% | PR-05 audit query |
 | MCP agent tool success rate | >90% read tools | PR-28 E2E agent test |
@@ -1219,6 +1399,6 @@ After each merged PR:
 
 **Status: Ready for implementation approval — no code in this document.**
 
-*Begin with PR-00 Platform Core, then PR-B01 (Billing) and PR-01 (AI) in parallel where staffed.*
+*Begin with PR-00 Platform Core, then parallel tracks: PR-B01 (Billing), PR-FF01 (Feature Flags), PR-01 (AI).*
 
-*End of AI Platform Implementation Roadmap v1.2.0*
+*End of AI Platform Implementation Roadmap v1.3.0*

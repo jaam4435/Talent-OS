@@ -370,7 +370,7 @@ interface PlanEntitlements {
 2. Active subscription plan
 3. Org-specific overrides (`billing_plan_overrides` for Enterprise contracts)
 
-Platform Feature Flags (PR-00) **read entitlements** from billing instead of `tenant.settings.features` over time.
+Platform Feature Flags (PR-00 MVP, **Wave 0c full platform**: [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md)) **read entitlements** from billing instead of `tenant.settings.features` over time.
 
 ---
 
