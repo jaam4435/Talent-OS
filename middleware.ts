@@ -1,22 +1,38 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
-import { ACTIVE_TENANT_COOKIE } from '@/lib/auth/tenant-context'
+import { updateSession } from '@/modules/core/utils/supabase/middleware'
+import { ACTIVE_TENANT_COOKIE } from '@/modules/core/services/tenant-context'
 import {
   ADMIN_ONLY_ROUTES,
   CLIENT_RESTRICTED_ROUTES,
   MANAGER_ONLY_ROUTES,
   PUBLIC_ROUTES,
-} from '@/lib/utils/constants'
+  isApiPublicRoute,
+  isApiRoute,
+} from '@/modules/core/utils/constants'
 
 function isPublicRoute(pathname: string) {
-  return PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  return (
+    PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ||
+    isApiPublicRoute(pathname)
   )
 }
 
 function matchesRoute(pathname: string, routes: readonly string[]) {
   return routes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+}
+
+function apiUnauthorizedResponse(request: NextRequest) {
+  return NextResponse.json(
+    { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+    {
+      status: 401,
+      headers: {
+        'X-API-Version': 'v1',
+        'Content-Type': 'application/json',
+      },
+    }
   )
 }
 
@@ -41,6 +57,15 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!supabaseUrl || !supabaseKey) {
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
+      if (isApiRoute(pathname)) {
+        return NextResponse.json(
+          { error: { code: 'SERVICE_UNAVAILABLE', message: 'Auth service not configured' } },
+          { status: 503 }
+        )
+      }
+      return new NextResponse('Service Unavailable', { status: 503 })
+    }
     return response
   }
 
@@ -59,6 +84,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
+    if (isApiRoute(pathname)) {
+      return apiUnauthorizedResponse(request)
+    }
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
@@ -84,6 +112,12 @@ export async function middleware(request: NextRequest) {
   }
 
   if (matchesRoute(pathname, ADMIN_ONLY_ROUTES) && membership?.role !== 'admin') {
+    if (isApiRoute(pathname)) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Admin access required' } },
+        { status: 403, headers: { 'X-API-Version': 'v1' } }
+      )
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -92,6 +126,12 @@ export async function middleware(request: NextRequest) {
     membership?.role !== 'admin' &&
     membership?.role !== 'talent_manager'
   ) {
+    if (isApiRoute(pathname)) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Manager access required' } },
+        { status: 403, headers: { 'X-API-Version': 'v1' } }
+      )
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -99,10 +139,22 @@ export async function middleware(request: NextRequest) {
     membership?.role === 'client' &&
     matchesRoute(pathname, CLIENT_RESTRICTED_ROUTES)
   ) {
+    if (isApiRoute(pathname)) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
+        { status: 403, headers: { 'X-API-Version': 'v1' } }
+      )
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   if (membership?.role === 'freelancer' && pathname.startsWith('/settings')) {
+    if (isApiRoute(pathname)) {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } },
+        { status: 403, headers: { 'X-API-Version': 'v1' } }
+      )
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

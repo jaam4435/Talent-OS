@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'crypto'
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto'
 
 const ALGORITHM = 'aes-256-gcm'
 const IV_LENGTH = 12
@@ -51,15 +51,20 @@ export function signPayload(payload: unknown, secret: string): string {
   return createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex')
 }
 
+function safeEqual(expected: string, provided: string): boolean {
+  if (expected.length !== provided.length) return false
+  return timingSafeEqual(Buffer.from(expected), Buffer.from(provided))
+}
+
 export function verifySignature(
   payload: unknown,
   secret: string,
   signature: string | null
 ): boolean {
-  if (!signature) return false
+  if (!signature || !secret) return false
   const expected = signPayload(payload, secret)
   const provided = signature.replace(/^sha256=/, '')
-  return expected === provided
+  return safeEqual(expected, provided)
 }
 
 export function verifyMetaSignature(
@@ -67,7 +72,8 @@ export function verifyMetaSignature(
   secret: string,
   signature: string | null
 ): boolean {
-  if (!signature) return false
+  if (!signature || !secret) return false
   const expected = createHmac('sha256', secret).update(rawBody).digest('hex')
-  return signature === `sha256=${expected}`
+  const provided = signature.startsWith('sha256=') ? signature.slice(7) : signature
+  return safeEqual(expected, provided)
 }

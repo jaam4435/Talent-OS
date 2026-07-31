@@ -1,21 +1,10 @@
-import { requireTenant } from '@/lib/auth/session'
-import { createClient } from '@/lib/supabase/server'
-import { success, handleApiError } from '@/lib/api/response'
+import { withApiHandler } from '@/modules/core/api/handler'
+import { createServices } from '@/lib/services/factory'
 
-export async function GET() {
-  try {
-    const { tenant } = await requireTenant()
-    const supabase = await createClient()
-
-    const { data, error } = await supabase
-      .from('v_dashboard_summary')
-      .select('*')
-      .eq('tenant_id', tenant.id)
-      .maybeSingle()
-
-    if (error) throw error
-    return success(data)
-  } catch (err) {
-    return handleApiError(err)
+export const GET = withApiHandler(
+  { auth: 'manager', permissions: ['analytics:read'], rateLimit: 'default' },
+  async ({ ctx }) => {
+    const services = await createServices()
+    return services.analytics.getDashboardSummary(ctx.tenant!.id)
   }
-}
+)

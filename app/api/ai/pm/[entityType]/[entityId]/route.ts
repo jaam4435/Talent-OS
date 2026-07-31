@@ -1,51 +1,57 @@
-import { requireTenant } from '@/lib/auth/session'
-import { requirePermission } from '@/lib/auth/permissions'
-import { AppError, handleApiError, success } from '@/lib/api/response'
-import { getProjectSummaryResult, getShortlistSummaryResult } from '@/lib/integrations/ai/summary'
-import { getStatusAssessmentResult } from '@/lib/integrations/ai/status-assessment'
-import { getBriefParseResult } from '@/lib/integrations/ai/brief-parse'
+import { withApiHandler } from '@/modules/core/api/handler'
+import { AppError } from '@/modules/core/api/response'
+import {
+  getBriefParseResult,
+  getProjectSummaryResult,
+  getShortlistSummaryResult,
+  getStatusAssessmentResult,
+} from '@/lib/queries/ai.queries'
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ entityType: string; entityId: string }> }
-) {
-  try {
-    const { tenant } = await requireTenant()
-    const { entityType, entityId } = await params
+export const GET = withApiHandler(
+  { auth: 'tenant', rateLimit: 'ai' },
+  async ({ ctx, params }) => {
+    const entityType = params?.entityType
+    const entityId = params?.entityId
+
+    if (!entityType || !entityId) {
+      throw new AppError('VALIDATION_ERROR', 'entityType and entityId are required', 400)
+    }
 
     if (entityType === 'project') {
-      requirePermission(tenant.role, 'ai:summary')
+      const { requirePermission } = await import('@/modules/core/services/permissions')
+      requirePermission(ctx.tenant!.role, 'ai:summary')
+
       const [summary, status] = await Promise.all([
-        getProjectSummaryResult(entityId, tenant.id),
-        getStatusAssessmentResult(entityId, tenant.id),
+        getProjectSummaryResult(entityId, ctx.tenant!.id),
+        getStatusAssessmentResult(entityId, ctx.tenant!.id),
       ])
 
-      return success({
+      return {
         summary: summary.summary,
         latestRequest: summary.latestRequest,
         assessment: status.assessment,
         statusRequest: status.latestRequest,
         currentStatus: status.currentStatus,
-      })
+      }
     }
 
     if (entityType === 'opportunity') {
-      requirePermission(tenant.role, 'ai:brief_parse')
+      const { requirePermission } = await import('@/modules/core/services/permissions')
+      requirePermission(ctx.tenant!.role, 'ai:brief_parse')
+
       const [brief, shortlist] = await Promise.all([
-        getBriefParseResult(entityId, tenant.id),
-        getShortlistSummaryResult(entityId, tenant.id),
+        getBriefParseResult(entityId, ctx.tenant!.id),
+        getShortlistSummaryResult(entityId, ctx.tenant!.id),
       ])
 
-      return success({
+      return {
         requirements: brief.requirements,
         latestRequest: brief.latestRequest,
         shortlistSummary: shortlist.latestRequest?.result ?? null,
         shortlistRequest: shortlist.latestRequest,
-      })
+      }
     }
 
     throw new AppError('NOT_FOUND', 'Unknown entity type', 404)
-  } catch (error) {
-    return handleApiError(error)
   }
-}
+)

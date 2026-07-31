@@ -5,21 +5,17 @@ import {
   executeShortlistSummary,
 } from '@/lib/integrations/ai/summary'
 import { executeStatusAssessment } from '@/lib/integrations/ai/status-assessment'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminServices } from '@/lib/services/factory'
 
 export async function executeAiRequest(aiRequestId: string, actorId?: string | null) {
-  const supabase = createAdminClient()
-  const { data: aiRequest } = await supabase
-    .from('ai_requests')
-    .select('request_type')
-    .eq('id', aiRequestId)
-    .maybeSingle()
+  const services = await createAdminServices()
+  const requestType = await services.ai.findRequestType(aiRequestId)
 
-  if (!aiRequest) {
+  if (!requestType) {
     throw new Error('AI_REQUEST_NOT_FOUND')
   }
 
-  switch (aiRequest.request_type) {
+  switch (requestType) {
     case 'talent_match':
       return executeTalentMatch(aiRequestId, actorId)
     case 'brief_parse':
@@ -31,6 +27,6 @@ export async function executeAiRequest(aiRequestId: string, actorId?: string | n
     case 'status_assessment':
       return executeStatusAssessment(aiRequestId, actorId)
     default:
-      throw new Error(`Unsupported AI request type: ${aiRequest.request_type}`)
+      throw new Error(`Unsupported AI request type: ${requestType}`)
   }
 }

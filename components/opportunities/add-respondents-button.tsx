@@ -3,7 +3,7 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { addRespondentsToShortlist } from '@/app/actions/shortlists'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/modules/core/components/ui/button'
 
 interface AddRespondentsButtonProps {
   opportunityId: string
