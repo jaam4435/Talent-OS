@@ -1,17 +1,17 @@
 # AI Platform — Implementation Roadmap
 
-**Document version:** 1.4.0  
+**Document version:** 1.5.0  
 **Date:** July 31, 2026  
-**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0 · [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) v1.0.0 · [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md) v1.0.0  
+**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0 · [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) v1.0.0 · [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md) v1.0.0 · [AUDIT_PLATFORM.md](./AUDIT_PLATFORM.md) v1.0.0  
 **Scope:** Planning only — no code in this document  
-**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing) · `cursor/ff-pr-FFXX-<slug>-5fb1` (Feature Flags) · `cursor/search-pr-SXX-<slug>-5fb1` (Search)  
-**Changelog:** v1.4.0 — Added Wave 0d Search Platform (PR-S01–PR-S08); v1.3.0 — Feature Flags Wave 0c; v1.2.0 — Billing Wave 0b; v1.1.0 — PR-00 Platform Core
+**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing) · `cursor/ff-pr-FFXX-<slug>-5fb1` (Feature Flags) · `cursor/search-pr-SXX-<slug>-5fb1` (Search) · `cursor/audit-pr-AXX-<slug>-5fb1` (Audit)  
+**Changelog:** v1.5.0 — Added Wave 0e Audit Platform (PR-A01–PR-A08); v1.4.0 — Search Wave 0d; v1.3.0 — Feature Flags Wave 0c; v1.2.0 — Billing Wave 0b; v1.1.0 — PR-00 Platform Core
 
 ---
 
 ## Overview
 
-This roadmap implements the **AI Platform** (43 PRs), **Billing Platform** (8 PRs), **Feature Flags Platform** (8 PRs), and **Search Platform** (8 PRs), ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first**. Waves **0b–0d** run in parallel with AI waves where dependencies allow. Each PR is independently reviewable, deployable, and reversible where possible.
+This roadmap implements the **AI Platform** (43 PRs) and four **Platform waves** (8 PRs each): Billing, Feature Flags, Search, and Audit — **75 PRs total**. **PR-00 (Platform Core) is mandatory first**. Waves **0b–0e** run in parallel with AI waves where dependencies allow.
 
 ### Confirmed architecture decisions (apply throughout)
 
@@ -48,10 +48,12 @@ flowchart LR
     W00 --> W0b[Wave 0b\nBilling]
     W00 --> W0c[Wave 0c\nFeature Flags]
     W00 --> W0d[Wave 0d\nSearch]
+    W00 --> W0e[Wave 0e\nAudit]
     W0 --> W1[Wave 1\nGateway Security]
     W0b --> W1
     W0c --> W1
     W0d --> W1
+    W0e --> W1
     W1 --> W2[Wave 2\nAI Gateway Ext]
     W2 --> W3[Wave 3\nPrompt + Cost]
     W3 --> W4[Wave 4\nEmbeddings]
@@ -62,6 +64,7 @@ flowchart LR
     W0c -.->|flags| W2
     W0d -.->|semantic| W4
     W4 -.->|vectors| W0d
+    W0e -.->|capture| W0
 ```
 
 | Wave | PRs | Theme |
@@ -70,6 +73,7 @@ flowchart LR
 | **0b** | **PR-B01 – PR-B08** | **Billing — org → subscription → plan → seats → usage → invoice → payments** |
 | **0c** | **PR-FF01 – PR-FF08** | **Feature Flags — feature → environment → org → rollout → experiment** |
 | **0d** | **PR-S01 – PR-S08** | **Search — search → keyword → semantic → hybrid → filters → saved search** |
+| **0e** | **PR-A01 – PR-A08** | **Audit — actor → action → object → before → after → timestamp → source** |
 | 0 | PR-01 – PR-05 | Test harness, schema, execution path, audit integrity |
 | 1 | PR-06 – PR-10 | Pipeline, circuit breakers, guardrails, PII |
 | 2 | PR-11 – PR-15 | AI client, Azure, routing, cache |
@@ -156,6 +160,7 @@ flowchart LR
 | Document | Update |
 |----------|--------|
 | `docs/Architecture/PLATFORM_CORE.md` | **New** — architecture, folder structure, usage examples |
+| `docs/Architecture/AUDIT_PLATFORM.md` | **Reference** — Wave 0e; complements domain events outbox |
 | `docs/Architecture/SEARCH_PLATFORM.md` | **Reference** — Wave 0d; semantic depends on Embedding Platform |
 | `docs/Architecture/FEATURE_FLAGS_PLATFORM.md` | **Reference** — PR-00 MVP extended by Wave 0c |
 | `docs/Architecture/BILLING_PLATFORM.md` | **Reference** — billing depends on Platform Core org context |
@@ -640,6 +645,159 @@ PR-00 → PR-S01 → PR-S02 → PR-S05 → PR-S06 → PR-S07 → PR-S08
                     ↘ PR-S03 → PR-S04 → PR-S07
 PR-24 (embedding index) → PR-S03
 PR-S02 ships keyword-only search before PR-24 completes
+```
+
+---
+
+## Wave 0e — Audit Platform
+
+> **Audit flow:** Actor → Action → Object → Before → After → Timestamp → Source  
+> Full architecture: [AUDIT_PLATFORM.md](./AUDIT_PLATFORM.md)
+
+Wave 0e can start after **PR-00**. PR-A05 aligns with **PR-05** (unified AI ledger). PR-A04 wires source capture into API middleware and Server Actions. All platform waves (billing, flags, search) emit audit records via PR-A04 hooks.
+
+### PR-A01: Audit schema and action registry
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Create append-only `audit_records`, `audit_action_registry`, immutability trigger, RLS. |
+| **Gap IDs** | Audit maturity ~25%; no before/after store |
+| **Files affected** | `supabase/migrations/033_audit_platform.sql` (new), `modules/platform/audit/types/record.ts`, `registry/actions.ts`, `lib/repositories/audit.repository.ts` |
+| **Dependencies** | **PR-00** (OrganizationContext, correlationId) |
+| **Risk level** | **Medium** — immutability trigger |
+| **Migration notes** | Migration `033` follows `032_search_platform`; seed action registry; deny UPDATE/DELETE via RLS + trigger. |
+| **Testing requirements** | INSERT succeeds; UPDATE/DELETE raises; cross-tenant read blocked. |
+| **Documentation updates** | `AUDIT_PLATFORM.md` §14; `MIGRATIONS_INDEX.md`; `SECURITY.md`. |
+| **Acceptance criteria** | Append-only enforced; ≥30 seed actions; admin SELECT policy works. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-A02: Audit capture service and redaction
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `AuditPlatformService.record()` and `recordChange()`; `SnapshotService` with PII redaction engine. |
+| **Gap IDs** | No unified capture API |
+| **Files affected** | `modules/platform/audit/capture/service.ts`, `snapshot.ts`, `redaction/engine.ts`, `diff/engine.ts`, `contracts/audit-service.ts` |
+| **Dependencies** | PR-A01 |
+| **Risk level** | **Low** |
+| **Migration notes** | Snapshot size limit 32KB; secrets always `[REDACTED]`. |
+| **Testing requirements** | Redaction strips api_key; recordChange computes diff; create has null before. |
+| **Documentation updates** | `AUDIT_PLATFORM.md` §9–10. |
+| **Acceptance criteria** | SDK `platform.audit.record()` works; diff excludes `updated_at` noise. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-A03: Actor resolver and repository hooks
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `ActorResolver` from OrganizationContext; optional repository mixin for update/delete capture. |
+| **Gap IDs** | Actor types incomplete |
+| **Files affected** | `modules/platform/audit/capture/actor-resolver.ts`, `hooks/repository-mixin.ts`, pilot: `payment.repository.ts`, `project.repository.ts` |
+| **Dependencies** | PR-A02 |
+| **Risk level** | **Medium** — hot path on mutations |
+| **Migration notes** | Pilot on payments + projects first; expand in PR-A06. |
+| **Testing requirements** | Payment approve records before/after status; actor is user UUID. |
+| **Documentation updates** | `AUDIT_PLATFORM.md` §6, §8. |
+| **Acceptance criteria** | Two domain repositories emit audit on update; system actor for cron explicit. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-A04: Source capture middleware
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Inject `AuditSource` into request context via `withApiHandler`, Server Action wrapper, webhook handlers, cron routes. |
+| **Gap IDs** | Source not recorded |
+| **Files affected** | `modules/core/api/handler.ts`, `modules/platform/context/resolver.ts`, `app/api/webhooks/**`, `app/api/cron/**`, server action wrapper |
+| **Dependencies** | PR-A03 |
+| **Risk level** | **Medium** — touches all entry points |
+| **Migration notes** | `source_detail` = route path or action name; correlation_id propagated. |
+| **Testing requirements** | API mutation audit has `source_channel: api`; webhook has `webhook:stripe`. |
+| **Documentation updates** | `AUDIT_PLATFORM.md` §12; `05-api-architecture.md`. |
+| **Acceptance criteria** | Every pilot audit record has non-null source; correlation_id matches request. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-A05: Unified AI audit (align with PR-05)
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | AI completion writes `audit_records` (`ai.request_complete`) + single `ai_requests` ledger; eliminate dual path. |
+| **Gap IDs** | TD-001, P0-005, SEC-005 |
+| **Files affected** | `lib/ai/gateway/pipeline.ts`, `lib/ai/logging/token-logger.ts`, `lib/integrations/ai/governance.ts`, `modules/platform/audit/capture/service.ts` |
+| **Dependencies** | PR-A02, **PR-05** (coordinate or merge) |
+| **Risk level** | **High** — AI audit path |
+| **Migration notes** | `after` stores tokens/cost/hash only — no raw prompt (ADR-008, ADR-AU05). |
+| **Testing requirements** | Single ai_requests row per call; audit record linked by correlation_id. |
+| **Documentation updates** | `AUDIT_PLATFORM.md` §13.3; `AI_GAP_ANALYSIS.md` TD-001 resolved. |
+| **Acceptance criteria** | Zero duplicate ai_requests writes; audit timeline shows AI actions. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-A06: Migrate activity_logs and expand domain coverage
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | New writes to `audit_records` only; dual-read activity_logs for history; expand hooks to talent, knowledge, billing, tenant settings. |
+| **Gap IDs** | activity_logs lacks before/after |
+| **Files affected** | `lib/repositories/activity-log.repository.ts` (delegate), `freelancer`, `knowledge`, `tenant`, `billing-*` repositories, `scripts/backfill-audit-from-activity.ts` |
+| **Dependencies** | PR-A04 |
+| **Risk level** | **Medium** |
+| **Migration notes** | activity_logs table retained read-only; deprecation comment in schema. |
+| **Testing requirements** | Project activity timeline reads from audit_records; legacy activity_logs still visible. |
+| **Documentation updates** | `AUDIT_PLATFORM.md` §19, §20. |
+| **Acceptance criteria** | No new activity_logs inserts; ≥5 domains emit before/after audits. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-A07: Audit query API and export
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `AuditQueryService`; admin API for filtered query, entity timeline, CSV export; MCP audit logger implementation. |
+| **Gap IDs** | No compliance export |
+| **Files affected** | `modules/platform/audit/query/service.ts`, `app/api/audit/**`, `lib/mcp/interfaces.ts` (wire McpAuditLogger) |
+| **Dependencies** | PR-A06 |
+| **Risk level** | **Low** |
+| **Migration notes** | Permission `tenant:audit` for admin; managers scoped per ADR. |
+| **Testing requirements** | Export date range; entity timeline ordered by occurred_at; MCP tool invoke audited. |
+| **Documentation updates** | `AUDIT_PLATFORM.md` §15–16; OpenAPI audit tag. |
+| **Acceptance criteria** | Admin exports CSV; project detail shows audit timeline; MCP audit no longer stub. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-A08: Observability, retention policy, and hardening
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Audit metrics; retention config per tier (no purge Phase 1); ≥25 unit tests; platform audit maturity ≥85%. |
+| **Gap IDs** | No audit observability |
+| **Files affected** | `modules/platform/audit/retention/service.ts`, `lib/observability/metrics.ts`, `modules/platform/events/catalog.ts` (`audit.recorded`) |
+| **Dependencies** | PR-A07 |
+| **Risk level** | **Low** |
+| **Migration notes** | Retention job stub — archive Phase 2; metrics: records/min, export count. |
+| **Testing requirements** | Immutability integration test; RLS cross-tenant blocked; coverage ≥25 tests. |
+| **Documentation updates** | `AUDIT_PLATFORM.md`; `PRODUCTION_CHECKLIST.md`; `README.md`. |
+| **Acceptance criteria** | Audit platform complete per success metrics; SOC 2 evidence pack documented. |
+| **Estimated effort** | **M** |
+
+---
+
+### Audit critical path
+
+```
+PR-00 → PR-A01 → PR-A02 → PR-A03 → PR-A04 → PR-A06 → PR-A07 → PR-A08
+                    ↘ PR-A05 ↔ PR-05 (unified AI ledger)
+PR-A04 → PR-B06, PR-FF08, PR-S07 (platform waves emit audits)
 ```
 
 ---
@@ -1455,6 +1613,14 @@ flowchart TD
 | **PR-S06** | **Saved searches + alerts** | **0d** | **M** | **Low** | **P1** |
 | **PR-S07** | **Unified Search API + SDK** | **0d** | **L** | **Med** | **P0** |
 | **PR-S08** | **Migrate knowledge + observability** | **0d** | **M** | **Med** | **P1** |
+| **PR-A01** | **Audit schema + action registry** | **0e** | **M** | **Med** | **P0** |
+| **PR-A02** | **Capture service + redaction** | **0e** | **M** | **Low** | **P0** |
+| **PR-A03** | **Actor resolver + repo hooks** | **0e** | **M** | **Med** | **P0** |
+| **PR-A04** | **Source capture middleware** | **0e** | **L** | **Med** | **P0** |
+| **PR-A05** | **Unified AI audit (w/ PR-05)** | **0e** | **M** | **High** | **P0** |
+| **PR-A06** | **Migrate activity_logs + domains** | **0e** | **L** | **Med** | **P1** |
+| **PR-A07** | **Query API + export + MCP audit** | **0e** | **M** | **Low** | **P1** |
+| **PR-A08** | **Observability + retention policy** | **0e** | **M** | **Low** | **P1** |
 | PR-01 | MockProvider + AI tests | 0 | M | Low | P1 |
 | PR-02 | ai_requests schema extend | 0 | M | Med | P1 |
 | PR-03 | Direct execution default | 0 | S | Med | P0 |
@@ -1498,7 +1664,7 @@ flowchart TD
 | PR-41 | OpenTelemetry export | 7 | M | Low | P3 |
 | PR-42 | Deprecate getAiGateway | 7 | S | Med | P1 |
 
-**Total PRs:** 67 (PR-00 + PR-B01–B08 + PR-FF01–FF08 + PR-S01–S08 + PR-01–PR-42) · **Estimated aggregate effort:** ~85–95 developer-days (sequential).
+**Total PRs:** 75 (PR-00 + PR-B01–B08 + PR-FF01–FF08 + PR-S01–S08 + PR-A01–A08 + PR-01–PR-42) · **Estimated aggregate effort:** ~95–105 developer-days (sequential).
 
 ### PR numbering note
 
@@ -1515,6 +1681,7 @@ flowchart TD
 | `030_ai_quality_reports.sql` | PR-36 |
 | `031_embedding_namespaces.sql` | PR-38 |
 | `032_search_platform.sql` | PR-S01 |
+| `033_audit_platform.sql` | PR-A01 |
 
 ---
 
@@ -1543,6 +1710,7 @@ flowchart TD
 | Billing platform complete | PR-B08 acceptance criteria | API tests + Stripe test mode |
 | Feature flags platform complete | PR-FF08 acceptance criteria | Precedence tests + cache benchmarks |
 | Search platform complete | PR-S08 acceptance criteria | Hybrid E2E + knowledge migration |
+| Audit platform complete | PR-A08 acceptance criteria | Immutability + export + MCP audit |
 | Platform maturity | ≥85% vs AI_PLATFORM.md | Updated gap analysis |
 | All LLM via single ledger | 100% | PR-05 audit query |
 | MCP agent tool success rate | >90% read tools | PR-28 E2E agent test |
@@ -1568,6 +1736,6 @@ After each merged PR:
 
 **Status: Ready for implementation approval — no code in this document.**
 
-*Begin with PR-00 Platform Core, then parallel tracks: PR-B01, PR-FF01, PR-S01, PR-01.*
+*Begin with PR-00 Platform Core, then parallel tracks: PR-B01, PR-FF01, PR-S01, PR-A01, PR-01.*
 
-*End of AI Platform Implementation Roadmap v1.4.0*
+*End of AI Platform Implementation Roadmap v1.5.0*

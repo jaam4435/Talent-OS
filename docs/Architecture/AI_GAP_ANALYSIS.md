@@ -550,6 +550,33 @@ Full analysis: [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md).
 
 ---
 
+## Audit Platform Gap (cross-cutting)
+
+Full analysis: [AUDIT_PLATFORM.md](./AUDIT_PLATFORM.md).
+
+| Flow field | Current | Target | Gap |
+|------------|:-------:|:------:|:---:|
+| Actor | 50% (user only) | user/system/agent/webhook | Medium |
+| Action | 30% (free text) | Action registry | High |
+| Object | 60% (entity_type/id) | Typed object catalog | Low |
+| Before | 5% | Redacted snapshots | Critical |
+| After | 20% | Redacted snapshots | Critical |
+| Timestamp | 90% | Immutable occurred_at | Low |
+| Source | 10% | Required source_channel | Critical |
+
+**Overall audit maturity: ~25%** — PR-A01 through PR-A08 in roadmap Wave 0e.
+
+**Cross-platform integration:**
+
+| Gap | Current | Audit dependency |
+|-----|---------|------------------|
+| Dual AI audit path | TD-001 | PR-A05 + PR-05 |
+| activity_logs | No before/after | PR-A06 migrate |
+| MCP audit | Stub interface | PR-A07 |
+| Domain events | Outbox only | Complementary — PR-A01 separate table |
+
+---
+
 ## Appendix — File Reference (current AI code)
 
 | Path | Role | Platform subsystem |
