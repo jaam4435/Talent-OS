@@ -1,17 +1,17 @@
 # AI Platform — Implementation Roadmap
 
-**Document version:** 1.1.0  
+**Document version:** 1.2.0  
 **Date:** July 31, 2026  
-**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0  
+**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0  
 **Scope:** Planning only — no code in this document  
-**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1`  
-**Changelog:** v1.1.0 — Added PR-00 Platform Core (prerequisite for all AI PRs)
+**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing)  
+**Changelog:** v1.2.0 — Added Wave 0b Billing Platform (PR-B01–PR-B08); v1.1.0 — Added PR-00 Platform Core
 
 ---
 
 ## Overview
 
-This roadmap implements the AI Platform in **43 small pull requests**, ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first** — it provides shared infrastructure consumed by every subsequent PR. Each PR is independently reviewable, deployable, and reversible where possible.
+This roadmap implements the **AI Platform** (43 PRs) and **Billing Platform** (8 PRs), ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first** — it provides shared infrastructure consumed by every subsequent PR. **Wave 0b (Billing)** runs in parallel with AI Wave 0–3 where dependencies allow. Each PR is independently reviewable, deployable, and reversible where possible.
 
 ### Confirmed architecture decisions (apply throughout)
 
@@ -45,18 +45,22 @@ This roadmap implements the AI Platform in **43 small pull requests**, ordered b
 ```mermaid
 flowchart LR
     W00[PR-00\nPlatform Core] --> W0[Wave 0\nFoundation]
+    W00 --> W0b[Wave 0b\nBilling Platform]
     W0 --> W1[Wave 1\nGateway Security]
+    W0b --> W1
     W1 --> W2[Wave 2\nAI Gateway Ext]
     W2 --> W3[Wave 3\nPrompt + Cost]
     W3 --> W4[Wave 4\nEmbeddings]
     W4 --> W5[Wave 5\nMCP + Agents]
     W5 --> W6[Wave 6\nMemory + Client]
     W6 --> W7[Wave 7\nQuality + Scale]
+    W0b -.->|usage meters| W3
 ```
 
 | Wave | PRs | Theme |
 |------|-----|-------|
 | **0a** | **PR-00** | **Platform Core — shared SDK, context, registry, events** |
+| **0b** | **PR-B01 – PR-B08** | **Billing Platform — org → subscription → plan → seats → usage → invoice → payments** |
 | 0 | PR-01 – PR-05 | Test harness, schema, execution path, audit integrity |
 | 1 | PR-06 – PR-10 | Pipeline, circuit breakers, guardrails, PII |
 | 2 | PR-11 – PR-15 | AI client, Azure, routing, cache |
@@ -143,6 +147,7 @@ flowchart LR
 | Document | Update |
 |----------|--------|
 | `docs/Architecture/PLATFORM_CORE.md` | **New** — architecture, folder structure, usage examples |
+| `docs/Architecture/BILLING_PLATFORM.md` | **Reference** — billing depends on Platform Core org context |
 | `docs/Architecture/AI_PLATFORM.md` | §13 — reference Platform Core as dependency |
 | `docs/Architecture/AI_GAP_ANALYSIS.md` | Mark multi-product and DevEx foundations partial |
 | `docs/06-folder-structure.md` | Add `modules/platform/` tree |
@@ -164,6 +169,159 @@ flowchart LR
 #### Estimated effort
 
 **L** (4–5 days) — foundational; quality here reduces rework in all 42 downstream PRs.
+
+---
+
+## Wave 0b — Billing Platform
+
+> **SaaS billing flow:** Organizations → Subscription → Plan → Seats → Usage → Invoice → Payments  
+> Full architecture: [BILLING_PLATFORM.md](./BILLING_PLATFORM.md)
+
+Wave 0b can start immediately after **PR-00**. PR-B04 (usage metering) integrates with **PR-19** (AI cost aggregates). PR-B02 (entitlements) should precede **PR-20** (budget enforcement) so plan limits drive AI budgets.
+
+### PR-B01: Billing schema foundation
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Create core billing tables: organization profiles, plans catalog, subscriptions, meters. |
+| **Gap IDs** | Billing maturity ~15%; closes subscription/plan normalization gap |
+| **Files affected** | `supabase/migrations/024_billing_platform.sql` (new), `modules/billing/types/index.ts` (new), `lib/repositories/billing-subscription.repository.ts`, `billing-plan.repository.ts`, `modules/core/types/database.ts` |
+| **Dependencies** | **PR-00** (OrganizationContext, ProductId) |
+| **Risk level** | **Medium** — DB migration |
+| **Migration notes** | Seed `billing_plans` (starter/pro/enterprise), `billing_meters`; RLS on all tables; `024` follows `022_platform_core`, `023_ai_requests_extend`. |
+| **Testing requirements** | Migration applies; RLS blocks cross-tenant read; plan seed count = 3. |
+| **Documentation updates** | `BILLING_PLATFORM.md` §14; `MIGRATIONS_INDEX.md`. |
+| **Acceptance criteria** | Tables exist with RLS; plans seeded; subscription CRUD via repository works in integration test. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-B02: Plan catalog and entitlements service
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `PlanService.resolveEntitlements(orgId)` merges plan defaults + org overrides; backfill subscriptions from `tenant.settings.subscription`. |
+| **Gap IDs** | Tier enforcement scattered in settings JSON |
+| **Files affected** | `modules/billing/plans/service.ts`, `entitlements.ts`, `catalog.ts`, `lib/repositories/billing-plan.repository.ts`, `scripts/backfill-billing-subscriptions.ts` (new) |
+| **Dependencies** | PR-B01 |
+| **Risk level** | **Medium** — backfill touches all tenants |
+| **Migration notes** | `billing_plan_overrides` for Enterprise; backfill idempotent. |
+| **Testing requirements** | Unit tests: starter/pro/enterprise entitlements; backfill script dry-run mode. |
+| **Documentation updates** | `BILLING_PLATFORM.md` §8; `08-multi-tenant-architecture.md` — reference billing entitlements. |
+| **Acceptance criteria** | Every tenant has `billing_subscriptions` row; `resolveEntitlements` returns correct limits for each tier. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-B03: Seat management and enforcement
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Track licensed seats; block team invites when at plan cap; seat overage counting. |
+| **Gap IDs** | No seat licensing |
+| **Files affected** | `modules/billing/seats/service.ts`, `lib/repositories/billing-seat.repository.ts`, team invite server action / API (seat check hook) |
+| **Dependencies** | PR-B02 |
+| **Risk level** | **Medium** — blocks invites at limit |
+| **Migration notes** | Seed active seats from existing `tenant_members`; freelancers excluded from seat count. |
+| **Testing requirements** | Unit test: at cap → invite rejected; release seat → invite allowed; overage count correct. |
+| **Documentation updates** | `BILLING_PLATFORM.md` §9. |
+| **Acceptance criteria** | `SeatService.canAssign(orgId)` enforced on invite; `billing.seat.limit_exceeded` event emitted. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-B04: Usage metering platform
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Unified usage ledger with idempotent ingest; aggregate by billing period; wire AI and WhatsApp producers. |
+| **Gap IDs** | No unified usage ledger |
+| **Files affected** | `modules/billing/usage/service.ts`, `meters.ts`, `aggregator.ts`, `lib/repositories/billing-usage.repository.ts`, `lib/ai/gateway/pipeline.ts` (post-success hook), WhatsApp send path (meter hook), `app/api/cron/billing/aggregate-usage/route.ts` |
+| **Dependencies** | PR-B01, **PR-19** (AI cost aggregates — can stub until PR-19 merges) |
+| **Risk level** | **Medium** — new write path on hot paths |
+| **Migration notes** | Idempotency keys prevent double-count; cron aggregates hourly. |
+| **Testing requirements** | Unit test: duplicate idempotency key ignored; aggregate sums match records; AI request emits `ai.cost_usd` meter. |
+| **Documentation updates** | `BILLING_PLATFORM.md` §10; `AI_PLATFORM.md` §10 — cross-ref billing usage. |
+| **Acceptance criteria** | Usage records created for AI + WA; aggregates available for invoice generation; no double billing on retry. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-B05: Invoice generation
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Monthly invoice generation: plan base + seat overage + usage overage line items. |
+| **Gap IDs** | SaaS invoicing 0% |
+| **Files affected** | `modules/billing/invoices/service.ts`, `generator.ts`, `lib/repositories/billing-invoice.repository.ts`, `app/api/cron/billing/generate-invoices/route.ts` |
+| **Dependencies** | PR-B03, PR-B04 |
+| **Risk level** | **Low** — cron-only initially |
+| **Migration notes** | Invoice numbers sequential per org; draft → open on finalize. |
+| **Testing requirements** | Integration test: mock period data → invoice with expected line items and totals. |
+| **Documentation updates** | `BILLING_PLATFORM.md` §11. |
+| **Acceptance criteria** | Cron generates invoices for active subscriptions; line items reconcile to usage aggregates + seats. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-B06: Stripe payment integration
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Stripe Customer, Checkout, Customer Portal, webhooks; `billing_payments` reconciliation. |
+| **Gap IDs** | Stripe Phase 2 in enterprise doc — brought forward |
+| **Files affected** | `modules/billing/payments/service.ts`, `stripe.adapter.ts`, `app/api/webhooks/stripe/route.ts`, `app/api/billing/checkout/route.ts`, `app/api/billing/portal/route.ts`, `lib/env.ts` (STRIPE_* vars) |
+| **Dependencies** | PR-B05 |
+| **Risk level** | **High** — payment path, webhook security |
+| **Migration notes** | Stripe test mode in CI; webhook idempotency via `billing_webhook_events`; no PCI data stored. |
+| **Testing requirements** | Webhook signature test; checkout session creation; payment_failed → past_due subscription. |
+| **Documentation updates** | `BILLING_PLATFORM.md` §12; `.env.local.example`; `SECURITY.md` — webhook verification. |
+| **Acceptance criteria** | Admin can checkout and attach payment method; webhook updates subscription status; `billing.payment.succeeded` event emitted. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-B07: Subscription lifecycle and middleware
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Replace ad-hoc `tenant.settings.subscription` reads with `SubscriptionService`; middleware enforcement for past_due/canceled/suspended. |
+| **Gap IDs** | Subscription status in JSON blob |
+| **Files affected** | `modules/billing/subscription/service.ts`, `lifecycle.ts`, `middleware.ts`, `lib/repositories/tenant.repository.ts`, event handlers syncing `tenants.subscription_status` cache |
+| **Dependencies** | PR-B02, PR-B06 |
+| **Risk level** | **High** — affects all authenticated requests |
+| **Migration notes** | Denormalized `tenants.subscription_status` kept as cache; reconciliation cron weekly. |
+| **Testing requirements** | E2E: past_due tenant redirected to billing; active tenant unaffected; trial expiry → canceled. |
+| **Documentation updates** | `08-multi-tenant-architecture.md` §subscription; `BILLING_PLATFORM.md` §7. |
+| **Acceptance criteria** | Middleware uses billing service; lifecycle transitions emit events; existing tenant access patterns preserved for active/trialing. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-B08: Billing API, events, and observability
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Complete admin billing API surface; wire `billing.*` platform events; observability metrics; OpenAPI. |
+| **Gap IDs** | Billing API 0% |
+| **Files affected** | `app/api/billing/subscription/route.ts`, `seats/route.ts`, `usage/route.ts`, `invoices/route.ts`, `modules/billing/sdk/billing-client.ts`, `modules/platform/events/catalog.ts`, `lib/observability/metrics.ts`, `docs/openapi.yaml` |
+| **Dependencies** | PR-B07 |
+| **Risk level** | **Low** |
+| **Migration notes** | `createPlatformClient` optionally exposes `billing` namespace. |
+| **Testing requirements** | API integration tests with `tenant:billing` permission; event payload includes org + product. |
+| **Documentation updates** | `BILLING_PLATFORM.md` §15–16; `README.md`; OpenAPI billing tag. |
+| **Acceptance criteria** | All billing API routes documented; metrics exported; ≥20 billing unit tests; billing platform maturity ≥80%. |
+| **Estimated effort** | **M** |
+
+---
+
+### Billing critical path
+
+```
+PR-00 → PR-B01 → PR-B02 → PR-B03 → PR-B04 → PR-B05 → PR-B06 → PR-B07 → PR-B08
+                              ↘ PR-19 (AI cost) → PR-B04
+PR-B02 → PR-20 (AI budget uses plan entitlements)
+```
 
 ---
 
@@ -500,7 +658,7 @@ flowchart LR
 | **Files affected** | `supabase/migrations/025_ai_cost_budgets.sql` (new), `lib/ai/cost/budgets.ts` (new), `lib/ai/cost/aggregates.ts` (new), `lib/repositories/ai-budget.repository.ts` (new), `lib/ai/logging/cost-tracker.ts` |
 | **Dependencies** | PR-02, PR-05 |
 | **Risk level** | **Low** — schema + read path |
-| **Migration notes** | Seed default org budget from tier; migrate monthly request limit as secondary cap optional. |
+| **Migration notes** | Seed default org budget from tier; migrate monthly request limit as secondary cap optional. Budget limits read from **PR-B02** `PlanService.resolveEntitlements()` when available. |
 | **Testing requirements** | Unit test: aggregate sums match `ai_requests`; budget row CRUD. |
 | **Documentation updates** | `AI_PLATFORM.md` §10.2; `MIGRATIONS_INDEX.md`. |
 | **Acceptance criteria** | Aggregates compute monthly USD per org; no enforcement yet. |
@@ -515,7 +673,7 @@ flowchart LR
 | **Objective** | Enforce hybrid budgets per confirmed decision: alert at 80%, reject at 100% when `hard_limit=true`. |
 | **Gap IDs** | M-012, M-013, P1-004 |
 | **Files affected** | `lib/ai/cost/budget-check.ts` (new), `lib/ai/gateway/pipeline.ts`, `lib/ai/errors.ts`, `modules/core/api/response.ts` (402 code if needed) |
-| **Dependencies** | PR-19, PR-06 |
+| **Dependencies** | PR-19, PR-06, **PR-B02** (plan entitlements for budget defaults) |
 | **Risk level** | **High** — blocks AI when budget exceeded |
 | **Migration notes** | Enterprise orgs may set `hard_limit=false`; Starter/Pro default hard limit on. Existing count-based limit remains as backstop. |
 | **Testing requirements** | Unit tests: under soft → pass; over soft → alert event; over hard → 402; hard_limit=false → pass with alert. |
@@ -954,6 +1112,14 @@ flowchart TD
 | PR | Title | Wave | Effort | Risk | Gap priority |
 |----|-------|:----:|:------:|:----:|:------------:|
 | **PR-00** | **Platform Core infrastructure** | **0a** | **L** | **Med** | **P0/P1** |
+| **PR-B01** | **Billing schema foundation** | **0b** | **M** | **Med** | **P0** |
+| **PR-B02** | **Plan catalog + entitlements** | **0b** | **M** | **Med** | **P0** |
+| **PR-B03** | **Seat management** | **0b** | **M** | **Med** | **P1** |
+| **PR-B04** | **Usage metering platform** | **0b** | **L** | **Med** | **P0** |
+| **PR-B05** | **Invoice generation** | **0b** | **M** | **Low** | **P1** |
+| **PR-B06** | **Stripe integration** | **0b** | **L** | **High** | **P1** |
+| **PR-B07** | **Subscription lifecycle + middleware** | **0b** | **M** | **High** | **P0** |
+| **PR-B08** | **Billing API + events + observability** | **0b** | **M** | **Low** | **P1** |
 | PR-01 | MockProvider + AI tests | 0 | M | Low | P1 |
 | PR-02 | ai_requests schema extend | 0 | M | Med | P1 |
 | PR-03 | Direct execution default | 0 | S | Med | P0 |
@@ -997,11 +1163,11 @@ flowchart TD
 | PR-41 | OpenTelemetry export | 7 | M | Low | P3 |
 | PR-42 | Deprecate getAiGateway | 7 | S | Med | P1 |
 
-**Total PRs:** 43 (PR-00 + PR-01–PR-42) · **Estimated aggregate effort:** ~50–60 developer-days (sequential); PR-00 is on the critical path for all work.
+**Total PRs:** 51 (PR-00 + PR-B01–B08 + PR-01–PR-42) · **Estimated aggregate effort:** ~65–75 developer-days (sequential); PR-00 and PR-B01–B02 are on critical paths for AI budgets and entitlements.
 
 ### PR numbering note
 
-Migration `022_platform_core.sql` is reserved for PR-00. AI schema PR-02 uses `023_ai_requests_extend.sql`; subsequent AI migrations shift +1 from v1.0.0 roadmap numbers (documented in each PR).
+Migration `022_platform_core.sql` is reserved for PR-00. AI schema PR-02 uses `023_ai_requests_extend.sql`. Billing schema PR-B01 uses `024_billing_platform.sql`; subsequent AI migrations shift +1 from v1.0.0 roadmap numbers where they collide (documented in each PR).
 
 ---
 
@@ -1011,6 +1177,8 @@ Migration `022_platform_core.sql` is reserved for PR-00. AI schema PR-02 uses `0
 |------|--------|
 | External vector DB (Pinecone/Weaviate) | pgvector confirmed until scale trigger |
 | AI Platform admin UI | Phase 4 per AI_PLATFORM.md |
+| Billing admin UI | Phase 2 — API-first in PR-B08; `/settings/billing` placeholder exists |
+| Stripe Tax / multi-currency invoicing | Phase 2 — single currency Phase 1 |
 | MCP HTTP/SSE transport | P3 — SEC-009 |
 | Fine-tuning pipeline | Phase 4 |
 | Media Intelligence / Ad Studio product apps | Products registered in PR-00; AI features in PR-31; apps are separate repos/phases |
@@ -1025,6 +1193,7 @@ Migration `022_platform_core.sql` is reserved for PR-00. AI schema PR-02 uses `0
 | Metric | Target | Validated by |
 |--------|--------|--------------|
 | Platform Core complete | PR-00 acceptance criteria | Unit tests + migration |
+| Billing platform complete | PR-B08 acceptance criteria | API tests + Stripe test mode |
 | Platform maturity | ≥85% vs AI_PLATFORM.md | Updated gap analysis |
 | All LLM via single ledger | 100% | PR-05 audit query |
 | MCP agent tool success rate | >90% read tools | PR-28 E2E agent test |
@@ -1050,6 +1219,6 @@ After each merged PR:
 
 **Status: Ready for implementation approval — no code in this document.**
 
-*Begin with PR-00 Platform Core, then PR-01.*
+*Begin with PR-00 Platform Core, then PR-B01 (Billing) and PR-01 (AI) in parallel where staffed.*
 
-*End of AI Platform Implementation Roadmap v1.1.0*
+*End of AI Platform Implementation Roadmap v1.2.0*

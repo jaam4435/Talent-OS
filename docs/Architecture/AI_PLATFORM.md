@@ -64,6 +64,7 @@ This document defines that shared platform: a **multi-tenant, provider-agnostic 
 | [Knowledge Module](../33-knowledge-module.md) | Consumer of Embedding Platform |
 | [Observability](../Platform/OBSERVABILITY_ARCHITECTURE.md) | Extended by AI Observability |
 | [Workflow Engine](../31-workflow-engine.md) | Async AI execution orchestrator |
+| [Billing Platform](./BILLING_PLATFORM.md) | Plan entitlements drive AI budgets; usage meters feed invoicing |
 
 ---
 
@@ -826,6 +827,8 @@ Centralized in `lib/ai/cost/pricing.ts` (extend current `MODEL_PRICING`):
 | ... | ... | ... | ... |
 
 Versioned; historical pricing preserved for accurate backfill.
+
+**Billing integration:** Metered AI spend is recorded to the Billing Platform usage ledger (`ai.cost_usd` meter) for monthly invoicing. Real-time budget enforcement (§10.3) remains in the Cost Platform; see [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) §10.4.
 
 ---
 

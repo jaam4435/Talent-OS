@@ -469,6 +469,33 @@ Capabilities defined in AI_PLATFORM.md with no meaningful implementation.
 3. **P1 platform shell** — SDK, productId, pipeline refactor, Prompt Platform DB, Azure, budgets
 4. **P1 cache + routing** — Response cache, policy routing, AI tests
 5. **P2 quality + multi-product** — Eval CI, traces, health, namespaces for future products
+6. **Billing Platform (Wave 0b)** — SaaS subscription, usage metering, invoicing — see [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) and [AI_IMPLEMENTATION_ROADMAP.md](./AI_IMPLEMENTATION_ROADMAP.md) PR-B01–B08
+
+---
+
+## Billing Platform Gap (cross-cutting)
+
+The **Billing Platform** is separate from the AI Platform but shares organization context and integrates at usage/budget boundaries. Full analysis: [BILLING_PLATFORM.md](./BILLING_PLATFORM.md).
+
+| Billing flow stage | Current | Target | Gap |
+|--------------------|:-------:|:------:|:---:|
+| Organizations | 80% (`tenants`) | Billing profile extension | Low |
+| Subscription | 30% (JSON + column) | `billing_subscriptions` | High |
+| Plan | 25% (hardcoded tiers) | `billing_plans` + entitlements | High |
+| Seats | 10% | `billing_seats` + enforcement | High |
+| Usage | 20% (AI counts only) | Unified usage ledger | High |
+| Invoice | 0% | `billing_invoices` | Critical |
+| Payments (SaaS) | 0% | Stripe + `billing_payments` | Critical |
+
+**Overall billing maturity: ~15%** — PR-B01 through PR-B08 in roadmap Wave 0b.
+
+**AI ↔ Billing integration gaps:**
+
+| Gap | AI component | Billing dependency |
+|-----|--------------|-------------------|
+| Budget defaults from plan | PR-19/20 Cost Platform | PR-B02 entitlements |
+| Usage for invoicing | AI gateway ledger | PR-B04 usage meters |
+| Tier limits scattered | `tenant.settings` | PR-B07 subscription service |
 
 ---
 
