@@ -4,7 +4,7 @@ import { createOrganizationContext } from '@/modules/platform/context/organizati
 import type { ApiRequestContext } from '@/modules/core/api/context'
 import { PLATFORM_EVENTS } from '@/modules/platform/events/catalog'
 import { createPlatformClient } from '@/modules/platform/sdk/factory'
-import { isProductId } from '@/modules/platform/types'
+import { TALENT_OS_PRODUCT_ID } from '@/modules/platform/types'
 
 const apiContext: ApiRequestContext = {
   requestId: 'req-1',
@@ -20,10 +20,10 @@ const apiContext: ApiRequestContext = {
 }
 
 describe('PlatformEventEmitter', () => {
-  it('includes productId and organizationId in payload', async () => {
+  it('includes organizationId in payload', async () => {
     const emitFn = vi.fn(async () => 'event-1')
     const emitter = createPlatformEventEmitter(emitFn)
-    const context = createOrganizationContext('talent_os', apiContext)
+    const context = createOrganizationContext(apiContext)
 
     await emitter.emit({
       eventType: PLATFORM_EVENTS.CONFIG_UPDATED,
@@ -37,12 +37,9 @@ describe('PlatformEventEmitter', () => {
     expect(emitFn).toHaveBeenCalledWith(
       expect.objectContaining({
         tenantId: 'tenant-abc',
-        correlationId: 'corr-1',
         payload: expect.objectContaining({
-          productId: 'talent_os',
           organizationId: 'tenant-abc',
           correlationId: 'corr-1',
-          configKey: 'ai',
         }),
       })
     )
@@ -50,43 +47,16 @@ describe('PlatformEventEmitter', () => {
 })
 
 describe('createPlatformClient', () => {
-  it('instantiates for talent_os', () => {
-    const client = createPlatformClient({
-      productId: 'talent_os',
-      getContext: () => apiContext,
-    })
-
-    expect(client.productId).toBe('talent_os')
-    expect(client.products.isEnabled('talent_os')).toBe(true)
+  it('instantiates for Talent OS', () => {
+    const client = createPlatformClient({ getContext: () => apiContext })
     expect(client.featureFlags).toBeDefined()
     expect(client.config).toBeDefined()
     expect(client.events).toBeDefined()
   })
-
-  it('rejects disabled products at SDK boundary', () => {
-    expect(() =>
-      createPlatformClient({
-        productId: 'media_intel',
-        getContext: () => apiContext,
-      })
-    ).toThrow('Product media_intel is not enabled')
-  })
-
-  it('allows disabled products when skipEnabledCheck is set', () => {
-    const client = createPlatformClient(
-      {
-        productId: 'media_intel',
-        getContext: () => apiContext,
-        skipEnabledCheck: true,
-      }
-    )
-    expect(client.productId).toBe('media_intel')
-  })
 })
 
-describe('isProductId', () => {
-  it('validates known product ids', () => {
-    expect(isProductId('talent_os')).toBe(true)
-    expect(isProductId('unknown')).toBe(false)
+describe('TALENT_OS_PRODUCT_ID', () => {
+  it('is talent_os', () => {
+    expect(TALENT_OS_PRODUCT_ID).toBe('talent_os')
   })
 })

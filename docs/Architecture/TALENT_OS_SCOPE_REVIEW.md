@@ -3,7 +3,7 @@
 **Document version:** 1.0.0  
 **Date:** July 31, 2026  
 **Author:** Principal Software Architect  
-**Status:** Draft — **Awaiting approval** (no implementation)  
+**Status:** **Approved** — July 31, 2026  
 **Scope:** Reconcile all planning documents against **Talent OS as a single product**
 
 ---
@@ -614,19 +614,20 @@ Premature boundaries (remove): product registry, billing platform module, search
 
 ---
 
-## 11. Approval checklist
+**Status: Approved — July 31, 2026**
 
-Before implementation begins:
+| # | Decision | Approved |
+|---|----------|----------|
+| 1 | Single-product scope (no Media Intel / Ad Studio in repo) | Yes |
+| 2 | Retire 83-PR program | Yes |
+| 3 | Postpone six platform waves | Yes |
+| 4 | Simplify PR-00 (remove multi-product registry from migration 022) | Yes |
+| 5 | P0 merge to main as T-01 | Yes — merged PR #42 |
 
-- [ ] Stakeholder confirms **single-product scope** (no Media Intel / Ad Studio in repo)
-- [ ] Approve **retiring 83-PR program** in favor of §8 (~28 PRs)
-- [ ] Approve **postponement** of Billing, Feature Flags, Search, Audit, Workflow platform waves
-- [ ] Approve **PR-00 simplification** (remove multi-product registry from migration 022)
-- [ ] Confirm **P0 merge to main** as first engineering action (T-01)
-- [ ] Confirm **pilot customer** timeline to calibrate P2/P3
+**Implementation authority:** [TALENT_OS_IMPLEMENTATION_ROADMAP.md](./TALENT_OS_IMPLEMENTATION_ROADMAP.md)
 
 ---
 
-**Status: Awaiting approval — no code changes authorized by this document.**
+**Status: Approved — implementation in progress on `cursor/talent-pr-01-scope-approved-5fb1`.**
 
 *End of Talent OS Scope Review v1.0.0*

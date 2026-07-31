@@ -1,4 +1,4 @@
-import type { OrganizationContext, PlatformFeatureFlag, ProductId } from '@/modules/platform/types'
+import type { OrganizationContext, PlatformFeatureFlag } from '@/modules/platform/types'
 
 export interface FeatureFlagEvaluateOptions {
   readonly organizationId?: string | null
@@ -6,14 +6,6 @@ export interface FeatureFlagEvaluateOptions {
 }
 
 export interface IFeatureFlagService {
-  evaluate(
-    productId: ProductId,
-    flagKey: string,
-    options?: FeatureFlagEvaluateOptions
-  ): Promise<PlatformFeatureFlag>
-  isEnabled(
-    productId: ProductId,
-    flagKey: string,
-    options?: FeatureFlagEvaluateOptions
-  ): Promise<boolean>
+  evaluate(flagKey: string, options?: FeatureFlagEvaluateOptions): Promise<PlatformFeatureFlag>
+  isEnabled(flagKey: string, options?: FeatureFlagEvaluateOptions): Promise<boolean>
 }

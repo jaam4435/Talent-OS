@@ -471,18 +471,8 @@ export interface Database {
         acknowledged_at: string | null
         resolved_at: string | null
       }>
-      platform_product_registry: TableDef<{
-        product_id: 'talent_os' | 'media_intel' | 'ad_studio'
-        display_name: string
-        enabled: boolean
-        default_config: Json
-        metadata: Json
-        created_at: string
-        updated_at: string
-      }>
       platform_feature_flags: TableDef<{
         id: string
-        product_id: 'talent_os' | 'media_intel' | 'ad_studio'
         tenant_id: string | null
         flag_key: string
         enabled: boolean
@@ -492,7 +482,6 @@ export interface Database {
       }>
       platform_config: TableDef<{
         id: string
-        product_id: 'talent_os' | 'media_intel' | 'ad_studio'
         tenant_id: string | null
         config_key: string
         config_value: Json

@@ -1,8 +1,7 @@
 import type { ApiRequestContext } from '@/modules/core/api/context'
-import type { OrganizationContext, ProductId } from '@/modules/platform/types'
+import type { OrganizationContext } from '@/modules/platform/types'
 
 export function createOrganizationContext(
-  productId: ProductId,
   ctx: Pick<
     ApiRequestContext,
     'tenantId' | 'userId' | 'role' | 'permissions' | 'correlationId' | 'requestId'
@@ -19,12 +18,10 @@ export function createOrganizationContext(
     permissions: ctx.permissions,
     correlationId: ctx.correlationId,
     requestId: ctx.requestId,
-    productId,
   })
 }
 
 export function createSystemOrganizationContext(
-  productId: ProductId,
   organizationId: string,
   correlationId: string,
   requestId: string
@@ -36,6 +33,5 @@ export function createSystemOrganizationContext(
     permissions: [],
     correlationId,
     requestId,
-    productId,
   })
 }

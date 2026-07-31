@@ -6,9 +6,8 @@ export type {
   PlatformEventPayload,
   PlatformEventType,
   PlatformFeatureFlag,
-  ProductId,
 } from '@/modules/platform/types'
-export { PRODUCT_IDS, isProductId } from '@/modules/platform/types'
+export { TALENT_OS_PRODUCT_ID, TALENT_OS_DEFAULT_CONFIG } from '@/modules/platform/types'
 
 // Contracts
 export type { IPlatformClient } from '@/modules/platform/contracts/platform-client'
@@ -18,7 +17,6 @@ export type {
   FeatureFlagEvaluateOptions,
 } from '@/modules/platform/contracts/feature-flag-provider'
 export type { IPlatformEventEmitter, PlatformEmitInput } from '@/modules/platform/contracts/event-emitter'
-export type { IProductRegistry, ProductDefinition } from '@/modules/platform/contracts/product-registry'
 
 // Context
 export {
@@ -30,9 +28,6 @@ export {
   resolveOrganizationContextAsync,
 } from '@/modules/platform/context/resolver'
 export type { OrganizationContextSource } from '@/modules/platform/context/resolver'
-
-// Products
-export { ProductRegistry, assertProductEnabled, BUILTIN_PRODUCTS } from '@/modules/platform/products/registry'
 
 // Features
 export { FeatureFlagService, createFeatureFlagService } from '@/modules/platform/features/flags'

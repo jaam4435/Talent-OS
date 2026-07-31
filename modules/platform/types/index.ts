@@ -1,9 +1,7 @@
 import type { UserRole } from '@/modules/core/types/enums'
 
-/** Canonical product identifiers — single source of truth for all platform waves. */
-export type ProductId = 'talent_os' | 'media_intel' | 'ad_studio'
-
-export const PRODUCT_IDS = ['talent_os', 'media_intel', 'ad_studio'] as const satisfies readonly ProductId[]
+/** Talent OS is the only product in this repository. */
+export const TALENT_OS_PRODUCT_ID = 'talent_os' as const
 
 /** Immutable request-scoped organization context (maps tenantId → organizationId). */
 export interface OrganizationContext {
@@ -13,7 +11,6 @@ export interface OrganizationContext {
   readonly permissions: readonly string[]
   readonly correlationId: string
   readonly requestId: string
-  readonly productId: ProductId
 }
 
 export type PlatformConfigScope = 'env' | 'platform' | 'organization' | 'request'
@@ -32,7 +29,6 @@ export type PlatformEventType =
   | (string & {})
 
 export interface PlatformEventPayload {
-  readonly productId: ProductId
   readonly organizationId: string
   readonly correlationId: string
   readonly requestId?: string
@@ -40,6 +36,10 @@ export interface PlatformEventPayload {
   readonly data?: Record<string, unknown>
 }
 
-export function isProductId(value: string): value is ProductId {
-  return (PRODUCT_IDS as readonly string[]).includes(value)
+/** Default platform config for Talent OS (mirrors migration seed). */
+export const TALENT_OS_DEFAULT_CONFIG: Record<string, unknown> = {
+  ai: {
+    defaultProvider: 'openai',
+    maxConcurrentRequests: 10,
+  },
 }

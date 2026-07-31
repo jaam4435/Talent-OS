@@ -24,38 +24,32 @@ const baseApiContext: ApiRequestContext = {
 
 describe('OrganizationContext', () => {
   it('maps tenantId to organizationId', () => {
-    const org = createOrganizationContext('talent_os', baseApiContext)
+    const org = createOrganizationContext(baseApiContext)
     expect(org.organizationId).toBe('tenant-abc')
-    expect(org.productId).toBe('talent_os')
     expect(org.correlationId).toBe('corr-1')
   })
 
   it('throws without tenantId', () => {
     expect(() =>
-      createOrganizationContext('talent_os', { ...baseApiContext, tenantId: null })
+      createOrganizationContext({ ...baseApiContext, tenantId: null })
     ).toThrow('Organization context requires tenantId')
   })
 
   it('creates system context for background jobs', () => {
-    const org = createSystemOrganizationContext(
-      'talent_os',
-      'tenant-abc',
-      'corr-bg',
-      'req-bg'
-    )
+    const org = createSystemOrganizationContext('tenant-abc', 'corr-bg', 'req-bg')
     expect(org.userId).toBeNull()
     expect(org.organizationId).toBe('tenant-abc')
   })
 
   it('resolves from ApiRequestContext', () => {
-    const org = resolveOrganizationContext('talent_os', baseApiContext)
+    const org = resolveOrganizationContext(baseApiContext)
     expect(org.organizationId).toBe('tenant-abc')
     expect(org.role).toBe('talent_manager')
   })
 
   it('returns existing OrganizationContext unchanged', async () => {
-    const existing = createOrganizationContext('talent_os', baseApiContext)
-    const resolved = await resolveOrganizationContextAsync('talent_os', () => existing)
+    const existing = createOrganizationContext(baseApiContext)
+    const resolved = await resolveOrganizationContextAsync(() => existing)
     expect(resolved).toBe(existing)
   })
 })

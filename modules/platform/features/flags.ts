@@ -4,24 +4,14 @@ import type {
   FeatureFlagEvaluateOptions,
   IFeatureFlagService,
 } from '@/modules/platform/contracts/feature-flag-provider'
-import { envFlagKey, LEGACY_TENANT_FLAG_MAP } from '@/modules/platform/features/registry'
-import type { OrganizationContext, PlatformFeatureFlag, ProductId } from '@/modules/platform/types'
+import { LEGACY_TENANT_FLAG_MAP, envFlagKey } from '@/modules/platform/features/registry'
+import type { OrganizationContext, PlatformFeatureFlag } from '@/modules/platform/types'
 
-function readEnvFlag(productId: ProductId, flagKey: string): boolean | undefined {
-  const specificKey = envFlagKey(productId, flagKey)
-  const genericKey = `PLATFORM_FLAG_${flagKey.toUpperCase()}`
-
-  const specific = process.env[specificKey]
-  if (specific !== undefined) {
-    return specific !== 'false' && specific !== '0'
-  }
-
-  const generic = process.env[genericKey]
-  if (generic !== undefined) {
-    return generic !== 'false' && generic !== '0'
-  }
-
-  return undefined
+function readEnvFlag(flagKey: string): boolean | undefined {
+  const genericKey = envFlagKey(flagKey)
+  const value = process.env[genericKey]
+  if (value === undefined) return undefined
+  return value !== 'false' && value !== '0'
 }
 
 async function readLegacyTenantFlag(
@@ -34,10 +24,8 @@ async function readLegacyTenantFlag(
   }
 
   const settings = await tenantRepo.getAiSettings(organizationId)
-
   if (flagKey === 'ai_matching') return settings.aiMatchingEnabled
   if (flagKey === 'ai_pm') return settings.aiPmEnabled
-
   return undefined
 }
 
@@ -48,20 +36,19 @@ export class FeatureFlagService implements IFeatureFlagService {
   ) {}
 
   async evaluate(
-    productId: ProductId,
     flagKey: string,
     options: FeatureFlagEvaluateOptions = {}
   ): Promise<PlatformFeatureFlag> {
     const organizationId =
       options.context?.organizationId ?? options.organizationId ?? null
 
-    const envValue = readEnvFlag(productId, flagKey)
+    const envValue = readEnvFlag(flagKey)
     if (envValue !== undefined) {
       return { key: flagKey, enabled: envValue, source: 'env' }
     }
 
     if (organizationId && this.featureRepo) {
-      const orgFlag = await this.featureRepo.getFlag(productId, flagKey, organizationId)
+      const orgFlag = await this.featureRepo.getFlag(flagKey, organizationId)
       if (orgFlag) {
         return {
           key: flagKey,
@@ -73,7 +60,7 @@ export class FeatureFlagService implements IFeatureFlagService {
     }
 
     if (this.featureRepo) {
-      const platformFlag = await this.featureRepo.getFlag(productId, flagKey, null)
+      const platformFlag = await this.featureRepo.getFlag(flagKey, null)
       if (platformFlag) {
         return {
           key: flagKey,
@@ -94,12 +81,8 @@ export class FeatureFlagService implements IFeatureFlagService {
     return { key: flagKey, enabled: false, source: 'platform' }
   }
 
-  async isEnabled(
-    productId: ProductId,
-    flagKey: string,
-    options?: FeatureFlagEvaluateOptions
-  ): Promise<boolean> {
-    const result = await this.evaluate(productId, flagKey, options)
+  async isEnabled(flagKey: string, options?: FeatureFlagEvaluateOptions): Promise<boolean> {
+    const result = await this.evaluate(flagKey, options)
     return result.enabled
   }
 }
@@ -110,5 +93,3 @@ export function createFeatureFlagService(deps: {
 }): FeatureFlagService {
   return new FeatureFlagService(deps.featureRepo, deps.tenantRepo)
 }
-
-export type { OrganizationContext }

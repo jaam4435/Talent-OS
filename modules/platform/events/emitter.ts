@@ -17,7 +17,6 @@ export class PlatformEventEmitter implements IPlatformEventEmitter {
       correlationId: context.correlationId,
       scheduledAt: rest.scheduledAt,
       payload: {
-        productId: context.productId,
         organizationId: context.organizationId,
         correlationId: context.correlationId,
         requestId: context.requestId,
@@ -32,7 +31,6 @@ export function createPlatformEventEmitter(emitFn: PlatformEventEmitFn): Platfor
   return new PlatformEventEmitter(emitFn)
 }
 
-/** Default emitter wrapping the domain outbox integration. */
 export async function createDefaultPlatformEventEmitter(): Promise<PlatformEventEmitter> {
   const { emitEvent } = await import('@/lib/integrations/events')
   return createPlatformEventEmitter((input) => emitEvent(input))

@@ -1,4 +1,4 @@
-import type { OrganizationContext, PlatformConfigScope, ProductId } from '@/modules/platform/types'
+import type { OrganizationContext, PlatformConfigScope } from '@/modules/platform/types'
 
 export interface ConfigGetOptions {
   readonly organizationId?: string | null
@@ -12,13 +12,6 @@ export interface ConfigValue<T = unknown> {
 }
 
 export interface IConfigService {
-  get<T = unknown>(
-    productId: ProductId,
-    configKey: string,
-    options?: ConfigGetOptions
-  ): Promise<ConfigValue<T>>
-  getMerged(
-    productId: ProductId,
-    options?: ConfigGetOptions
-  ): Promise<Record<string, unknown>>
+  get<T = unknown>(configKey: string, options?: ConfigGetOptions): Promise<ConfigValue<T>>
+  getMerged(options?: ConfigGetOptions): Promise<Record<string, unknown>>
 }
