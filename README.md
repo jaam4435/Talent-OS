@@ -55,6 +55,14 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | — | [**Distributed State Architecture**](docs/Platform/DISTRIBUTED_STATE_ARCHITECTURE.md) | Redis + Postgres distributed state |
 | — | [SECURITY.md](SECURITY.md) | Security policy and controls |
 
+### Planning & roadmap (approved)
+
+| Document | Description |
+|----------|-------------|
+| [**Talent OS Scope Review**](docs/Architecture/TALENT_OS_SCOPE_REVIEW.md) | Single-product scope audit — **approved** |
+| [**Implementation Roadmap**](docs/Architecture/TALENT_OS_IMPLEMENTATION_ROADMAP.md) | **Active** — ~28 PRs for Talent OS |
+| [Archived: 83-PR platform program](docs/Archive/README.md) | Retired multi-product roadmap |
+
 ## Enterprise Architecture Highlights
 
 The [enterprise architecture document](docs/11-enterprise-system-architecture.md) covers:
