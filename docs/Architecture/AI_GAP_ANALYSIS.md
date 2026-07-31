@@ -524,6 +524,32 @@ Full analysis: [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md).
 
 ---
 
+## Search Platform Gap (cross-cutting)
+
+Full analysis: [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md).
+
+| Flow stage | Current | Target | Gap |
+|------------|:-------:|:------:|:---:|
+| Search (orchestration) | 0% | `SearchPlatformService` | Critical |
+| Keyword | 55% (fragmented RPCs) | Unified KeywordEngine | Medium |
+| Semantic | 25% (schema only) | Embedding Platform + SemanticEngine | High |
+| Hybrid | 0% | RRF ranker | Critical |
+| Filters | 50% (ad-hoc params) | FilterEngine + facets | Medium |
+| Saved Search | 0% | `search_saved_queries` + alerts | High |
+
+**Overall search maturity: ~25%** — PR-S01 through PR-S08 in roadmap Wave 0d.
+
+**Cross-platform integration:**
+
+| Gap | Consumer | Search dependency |
+|-----|----------|-------------------|
+| Knowledge FTS + vector | `KnowledgeService` | PR-S07, PR-S08 migrate |
+| Talent roster search | `/api/talent/search` | PR-S02 keyword, PR-S07 API |
+| Agent/MCP retrieval | MCP knowledge server | PR-S08 unified query |
+| Query embeddings | Semantic/hybrid | PR-24 + PR-S03 |
+
+---
+
 ## Appendix — File Reference (current AI code)
 
 | Path | Role | Platform subsystem |

@@ -66,6 +66,7 @@ This document defines that shared platform: a **multi-tenant, provider-agnostic 
 | [Workflow Engine](../31-workflow-engine.md) | Async AI execution orchestrator |
 | [Billing Platform](./BILLING_PLATFORM.md) | Plan entitlements drive AI budgets; usage meters feed invoicing |
 | [Feature Flags Platform](./FEATURE_FLAGS_PLATFORM.md) | Entitlement-gated org overrides; AI kill switches and prompt A/B |
+| [Search Platform](./SEARCH_PLATFORM.md) | Hybrid retrieval consumes Embedding Platform; unified query API |
 
 ---
 
@@ -608,7 +609,7 @@ Enable RAG, semantic search, and cross-product knowledge retrieval.
 | **Metadata** | Org, product, entity, source, timestamps |
 | **Indexing** | Write to pgvector with HNSW/IVFFlat |
 | **Vector storage** | `knowledge_embeddings` + product-specific tables |
-| **Search** | Similarity, hybrid (BM25 + vector), filtered |
+| **Search** | Similarity, hybrid (BM25 + vector), filtered | Delegates to [Search Platform](./SEARCH_PLATFORM.md) |
 | **Similarity** | Cosine default; configurable metric |
 | **Refresh strategy** | On content change, scheduled, manual |
 | **Re-indexing** | Batch jobs via workflow engine |

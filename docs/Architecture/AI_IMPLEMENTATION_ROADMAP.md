@@ -1,17 +1,17 @@
 # AI Platform — Implementation Roadmap
 
-**Document version:** 1.3.0  
+**Document version:** 1.4.0  
 **Date:** July 31, 2026  
-**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0 · [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) v1.0.0  
+**Sources:** [AI_PLATFORM.md](./AI_PLATFORM.md) v1.0.0 · [AI_GAP_ANALYSIS.md](./AI_GAP_ANALYSIS.md) v1.0.0 · [BILLING_PLATFORM.md](./BILLING_PLATFORM.md) v1.0.0 · [FEATURE_FLAGS_PLATFORM.md](./FEATURE_FLAGS_PLATFORM.md) v1.0.0 · [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md) v1.0.0  
 **Scope:** Planning only — no code in this document  
-**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing) · `cursor/ff-pr-FFXX-<slug>-5fb1` (Feature Flags)  
-**Changelog:** v1.3.0 — Added Wave 0c Feature Flags Platform (PR-FF01–PR-FF08); v1.2.0 — Billing Wave 0b; v1.1.0 — PR-00 Platform Core
+**Branch naming:** `cursor/ai-pr-XX-<slug>-5fb1` (AI) · `cursor/billing-pr-BXX-<slug>-5fb1` (Billing) · `cursor/ff-pr-FFXX-<slug>-5fb1` (Feature Flags) · `cursor/search-pr-SXX-<slug>-5fb1` (Search)  
+**Changelog:** v1.4.0 — Added Wave 0d Search Platform (PR-S01–PR-S08); v1.3.0 — Feature Flags Wave 0c; v1.2.0 — Billing Wave 0b; v1.1.0 — PR-00 Platform Core
 
 ---
 
 ## Overview
 
-This roadmap implements the **AI Platform** (43 PRs), **Billing Platform** (8 PRs), and **Feature Flags Platform** (8 PRs), ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first** — it provides shared infrastructure including feature flags MVP. **Wave 0b (Billing)** and **Wave 0c (Feature Flags)** run in parallel with AI waves where dependencies allow. Each PR is independently reviewable, deployable, and reversible where possible.
+This roadmap implements the **AI Platform** (43 PRs), **Billing Platform** (8 PRs), **Feature Flags Platform** (8 PRs), and **Search Platform** (8 PRs), ordered by dependency and risk. **PR-00 (Platform Core) is mandatory first**. Waves **0b–0d** run in parallel with AI waves where dependencies allow. Each PR is independently reviewable, deployable, and reversible where possible.
 
 ### Confirmed architecture decisions (apply throughout)
 
@@ -47,25 +47,29 @@ flowchart LR
     W00[PR-00\nPlatform Core] --> W0[Wave 0\nFoundation]
     W00 --> W0b[Wave 0b\nBilling]
     W00 --> W0c[Wave 0c\nFeature Flags]
+    W00 --> W0d[Wave 0d\nSearch]
     W0 --> W1[Wave 1\nGateway Security]
     W0b --> W1
     W0c --> W1
+    W0d --> W1
     W1 --> W2[Wave 2\nAI Gateway Ext]
     W2 --> W3[Wave 3\nPrompt + Cost]
     W3 --> W4[Wave 4\nEmbeddings]
     W4 --> W5[Wave 5\nMCP + Agents]
     W5 --> W6[Wave 6\nMemory + Client]
     W6 --> W7[Wave 7\nQuality + Scale]
-    W0b -.->|usage meters| W3
-    W0c -.->|entitlements| W0b
-    W0c -.->|evaluate| W2
+    W0b -.->|usage| W3
+    W0c -.->|flags| W2
+    W0d -.->|semantic| W4
+    W4 -.->|vectors| W0d
 ```
 
 | Wave | PRs | Theme |
 |------|-----|-------|
 | **0a** | **PR-00** | **Platform Core — shared SDK, context, registry, events, flags MVP** |
-| **0b** | **PR-B01 – PR-B08** | **Billing Platform — org → subscription → plan → seats → usage → invoice → payments** |
+| **0b** | **PR-B01 – PR-B08** | **Billing — org → subscription → plan → seats → usage → invoice → payments** |
 | **0c** | **PR-FF01 – PR-FF08** | **Feature Flags — feature → environment → org → rollout → experiment** |
+| **0d** | **PR-S01 – PR-S08** | **Search — search → keyword → semantic → hybrid → filters → saved search** |
 | 0 | PR-01 – PR-05 | Test harness, schema, execution path, audit integrity |
 | 1 | PR-06 – PR-10 | Pipeline, circuit breakers, guardrails, PII |
 | 2 | PR-11 – PR-15 | AI client, Azure, routing, cache |
@@ -152,6 +156,7 @@ flowchart LR
 | Document | Update |
 |----------|--------|
 | `docs/Architecture/PLATFORM_CORE.md` | **New** — architecture, folder structure, usage examples |
+| `docs/Architecture/SEARCH_PLATFORM.md` | **Reference** — Wave 0d; semantic depends on Embedding Platform |
 | `docs/Architecture/FEATURE_FLAGS_PLATFORM.md` | **Reference** — PR-00 MVP extended by Wave 0c |
 | `docs/Architecture/BILLING_PLATFORM.md` | **Reference** — billing depends on Platform Core org context |
 | `docs/Architecture/AI_PLATFORM.md` | §13 — reference Platform Core as dependency |
@@ -481,6 +486,160 @@ PR-00 → PR-FF01 → PR-FF02 → PR-FF03 → PR-FF06 → PR-FF04 → PR-FF05 �
                               ↘ PR-B02 (entitlement gate)
 PR-FF07 → PR-11 (AI client uses platform.features)
 PR-FF05 → PR-17 (prompt A/B via experiments)
+```
+
+---
+
+## Wave 0d — Search Platform
+
+> **Search flow:** Search → Keyword → Semantic → Hybrid → Filters → Saved Search  
+> Full architecture: [SEARCH_PLATFORM.md](./SEARCH_PLATFORM.md)
+
+Wave 0d can start after **PR-00**. PR-S02 (keyword) ships before embeddings. PR-S03/S04 (semantic/hybrid) require **PR-24** (embedding indexing). PR-S07 migrates existing talent and knowledge search paths.
+
+### PR-S01: Search schema and index registry
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Create `search_index_registry`, `search_index_config`, index catalog; seed `talent.roster` and `knowledge.entries`. |
+| **Gap IDs** | Search maturity ~25%; no unified index model |
+| **Files affected** | `supabase/migrations/032_search_platform.sql` (new), `modules/search/types/query.ts`, `registry/index-registry.ts`, `lib/repositories/search-index.repository.ts` |
+| **Dependencies** | **PR-00** (OrganizationContext, ProductId) |
+| **Risk level** | **Low** — additive schema |
+| **Migration notes** | Migration `032` follows `031_embedding_namespaces`; no changes to existing RPCs yet. |
+| **Testing requirements** | Registry resolves known indices; unknown index rejected. |
+| **Documentation updates** | `SEARCH_PLATFORM.md` §6, §13; `MIGRATIONS_INDEX.md`. |
+| **Acceptance criteria** | Index registry seeded; config per index queryable; RLS on saved search tables (schema only). |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-S02: Keyword search engine
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `KeywordEngine` wraps `search_knowledge_entries` and upgraded talent FTS; add `freelancers.search_vector` tsvector column. |
+| **Gap IDs** | Fragmented keyword paths |
+| **Files affected** | `modules/search/engines/keyword.engine.ts`, `registry/indices/knowledge-entries.ts`, `talent-roster.ts`, `supabase/migrations/032_search_platform.sql` (talent tsvector), new RPC `search_talent_keyword` |
+| **Dependencies** | PR-S01 |
+| **Risk level** | **Medium** — talent search behavior change (ILIKE → FTS) |
+| **Migration notes** | Feature flag `search.talent_fts` for cutover; fallback to ILIKE during dual-read. |
+| **Testing requirements** | Knowledge keyword parity with existing RPC; talent search returns same fixtures ± ranking order. |
+| **Documentation updates** | `SEARCH_PLATFORM.md` §7; `33-knowledge-module.md` — reference Search Platform. |
+| **Acceptance criteria** | KeywordEngine returns ranked hits for both indices; ts_headline snippets for knowledge. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-S03: Semantic search engine
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `SemanticEngine` embeds query via Embedding Platform, calls vector RPCs; empty degrade when no vectors. |
+| **Gap IDs** | Vector RPC exists but no query pipeline |
+| **Files affected** | `modules/search/engines/semantic.engine.ts`, integration with `lib/ai/embedding/service.ts` |
+| **Dependencies** | PR-S01, **PR-24** (embeddings indexed) |
+| **Risk level** | **Medium** — AI cost per query |
+| **Migration notes** | Cache query embeddings 1 hour; min similarity 0.72 default. |
+| **Testing requirements** | Mock embed returns vector; semantic hits match `search_knowledge_vector`; empty when no embeddings. |
+| **Documentation updates** | `SEARCH_PLATFORM.md` §8; `AI_PLATFORM.md` §8.2 search integration. |
+| **Acceptance criteria** | Semantic search returns similarity-scored results; AI usage logged; degrades gracefully. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-S04: Hybrid ranker
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `HybridRanker` with RRF fusion; configurable weighted merge per index; `mode: hybrid` in orchestrator. |
+| **Gap IDs** | No hybrid search |
+| **Files affected** | `modules/search/engines/hybrid.ranker.ts`, `orchestrator/service.ts` |
+| **Dependencies** | PR-S02, PR-S03 |
+| **Risk level** | **Low** |
+| **Migration notes** | Default mode `hybrid` for knowledge, `keyword` for talent; flag `search.hybrid.enabled`. |
+| **Testing requirements** | Unit test: RRF fusion ordering; doc in both lists ranks higher; single-engine fallback. |
+| **Documentation updates** | `SEARCH_PLATFORM.md` §9. |
+| **Acceptance criteria** | Hybrid query fuses keyword + semantic; p95 < 600ms in integration test with mocks. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-S05: Filter engine and facets
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | Unified filter schemas per index; pre/post filter application; facet counts in response. |
+| **Gap IDs** | Ad-hoc filter params per domain |
+| **Files affected** | `modules/search/filters/engine.ts`, `schemas.ts`, update index registry configs |
+| **Dependencies** | PR-S02 |
+| **Risk level** | **Low** |
+| **Migration notes** | Talent filters map 1:1 from existing `TalentSearchParams`; knowledge from `KnowledgeSearchParams`. |
+| **Testing requirements** | Invalid filter rejected; facet counts match filtered aggregate; permission-scoped filters. |
+| **Documentation updates** | `SEARCH_PLATFORM.md` §10. |
+| **Acceptance criteria** | FilterEngine validates per index; facets returned for talent discipline and knowledge category. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-S06: Saved searches and alerts
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `search_saved_queries` CRUD; replay; cron alert on new results. |
+| **Gap IDs** | Saved search 0% |
+| **Files affected** | `modules/search/saved/service.ts`, `lib/repositories/search-saved.repository.ts`, `app/api/search/saved/**`, `app/api/cron/search/evaluate-alerts/route.ts` |
+| **Dependencies** | PR-S05, PR-S04 (or PR-S02 for keyword-only saved searches) |
+| **Risk level** | **Low** |
+| **Migration notes** | Alerts: daily/weekly/immediate; `search.saved.alert_fired` event. |
+| **Testing requirements** | Save + replay returns same results; alert fires when new document matches. |
+| **Documentation updates** | `SEARCH_PLATFORM.md` §11. |
+| **Acceptance criteria** | User can save, share, and replay search; cron creates notification on new matches. |
+| **Estimated effort** | **M** |
+
+---
+
+### PR-S07: Unified Search API and SDK
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `POST /api/search/query`; `platform.search.query()` SDK; migrate `GET /api/talent/search` to delegate. |
+| **Gap IDs** | No unified API |
+| **Files affected** | `app/api/search/query/route.ts`, `indices/route.ts`, `modules/search/sdk/search-client.ts`, `app/api/talent/search/route.ts`, `docs/openapi.yaml` |
+| **Dependencies** | PR-S04, PR-S05, PR-S06 |
+| **Risk level** | **Medium** — talent API behavior |
+| **Migration notes** | Talent route remains as compatibility wrapper; deprecation header added. |
+| **Testing requirements** | E2E search query; talent legacy route parity; rate limit `search` profile applied. |
+| **Documentation updates** | `SEARCH_PLATFORM.md` §14; `05-api-architecture.md`; OpenAPI search tag. |
+| **Acceptance criteria** | Single query endpoint works for both indices; SDK exported from `@/modules/platform`. |
+| **Estimated effort** | **L** |
+
+---
+
+### PR-S08: Migrate knowledge and observability
+
+| Field | Detail |
+|-------|--------|
+| **Objective** | `KnowledgeService.search/searchVector` delegate to Search Platform; search metrics; ≥20 unit tests. |
+| **Gap IDs** | Duplicate search paths |
+| **Files affected** | `lib/services/knowledge.service.ts`, `lib/queries/knowledge.queries.ts`, `lib/mcp/servers/knowledge.server.ts`, `lib/observability/metrics.ts` |
+| **Dependencies** | PR-S07 |
+| **Risk level** | **Medium** |
+| **Migration notes** | KnowledgeService methods become thin wrappers; MCP tools use search query API. |
+| **Testing requirements** | Knowledge search parity tests; metrics exported; search platform maturity ≥80%. |
+| **Documentation updates** | `33-knowledge-module.md`; `AI_GAP_ANALYSIS.md`; `README.md`. |
+| **Acceptance criteria** | No direct `repos.knowledge.search` in product code paths; observability dashboard shows search latency. |
+| **Estimated effort** | **M** |
+
+---
+
+### Search critical path
+
+```
+PR-00 → PR-S01 → PR-S02 → PR-S05 → PR-S06 → PR-S07 → PR-S08
+                    ↘ PR-S03 → PR-S04 → PR-S07
+PR-24 (embedding index) → PR-S03
+PR-S02 ships keyword-only search before PR-24 completes
 ```
 
 ---
@@ -1288,6 +1447,14 @@ flowchart TD
 | **PR-FF06** | **Evaluation service + Redis cache** | **0c** | **L** | **Med** | **P0** |
 | **PR-FF07** | **Migrate AI + tenant.settings flags** | **0c** | **M** | **High** | **P0** |
 | **PR-FF08** | **Admin API + events + observability** | **0c** | **M** | **Low** | **P1** |
+| **PR-S01** | **Search schema + index registry** | **0d** | **M** | **Low** | **P0** |
+| **PR-S02** | **Keyword search engine** | **0d** | **M** | **Med** | **P0** |
+| **PR-S03** | **Semantic search engine** | **0d** | **M** | **Med** | **P1** |
+| **PR-S04** | **Hybrid ranker (RRF)** | **0d** | **M** | **Low** | **P1** |
+| **PR-S05** | **Filter engine + facets** | **0d** | **M** | **Low** | **P0** |
+| **PR-S06** | **Saved searches + alerts** | **0d** | **M** | **Low** | **P1** |
+| **PR-S07** | **Unified Search API + SDK** | **0d** | **L** | **Med** | **P0** |
+| **PR-S08** | **Migrate knowledge + observability** | **0d** | **M** | **Med** | **P1** |
 | PR-01 | MockProvider + AI tests | 0 | M | Low | P1 |
 | PR-02 | ai_requests schema extend | 0 | M | Med | P1 |
 | PR-03 | Direct execution default | 0 | S | Med | P0 |
@@ -1331,7 +1498,7 @@ flowchart TD
 | PR-41 | OpenTelemetry export | 7 | M | Low | P3 |
 | PR-42 | Deprecate getAiGateway | 7 | S | Med | P1 |
 
-**Total PRs:** 59 (PR-00 + PR-B01–B08 + PR-FF01–FF08 + PR-01–PR-42) · **Estimated aggregate effort:** ~75–85 developer-days (sequential).
+**Total PRs:** 67 (PR-00 + PR-B01–B08 + PR-FF01–FF08 + PR-S01–S08 + PR-01–PR-42) · **Estimated aggregate effort:** ~85–95 developer-days (sequential).
 
 ### PR numbering note
 
@@ -1347,6 +1514,7 @@ flowchart TD
 | `029_ai_memory_unified.sql` | PR-29 |
 | `030_ai_quality_reports.sql` | PR-36 |
 | `031_embedding_namespaces.sql` | PR-38 |
+| `032_search_platform.sql` | PR-S01 |
 
 ---
 
@@ -1374,6 +1542,7 @@ flowchart TD
 | Platform Core complete | PR-00 acceptance criteria | Unit tests + migration |
 | Billing platform complete | PR-B08 acceptance criteria | API tests + Stripe test mode |
 | Feature flags platform complete | PR-FF08 acceptance criteria | Precedence tests + cache benchmarks |
+| Search platform complete | PR-S08 acceptance criteria | Hybrid E2E + knowledge migration |
 | Platform maturity | ≥85% vs AI_PLATFORM.md | Updated gap analysis |
 | All LLM via single ledger | 100% | PR-05 audit query |
 | MCP agent tool success rate | >90% read tools | PR-28 E2E agent test |
@@ -1399,6 +1568,6 @@ After each merged PR:
 
 **Status: Ready for implementation approval — no code in this document.**
 
-*Begin with PR-00 Platform Core, then parallel tracks: PR-B01 (Billing), PR-FF01 (Feature Flags), PR-01 (AI).*
+*Begin with PR-00 Platform Core, then parallel tracks: PR-B01, PR-FF01, PR-S01, PR-01.*
 
-*End of AI Platform Implementation Roadmap v1.3.0*
+*End of AI Platform Implementation Roadmap v1.4.0*
