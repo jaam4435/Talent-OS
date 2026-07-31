@@ -11,12 +11,12 @@ export class DashboardRepository extends BaseRepository {
   async getSummary(tenantId: string): Promise<DashboardSummary | null> {
     const cacheKey = this.cacheKey('v_dashboard_summary', { tenantId })
     return this.withCache(cacheKey, 60_000, async () => {
-      const { data } = await this.ctx.supabase
-        .from('v_dashboard_summary')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .maybeSingle()
-      return (data as DashboardSummary | null) ?? null
+      const { data, error } = await this.ctx.supabase.rpc('get_dashboard_summary', {
+        p_tenant_id: tenantId,
+      })
+      this.throwIfError(error)
+      const row = Array.isArray(data) ? data[0] : data
+      return (row as DashboardSummary | null) ?? null
     })
   }
 }

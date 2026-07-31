@@ -9,6 +9,7 @@ import type {
 } from '@/lib/workflows/types'
 import type { Services } from '@/lib/services/factory'
 import type { WorkflowRepository } from '@/lib/repositories/workflow.repository'
+import { instrumentWorkflowRun } from '@/lib/observability/instrumentation'
 
 export class WorkflowEngine {
   constructor(
@@ -113,6 +114,13 @@ export class WorkflowEngine {
         results.push({ jobId: job.id, ok: true })
       } else {
         await this.repos.markJobFailed(job.id, result.error ?? 'Action failed')
+        instrumentWorkflowRun({
+          workflowId: run.workflow_id,
+          durationMs: 0,
+          status: 'failed',
+          context: { tenantId: run.tenant_id, correlationId: run.correlation_id ?? undefined },
+          error: result.error,
+        })
         results.push({ jobId: job.id, ok: false, error: result.error })
       }
     }
@@ -243,12 +251,23 @@ export class WorkflowEngine {
   }
 
   private async advanceRun(runId: string, completedStepId: string) {
+    const run = await this.repos.findRunById(runId)
     const pending = await this.repos.countPendingJobsForRun(runId)
     if (pending === 0) {
+      const completedAt = new Date().toISOString()
       await this.repos.updateRunStatus(runId, 'completed', {
-        completed_at: new Date().toISOString(),
+        completed_at: completedAt,
         current_step_id: completedStepId,
       })
+      if (run) {
+        const startedAt = run.started_at ? new Date(run.started_at).getTime() : Date.now()
+        instrumentWorkflowRun({
+          workflowId: run.workflow_id,
+          durationMs: Date.now() - startedAt,
+          status: 'completed',
+          context: { tenantId: run.tenant_id, correlationId: run.correlation_id ?? undefined },
+        })
+      }
     }
   }
 

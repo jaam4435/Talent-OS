@@ -64,60 +64,96 @@ async function legacyDispatch(event: {
   return { ok: true }
 }
 
+async function processEvent(
+  event: {
+    id: string
+    tenant_id: string
+    event_type: string
+    aggregate_type: string
+    aggregate_id: string
+    payload: Record<string, unknown> | null
+    actor_id: string | null
+    correlation_id: string
+    idempotency_key: string
+  },
+  services: Awaited<ReturnType<typeof createAdminServices>>
+): Promise<{ id: string; ok: boolean; workflows?: number; error?: string }> {
+  await markEventProcessing(event.id)
+
+  const workflows = findWorkflowsForEvent(event.event_type)
+
+  if (workflows.length > 0) {
+    try {
+      const started = await services.workflowEngine.triggerFromDomainEvent({
+        id: event.id,
+        tenant_id: event.tenant_id,
+        event_type: event.event_type,
+        aggregate_type: event.aggregate_type,
+        aggregate_id: event.aggregate_id,
+        payload: event.payload,
+        actor_id: event.actor_id,
+        correlation_id: event.correlation_id,
+        idempotency_key: event.idempotency_key,
+      })
+      await markEventDelivered(event.id)
+      return { id: event.id, ok: true, workflows: started.length }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Workflow trigger failed'
+      await markEventFailed(event.id, message)
+      return { id: event.id, ok: false, error: message }
+    }
+  }
+
+  const result = await legacyDispatch(event)
+
+  if (result.ok) {
+    await markEventDelivered(event.id)
+    return { id: event.id, ok: true, workflows: 0 }
+  }
+
+  await markEventFailed(event.id, result.error ?? 'Dispatch failed')
+  return { id: event.id, ok: false, error: result.error }
+}
+
+const DISPATCH_CONCURRENCY = 5
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = []
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency)
+    const batchResults = await Promise.all(batch.map(fn))
+    results.push(...batchResults)
+  }
+  return results
+}
+
 export const GET = withApiHandler(
   { auth: 'cron', rateLimit: 'cron', legacyEnvelope: true },
   async () => {
     const startedAt = Date.now()
     const services = await createAdminServices()
     const events = await services.workflow.listPendingForDispatch(50)
-    const results: Array<{ id: string; ok: boolean; workflows?: number; error?: string }> = []
 
-    for (const event of events) {
-      await markEventProcessing(event.id)
-
-      const workflows = findWorkflowsForEvent(event.event_type)
-
-      if (workflows.length > 0) {
-        try {
-          const started = await services.workflowEngine.triggerFromDomainEvent({
-            id: event.id,
-            tenant_id: event.tenant_id,
-            event_type: event.event_type,
-            aggregate_type: event.aggregate_type,
-            aggregate_id: event.aggregate_id,
-            payload: (event.payload as Record<string, unknown>) ?? null,
-            actor_id: event.actor_id,
-            correlation_id: event.correlation_id,
-            idempotency_key: event.idempotency_key,
-          })
-          await markEventDelivered(event.id)
-          results.push({ id: event.id, ok: true, workflows: started.length })
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Workflow trigger failed'
-          await markEventFailed(event.id, message)
-          results.push({ id: event.id, ok: false, error: message })
-        }
-        continue
-      }
-
-      const result = await legacyDispatch({
-        id: event.id,
-        tenant_id: event.tenant_id,
-        event_type: event.event_type,
-        payload: (event.payload as Record<string, unknown>) ?? null,
-        actor_id: event.actor_id,
-        correlation_id: event.correlation_id,
-        idempotency_key: event.idempotency_key,
-      })
-
-      if (result.ok) {
-        await markEventDelivered(event.id)
-        results.push({ id: event.id, ok: true, workflows: 0 })
-      } else {
-        await markEventFailed(event.id, result.error ?? 'Dispatch failed')
-        results.push({ id: event.id, ok: false, error: result.error })
-      }
-    }
+    const results = await mapWithConcurrency(events, DISPATCH_CONCURRENCY, (event) =>
+      processEvent(
+        {
+          id: event.id,
+          tenant_id: event.tenant_id,
+          event_type: event.event_type,
+          aggregate_type: event.aggregate_type,
+          aggregate_id: event.aggregate_id,
+          payload: (event.payload as Record<string, unknown>) ?? null,
+          actor_id: event.actor_id,
+          correlation_id: event.correlation_id,
+          idempotency_key: event.idempotency_key,
+        },
+        services
+      )
+    )
 
     const result = {
       processed: results.length,

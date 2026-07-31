@@ -58,7 +58,15 @@ class ObservabilityCollector {
         }
       }
     } catch (error) {
-      console.error('[ObservabilityCollector] flush failed:', error)
+      const { platformLogger } = await import('@/lib/observability/logger')
+      platformLogger.error(
+        'Observability collector flush failed',
+        'observability',
+        { batchSize: batch.length },
+        undefined,
+        error instanceof Error ? error.message : 'flush_failed'
+      )
+      this.buffer.unshift(...batch)
     }
   }
 }

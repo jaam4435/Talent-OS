@@ -42,7 +42,7 @@ export type ApiHandlerFn<T = unknown> = (input: {
   params?: Record<string, string>
 }) => Promise<ApiHandlerResult<T> | NextResponse>
 
-type RouteContext = { params?: Promise<Record<string, string>> }
+type RouteContext = { params: Promise<Record<string, string>> }
 
 function clientIp(request: Request): string {
   return (
@@ -55,8 +55,8 @@ function clientIp(request: Request): string {
 export function withApiHandler<T>(
   options: ApiHandlerOptions,
   handler: ApiHandlerFn<T>
-) {
-  return async (request: Request, routeCtx?: RouteContext): Promise<NextResponse> => {
+): (request: Request, routeCtx: RouteContext) => Promise<NextResponse> {
+  return async (request: Request, routeCtx: RouteContext): Promise<NextResponse> => {
     let ctx = createRequestContext(request)
     const startedAt = Date.now()
     const url = new URL(request.url)
@@ -110,7 +110,8 @@ export function withApiHandler<T>(
         validateQuery(options.validate.query, url.searchParams)
       }
 
-      const params = routeCtx?.params ? await routeCtx.params : undefined
+      const params = await routeCtx.params
+      const resolvedParams = Object.keys(params).length > 0 ? params : undefined
 
       if (options.idempotency && ctx.idempotencyKey) {
         const idemKey = buildIdempotencyKey(
@@ -135,7 +136,7 @@ export function withApiHandler<T>(
         ctx,
         body,
         searchParams: url.searchParams,
-        params,
+        params: resolvedParams,
       })
 
       if (raw instanceof NextResponse) {

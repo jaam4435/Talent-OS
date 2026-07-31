@@ -1,4 +1,5 @@
 import { AppError } from '@/modules/core/api/response'
+import { isProduction } from '@/lib/env'
 import { requireAdmin, requireManager } from '@/modules/core/services/guards'
 import { requirePermission } from '@/modules/core/services/permissions'
 import { getSession, requireSession, requireTenant } from '@/modules/core/services/session'
@@ -26,8 +27,12 @@ export async function authenticateRequest(
   if (mode === 'none') return ctx
 
   if (mode === 'cron') {
+    const secret = process.env.CRON_SECRET
+    if (isProduction() && (!secret || secret.length < 16)) {
+      throw new AppError('CRON_UNAUTHORIZED', 'Cron secret not configured', 503)
+    }
     const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${secret}`) {
       throw new AppError('CRON_UNAUTHORIZED', 'Invalid cron authorization', 401)
     }
     return ctx

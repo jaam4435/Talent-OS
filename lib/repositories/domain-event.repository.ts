@@ -28,8 +28,7 @@ export class DomainEventRepository extends BaseRepository {
     })
 
     if (error) {
-      console.error('emitEvent failed:', error)
-      return null
+      this.throwIfError(error)
     }
 
     return data as string | null

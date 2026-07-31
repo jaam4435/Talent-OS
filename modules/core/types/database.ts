@@ -652,6 +652,41 @@ export interface Database {
         }
         Returns: string
       }
+      get_dashboard_summary: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          tenant_id: string
+          total_freelancers: number | null
+          active_projects: number | null
+          open_opportunities: number | null
+          pending_payments: number | null
+          pending_payments_amount: number | null
+        }[]
+      }
+      get_observability_workflow_health: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_observability_queue_depth: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_observability_notification_delivery: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_observability_ai_latency: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_observability_failures_24h: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_event_pipeline_health: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
       get_invite_preview: {
         Args: { p_token_hash: string }
         Returns: Array<{

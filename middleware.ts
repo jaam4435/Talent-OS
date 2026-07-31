@@ -57,6 +57,15 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!supabaseUrl || !supabaseKey) {
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
+      if (isApiRoute(pathname)) {
+        return NextResponse.json(
+          { error: { code: 'SERVICE_UNAVAILABLE', message: 'Auth service not configured' } },
+          { status: 503 }
+        )
+      }
+      return new NextResponse('Service Unavailable', { status: 503 })
+    }
     return response
   }
 

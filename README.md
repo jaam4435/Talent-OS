@@ -8,7 +8,7 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 |---|---|
 | Frontend | Next.js 15, TypeScript, React 19, Tailwind CSS |
 | Backend | Next.js Server Actions + Route Handlers |
-| Database | Supabase (PostgreSQL 15) |
+| Database | Supabase (PostgreSQL 17) |
 | Auth | Supabase Auth (JWT, magic links) |
 | Storage | Supabase Storage |
 | Automation | n8n |
@@ -39,7 +39,7 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 2 | [User Stories](docs/02-user-stories.md) | 36 stories across 9 epics with acceptance criteria |
 | 3 | [Database Schema](docs/03-database-schema.md) | ERD, tables, enums, views, storage buckets |
 | 4 | [**Complete Supabase Schema**](docs/04-supabase-complete-schema.md) | Tables, FKs, RLS matrix, triggers, migrations |
-| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–006 |
+| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–020 |
 | 6 | [API Architecture](docs/05-api-architecture.md) | REST endpoints, server actions, event contracts |
 | 7 | [Folder Structure](docs/06-folder-structure.md) | Next.js project tree and conventions |
 | 8 | [Authentication Design](docs/07-authentication-design.md) | Auth flows, RBAC, session management |
@@ -49,6 +49,9 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 12 | [Enterprise System Architecture](docs/11-enterprise-system-architecture.md) | HLD, components, events, webhooks, security, scale |
 | 13 | [**WhatsApp + n8n Integration**](docs/12-whatsapp-n8n-integration-architecture.md) | **Unified messaging orchestration architecture** |
 | 24 | [**Technical Audit**](docs/24-technical-audit.md) | Codebase audit: architecture, schema, debt, AI roadmap |
+| — | [**Enterprise Readiness Review**](docs/Platform/ENTERPRISE_READINESS_REVIEW.md) | Production readiness assessment |
+| — | [**Gap Analysis Study Pack**](docs/Platform/GAP_ANALYSIS_STUDY_PACK.md) | Curated docs + code index for gap review |
+| — | [SECURITY.md](SECURITY.md) | Security policy and controls |
 
 ## Enterprise Architecture Highlights
 
@@ -67,17 +70,11 @@ The [enterprise architecture document](docs/11-enterprise-system-architecture.md
 
 ## Database Migrations
 
-Run in order against your Supabase project:
+Run all migrations in order against your Supabase project:
 
 ```bash
 supabase db push
-# or manually:
-psql -f supabase/migrations/001_initial_schema.sql
-psql -f supabase/migrations/002_rls_policies.sql
-psql -f supabase/migrations/003_functions_triggers.sql
-psql -f supabase/migrations/004_views_analytics.sql
-psql -f supabase/migrations/005_event_infrastructure.sql
-psql -f supabase/migrations/006_complete_rls_and_integrity.sql
+# Migrations 001–020 (see supabase/migrations/)
 ```
 
 ## Quick Start (Development)

@@ -205,13 +205,12 @@ export class ObservabilityRepository extends BaseRepository {
   }
 
   async getWorkflowMetrics(tenantId: string): Promise<WorkflowMetricsSummary> {
-    const { data } = await this.ctx.supabase
-      .from('v_observability_workflow_health' as 'workflow_runs')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .maybeSingle()
+    const { data, error } = await this.ctx.supabase.rpc('get_observability_workflow_health', {
+      p_tenant_id: tenantId,
+    })
+    this.throwIfError(error)
 
-    const row = data as Record<string, unknown> | null
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null
 
     return {
       running: Number(row?.running_count ?? 0),
@@ -223,15 +222,17 @@ export class ObservabilityRepository extends BaseRepository {
   }
 
   async getQueueMetrics(tenantId: string): Promise<QueueMetricsSummary> {
-    const { data: queueData } = await this.ctx.supabase
-      .from('v_observability_queue_depth' as 'domain_events')
-      .select('*')
-      .eq('tenant_id', tenantId)
+    const { data: queueData, error: queueError } = await this.ctx.supabase.rpc(
+      'get_observability_queue_depth',
+      { p_tenant_id: tenantId }
+    )
+    this.throwIfError(queueError)
 
-    const { data: pipelineData } = await this.ctx.supabase
-      .from('v_event_pipeline_health' as 'domain_events')
-      .select('*')
-      .eq('tenant_id', tenantId)
+    const { data: pipelineData, error: pipelineError } = await this.ctx.supabase.rpc(
+      'get_event_pipeline_health',
+      { p_tenant_id: tenantId }
+    )
+    this.throwIfError(pipelineError)
 
     const queues = (queueData ?? []) as Array<Record<string, unknown>>
     const pipeline = (pipelineData ?? []) as Array<Record<string, unknown>>
@@ -261,10 +262,10 @@ export class ObservabilityRepository extends BaseRepository {
   }
 
   async getNotificationMetrics(tenantId: string): Promise<NotificationMetricsSummary> {
-    const { data } = await this.ctx.supabase
-      .from('v_observability_notification_delivery' as 'notifications')
-      .select('*')
-      .eq('tenant_id', tenantId)
+    const { data, error } = await this.ctx.supabase.rpc('get_observability_notification_delivery', {
+      p_tenant_id: tenantId,
+    })
+    this.throwIfError(error)
 
     return {
       channels: ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
@@ -277,10 +278,10 @@ export class ObservabilityRepository extends BaseRepository {
   }
 
   async getAiLatencyMetrics(tenantId: string): Promise<LatencySummary['ai']> {
-    const { data } = await this.ctx.supabase
-      .from('v_observability_ai_latency' as 'ai_requests')
-      .select('*')
-      .eq('tenant_id', tenantId)
+    const { data, error } = await this.ctx.supabase.rpc('get_observability_ai_latency', {
+      p_tenant_id: tenantId,
+    })
+    this.throwIfError(error)
 
     return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
       requestType: r.request_type as string,
@@ -291,10 +292,10 @@ export class ObservabilityRepository extends BaseRepository {
   }
 
   async getFailures24h(tenantId: string): Promise<FailureSummary[]> {
-    const { data } = await this.ctx.supabase
-      .from('v_observability_failures_24h' as 'domain_events')
-      .select('*')
-      .eq('tenant_id', tenantId)
+    const { data, error } = await this.ctx.supabase.rpc('get_observability_failures_24h', {
+      p_tenant_id: tenantId,
+    })
+    this.throwIfError(error)
 
     return ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
       source: r.source as string,
