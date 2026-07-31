@@ -1905,6 +1905,8 @@ After each merged PR:
 
 **Status: Ready for implementation approval — no code in this document.**
 
+**Execution:** See [ENGINEERING_EXECUTION_PLAN.md](./ENGINEERING_EXECUTION_PLAN.md) and sprint playbooks [SPRINT_01.md](./SPRINT_01.md)–[SPRINT_05.md](./SPRINT_05.md).
+
 *Begin with PR-00 Platform Core, then parallel tracks: PR-B01, PR-FF01, PR-S01, PR-A01, PR-W01, PR-01.*
 
 *End of AI Platform Implementation Roadmap v1.6.0*
