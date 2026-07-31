@@ -33,6 +33,16 @@ talent-os/
 │       ├── types.ts
 │       ├── validation.ts
 │       └── index.ts
+│   └── platform/                     # Platform Core SDK (PR-00)
+│       ├── types/
+│       ├── contracts/
+│       ├── context/
+│       ├── products/
+│       ├── features/
+│       ├── config/
+│       ├── events/
+│       ├── sdk/
+│       └── index.ts
 │
 ├── lib/
 │   ├── ai/                           # AI Gateway — all LLM requests go here

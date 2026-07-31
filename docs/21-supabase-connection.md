@@ -39,6 +39,12 @@ SUPABASE_DB_PASSWORD='your-db-password' ./scripts/push-supabase-schema.sh
 Uses session pooler `aws-1-ap-southeast-1.pooler.supabase.com:5432` by default.
 Override with `SUPABASE_POOLER_HOST` / `SUPABASE_POOLER_PORT` if your project region differs.
 
+Verify applied migrations (including PR-00 Platform Core tables):
+
+```bash
+SUPABASE_DB_PASSWORD='your-db-password' ./scripts/verify-supabase-migrations.sh
+```
+
 Optional demo seed data (after at least one auth user exists):
 
 ```bash
