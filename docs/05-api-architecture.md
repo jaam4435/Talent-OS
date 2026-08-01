@@ -54,7 +54,7 @@
 
 Domain CRUD (talent, opportunities, projects, milestones, payments) is implemented via **Server Actions** in `app/actions/`, not REST route handlers.
 
-### 3.1 Implemented REST routes (24 handlers)
+### 3.1 Implemented REST routes (24 core + 15 organization = 39 route files)
 
 | Method | Endpoint | Auth | Notes |
 |--------|----------|------|-------|
@@ -83,6 +83,26 @@ Domain CRUD (talent, opportunities, projects, milestones, payments) is implement
 | `POST` | `/api/webhooks/n8n` | HMAC + idempotency key | n8n callbacks |
 | `GET` | `/api/webhooks/whatsapp` | Meta verify token | Webhook verification |
 | `POST` | `/api/webhooks/whatsapp` | HMAC signature | Inbound WhatsApp |
+
+**Organization module** (`/api/organization/*`) — see [ORGANIZATION_MODULE.md](./Architecture/ORGANIZATION_MODULE.md):
+
+| Method | Endpoint | Auth | Notes |
+|--------|----------|------|-------|
+| `GET` / `PATCH` | `/api/organization` | Tenant / Admin | Profile + settings |
+| `GET` / `PATCH` | `/api/organization/branding` | Tenant / Admin | Logo + colors |
+| `GET` / `PATCH` | `/api/organization/settings` | Tenant / Admin | Business hours |
+| `GET` | `/api/organization/subscription` | Admin + billing | External billing ref |
+| `GET` | `/api/organization/permissions` | Tenant | Role → permission map |
+| `GET` / `POST` | `/api/organization/departments` | Manager | Paginated CRUD |
+| `GET` / `PATCH` / `DELETE` | `/api/organization/departments/[id]` | Manager | Soft delete |
+| `GET` / `POST` | `/api/organization/teams` | Manager | Paginated CRUD |
+| `GET` / `PATCH` / `DELETE` | `/api/organization/teams/[id]` | Manager | Soft delete |
+| `GET` / `POST` / `DELETE` | `/api/organization/teams/[id]/members` | Manager | Team membership |
+| `GET` | `/api/organization/members` | Admin | Paginated, filter, search |
+| `GET` / `PATCH` / `DELETE` | `/api/organization/members/[id]` | Admin | Role, suspend, remove |
+| `GET` / `POST` | `/api/organization/invitations` | Admin | Idempotent create |
+| `DELETE` | `/api/organization/invitations/[id]` | Admin | Revoke |
+| `GET` | `/api/organization/audit-logs` | Admin | Before/after audit trail |
 
 ### 3.2 Planned REST (not implemented)
 

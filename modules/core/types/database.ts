@@ -25,7 +25,12 @@ export interface Database {
         currency: string
         settings: Json
         subscription_status: string
+        subscription_reference: string | null
         trial_ends_at: string | null
+        primary_color: string | null
+        accent_color: string | null
+        business_hours: Json
+        deleted_at: string | null
         created_at: string
         updated_at: string
       }>
@@ -47,6 +52,7 @@ export interface Database {
         invited_at: string | null
         joined_at: string | null
         company_id: string | null
+        deleted_at: string | null
         created_at: string
       }>
       companies: TableDef<{
@@ -488,6 +494,46 @@ export interface Database {
         created_at: string
         updated_at: string
       }>
+      org_departments: TableDef<{
+        id: string
+        tenant_id: string
+        name: string
+        slug: string
+        description: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      org_teams: TableDef<{
+        id: string
+        tenant_id: string
+        department_id: string | null
+        name: string
+        slug: string
+        description: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      org_team_members: TableDef<{
+        id: string
+        tenant_id: string
+        team_id: string
+        member_id: string
+        created_at: string
+      }>
+      organization_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
@@ -577,6 +623,9 @@ export interface Database {
         tenant_id: string
         email: string
         role: string
+        invited_by: string
+        token_hash: string
+        company_id: string | null
         expires_at: string
         created_at: string
         accepted_at: string | null
