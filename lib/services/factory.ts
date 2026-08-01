@@ -17,6 +17,7 @@ import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
 import { WhatsAppService } from '@/lib/services/whatsapp.service'
 import { KnowledgeService } from '@/lib/services/knowledge.service'
 import { AgentService } from '@/lib/services/agent.service'
+import { OrganizationService } from '@/lib/services/organization.service'
 import { ObservabilityService } from '@/lib/services/observability.service'
 
 export interface Services {
@@ -35,6 +36,7 @@ export interface Services {
   notification: NotificationService
   ai: AIService
   integration: IntegrationService
+  organization: OrganizationService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -69,6 +71,7 @@ function buildServices(repos: Repositories): Services {
     finance: new FinanceService(repos),
     analytics: new AnalyticsService(repos),
     integration,
+    organization: new OrganizationService(repos),
   }
 
   return services

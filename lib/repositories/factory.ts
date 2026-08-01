@@ -40,6 +40,12 @@ import {
 import { ObservabilityRepository } from '@/lib/repositories/observability.repository'
 import { PlatformFeatureRepository } from '@/lib/repositories/platform-feature.repository'
 import { PlatformConfigRepository } from '@/lib/repositories/platform-config.repository'
+import { OrganizationRepository } from '@/lib/repositories/organization.repository'
+import { OrganizationDepartmentRepository } from '@/lib/repositories/organization-department.repository'
+import { OrganizationTeamRepository } from '@/lib/repositories/organization-team.repository'
+import { OrganizationMemberRepository } from '@/lib/repositories/organization-member.repository'
+import { OrganizationInviteRepository } from '@/lib/repositories/organization-invite.repository'
+import { OrganizationAuditRepository } from '@/lib/repositories/organization-audit.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -75,6 +81,12 @@ export interface Repositories {
   observability: ObservabilityRepository
   platformFeature: PlatformFeatureRepository
   platformConfig: PlatformConfigRepository
+  organization: OrganizationRepository
+  organizationDepartment: OrganizationDepartmentRepository
+  organizationTeam: OrganizationTeamRepository
+  organizationMember: OrganizationMemberRepository
+  organizationInvite: OrganizationInviteRepository
+  organizationAudit: OrganizationAuditRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -112,6 +124,12 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     observability: new ObservabilityRepository(ctx),
     platformFeature: new PlatformFeatureRepository(ctx),
     platformConfig: new PlatformConfigRepository(ctx),
+    organization: new OrganizationRepository(ctx),
+    organizationDepartment: new OrganizationDepartmentRepository(ctx),
+    organizationTeam: new OrganizationTeamRepository(ctx),
+    organizationMember: new OrganizationMemberRepository(ctx),
+    organizationInvite: new OrganizationInviteRepository(ctx),
+    organizationAudit: new OrganizationAuditRepository(ctx),
   }
 }
 
