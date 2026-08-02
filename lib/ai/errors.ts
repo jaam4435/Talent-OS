@@ -45,6 +45,20 @@ export class AiStructuredParseError extends AiGatewayError {
   }
 }
 
+export class AiGuardrailError extends AiGatewayError {
+  constructor(message: string) {
+    super(message, 'AI_GUARDRAIL_BLOCKED', 400)
+    this.name = 'AiGuardrailError'
+  }
+}
+
+export class AiCircuitOpenError extends AiGatewayError {
+  constructor(provider: string) {
+    super(`AI circuit breaker open for provider: ${provider}`, 'AI_CIRCUIT_OPEN', 503)
+    this.name = 'AiCircuitOpenError'
+  }
+}
+
 export function isAiGatewayError(error: unknown): error is AiGatewayError {
   return error instanceof AiGatewayError
 }
@@ -54,6 +68,8 @@ export function isRetryableAiError(error: unknown): boolean {
   if (error instanceof AiRateLimitError) return true
   if (error instanceof AiFeatureDisabledError) return false
   if (error instanceof AiConfigurationError) return false
+  if (error instanceof AiGuardrailError) return false
+  if (error instanceof AiCircuitOpenError) return false
   if (error.statusCode >= 500) return true
   if (error.statusCode === 429) return true
   return false

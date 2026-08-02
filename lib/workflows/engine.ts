@@ -12,7 +12,6 @@ import type { WorkflowRepository } from '@/lib/repositories/workflow.repository'
 import type { WorkflowExecutionHistoryRepository } from '@/lib/repositories/workflow-execution-history.repository'
 import type { WorkflowCompensationRepository } from '@/lib/repositories/workflow-compensation.repository'
 import { instrumentWorkflowRun } from '@/lib/observability/instrumentation'
-import type { ActionStep } from '@/lib/workflows/types'
 
 export class WorkflowEngine {
   constructor(

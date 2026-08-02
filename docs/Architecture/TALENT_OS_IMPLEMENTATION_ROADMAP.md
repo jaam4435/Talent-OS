@@ -26,12 +26,18 @@
 | **T-03** | Payment approve/pay workflow UI | **Done** — PR #56 |
 | **T-04** | API route standardization completion | **Done** — PR #56 |
 | **T-05** | Documentation truth pass | **Done** — PR #56 |
+| **T-06** | MockProvider + AI test harness | **Done** — PR #65 |
+| **T-07** | Extend `ai_requests` schema | **Done** — PR #65 |
+| **T-08** | Direct execution default + agent tagging | **Done** — PR #65 |
+| **T-09** | Unified AI ledger | **Done** — PR #65 |
+| **T-10** | Gateway pipeline + circuit breakers | **Done** — PR #65 |
+| **T-11** | Guardrails + PII middleware | **Done** — PR #65 |
 
 ### In progress
 
 | PR | Title | Status |
 |----|-------|--------|
-| — | Phase B — AI security & integrity (T-06+) | Next |
+| — | Phase C — AI product (T-12+) | Next |
 
 ---
 
@@ -125,7 +131,8 @@ See [docs/Archive/README.md](../Archive/README.md).
 |-----------|-----|--------|
 | 001–021 | P0 | On `main` |
 | 022_platform_core.sql | T-02 | Single-product (no product registry) — merged in PR #56 |
-| 023+ | T-07+ | AI schema extensions |
+| 023–028 | Module stack | CRM, org, talent, project, assignment, workflow modules |
+| 029_ai_requests_extend.sql | T-07 | AI schema extensions — PR #65 |
 
 ---
 
