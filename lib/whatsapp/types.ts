@@ -47,6 +47,7 @@ export interface DetectedIntent {
 }
 
 export interface ConversationContext {
+  id: string
   tenantId: string
   freelancerId: string
   phone: string

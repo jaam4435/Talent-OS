@@ -85,9 +85,18 @@ export class WhatsAppPlatformModuleService {
   }): Promise<InboundProcessResult> {
     const result = await this.whatsapp.processInboundMessage(input)
 
+    const conversation = await this.repos.whatsappConversation.getByFreelancer(
+      input.tenantId,
+      input.freelancer.id
+    )
+    if (!conversation) {
+      throw new Error('WhatsApp conversation not found after inbound processing')
+    }
+
     await this.repos.whatsappMemory.append({
       tenant_id: input.tenantId,
       freelancer_id: input.freelancer.id,
+      conversation_id: conversation.id,
       role: 'user',
       content: input.message.body,
       intent: result.intent,
@@ -509,9 +518,15 @@ export class WhatsAppPlatformModuleService {
     content: string,
     intent?: string
   ) {
+    const conversation = await this.repos.whatsappConversation.getByFreelancer(tenantId, freelancerId)
+    if (!conversation) {
+      throw new Error('WhatsApp conversation not found')
+    }
+
     return this.repos.whatsappMemory.append({
       tenant_id: tenantId,
       freelancer_id: freelancerId,
+      conversation_id: conversation.id,
       role: 'assistant',
       content,
       intent: intent ?? null,

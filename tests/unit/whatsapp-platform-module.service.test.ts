@@ -86,6 +86,20 @@ describe('WhatsAppPlatformModuleService', () => {
     const repos = {
       whatsappMemory: { append: vi.fn(async () => ({ id: 'mem-1' })) },
       whatsappAudit: { record: vi.fn(async () => undefined) },
+      whatsappConversation: {
+        getByFreelancer: vi.fn(async () => ({
+          id: 'conv-1',
+          tenantId: 'tenant-1',
+          freelancerId: 'fl-1',
+          phone: '+1234',
+          activeIntent: null,
+          activeEntityType: null,
+          activeEntityId: null,
+          memorySummary: null,
+          pendingApprovalId: null,
+          lastMessageAt: new Date().toISOString(),
+        })),
+      },
     }
     const service = new WhatsAppPlatformModuleService(
       repos as never,
@@ -113,13 +127,19 @@ describe('WhatsAppPlatformModuleService', () => {
     })
 
     expect(repos.whatsappMemory.append).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'user', content: 'HELP', intent: 'help' })
+      expect.objectContaining({
+        role: 'user',
+        content: 'HELP',
+        intent: 'help',
+        conversation_id: 'conv-1',
+      })
     )
   })
 })
 
 describe('WhatsApp intent detection', () => {
   const baseContext: ConversationContext = {
+    id: 'conv-1',
     tenantId: 't1',
     freelancerId: 'f1',
     phone: '+1',

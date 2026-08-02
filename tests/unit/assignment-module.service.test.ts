@@ -20,6 +20,7 @@ describe('AssignmentModuleService', () => {
 
     const result = await service.createAllocation('tenant-1', 'user-1', {
       freelancer_id: 'talent-1',
+      project_id: 'project-1',
       title: 'Design sprint',
       starts_at: '2026-08-01T09:00:00.000Z',
       ends_at: '2026-08-05T17:00:00.000Z',
@@ -63,6 +64,7 @@ describe('AssignmentModuleService', () => {
     const service = new AssignmentModuleService(repos as never, { create: vi.fn() } as never)
     const result = await service.createAllocation('tenant-1', 'user-1', {
       freelancer_id: 'talent-1',
+      project_id: 'project-1',
       title: 'Design sprint',
       starts_at: '2026-08-01T09:00:00.000Z',
       ends_at: '2026-08-05T17:00:00.000Z',
@@ -71,6 +73,26 @@ describe('AssignmentModuleService', () => {
 
     expect(result.ok).toBe(true)
     expect(repos.assignmentAudit.record).toHaveBeenCalled()
+  })
+
+  it('rejects allocation without a project or opportunity target', async () => {
+    const repos = {
+      assignmentAllocation: {
+        detectConflicts: vi.fn(async () => []),
+      },
+    }
+    const service = new AssignmentModuleService(repos as never, { create: vi.fn() } as never)
+    const result = await service.createAllocation('tenant-1', 'user-1', {
+      freelancer_id: 'talent-1',
+      title: 'Design sprint',
+      starts_at: '2026-08-01T09:00:00.000Z',
+      ends_at: '2026-08-05T17:00:00.000Z',
+    })
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('project or an opportunity')
+    }
   })
 
   it('returns assignment suggestions', async () => {

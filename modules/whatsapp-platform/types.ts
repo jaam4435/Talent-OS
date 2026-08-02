@@ -57,6 +57,7 @@ export interface WhatsAppMemoryEntry {
   id: string
   tenantId: string
   freelancerId: string
+  conversationId: string
   role: 'user' | 'assistant' | 'system'
   content: string
   intent: string | null
@@ -76,6 +77,7 @@ export interface WhatsAppApprovalGate {
 }
 
 export interface WhatsAppConversationSummary {
+  id: string
   tenantId: string
   freelancerId: string
   phone: string

@@ -68,15 +68,17 @@ export class WhatsAppService {
       ? new Date(Number(message.timestamp) * 1000).toISOString()
       : new Date().toISOString()
 
+    const conversation = await this.getConversation(tenantId, freelancer.id, message.phone)
+
     await this.integration.createInboundWhatsApp({
       tenant_id: tenantId,
       freelancer_id: freelancer.id,
+      conversation_id: conversation.id,
       wa_message_id: message.waMessageId,
       phone: message.phone,
       body: message.body,
     })
 
-    const conversation = await this.getConversation(tenantId, freelancer.id, message.phone)
     await this.repos.whatsappConversation.touchMessage(tenantId, freelancer.id, now)
 
     const pending = await this.crm.findPendingRecipient(tenantId, freelancer.id)

@@ -436,10 +436,10 @@ Items that **correctly match** the domain model:
 
 ### P0 — Integrity (before scale)
 
-1. Add XOR CHECK on `assignment_allocations` (project_id OR opportunity_id, not both/neither)
-2. Add partial unique index on `member_invites` for pending invites only
-3. Add `conversation_id` FK chain for WhatsApp messages and memory
-4. Add `idx_assignment_allocations_opportunity`
+1. ~~Add XOR CHECK on `assignment_allocations` (project_id OR opportunity_id, not both/neither)~~ ✅ Sprint 10 (`032`)
+2. ~~Add partial unique index on `member_invites` for pending invites only~~ ✅ Sprint 10 (`032`)
+3. ~~Add `conversation_id` FK chain for WhatsApp messages and memory~~ ✅ Sprint 10 (`032`)
+4. ~~Add `idx_assignment_allocations_opportunity`~~ ✅ Sprint 10 (`032`)
 
 ### P1 — Performance (before 10k+ rows per tenant)
 

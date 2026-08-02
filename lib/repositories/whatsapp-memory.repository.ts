@@ -7,6 +7,7 @@ export class WhatsappMemoryRepository extends BaseRepository {
   async append(input: {
     tenant_id: string
     freelancer_id: string
+    conversation_id: string
     role: 'user' | 'assistant' | 'system'
     content: string
     intent?: string | null
@@ -17,6 +18,7 @@ export class WhatsappMemoryRepository extends BaseRepository {
       .insert({
         tenant_id: input.tenant_id,
         freelancer_id: input.freelancer_id,
+        conversation_id: input.conversation_id,
         role: input.role,
         content: input.content,
         intent: input.intent ?? null,
@@ -71,6 +73,7 @@ export class WhatsappMemoryRepository extends BaseRepository {
     id: string
     tenant_id: string
     freelancer_id: string
+    conversation_id: string
     role: string
     content: string
     intent: string | null
@@ -81,6 +84,7 @@ export class WhatsappMemoryRepository extends BaseRepository {
       id: row.id,
       tenantId: row.tenant_id,
       freelancerId: row.freelancer_id,
+      conversationId: row.conversation_id,
       role: row.role as WhatsAppMemoryEntry['role'],
       content: row.content,
       intent: row.intent,

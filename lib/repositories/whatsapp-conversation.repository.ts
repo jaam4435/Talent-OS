@@ -120,6 +120,7 @@ export class WhatsappConversationRepository extends BaseRepository {
   }
 
   private mapSummaryRow(row: {
+    id: string
     tenant_id: string
     freelancer_id: string
     phone: string
@@ -131,6 +132,7 @@ export class WhatsappConversationRepository extends BaseRepository {
     last_message_at: string
   }): WhatsAppConversationSummary {
     return {
+      id: row.id,
       tenantId: row.tenant_id,
       freelancerId: row.freelancer_id,
       phone: row.phone,
@@ -144,6 +146,7 @@ export class WhatsappConversationRepository extends BaseRepository {
   }
 
   private mapRow(row: {
+    id: string
     tenant_id: string
     freelancer_id: string
     phone: string
@@ -156,6 +159,7 @@ export class WhatsappConversationRepository extends BaseRepository {
     last_message_at: string
   }): ConversationContext {
     return {
+      id: row.id,
       tenantId: row.tenant_id,
       freelancerId: row.freelancer_id,
       phone: row.phone,

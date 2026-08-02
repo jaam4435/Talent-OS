@@ -13,7 +13,43 @@ export const listQuerySchema = z.object({
   to: z.string().datetime().optional(),
 })
 
-export const createAllocationSchema = z.object({
+const allocationTargetRefine = (
+  data: { project_id?: string | null; opportunity_id?: string | null },
+  ctx: z.RefinementCtx
+) => {
+  const hasProject = data.project_id != null
+  const hasOpportunity = data.opportunity_id != null
+  if (hasProject && hasOpportunity) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Allocation cannot target both a project and an opportunity',
+      path: ['project_id'],
+    })
+  } else if (!hasProject && !hasOpportunity) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Allocation must target either a project or an opportunity',
+      path: ['project_id'],
+    })
+  }
+}
+
+export function validateAllocationTarget(
+  projectId: string | null | undefined,
+  opportunityId: string | null | undefined
+): { ok: true } | { ok: false; error: string } {
+  const hasProject = projectId != null
+  const hasOpportunity = opportunityId != null
+  if (hasProject && hasOpportunity) {
+    return { ok: false, error: 'Allocation cannot target both a project and an opportunity' }
+  }
+  if (!hasProject && !hasOpportunity) {
+    return { ok: false, error: 'Allocation must target either a project or an opportunity' }
+  }
+  return { ok: true }
+}
+
+const allocationBodySchema = z.object({
   freelancer_id: z.string().uuid(),
   project_id: z.string().uuid().optional().nullable(),
   opportunity_id: z.string().uuid().optional().nullable(),
@@ -26,9 +62,24 @@ export const createAllocationSchema = z.object({
   skip_conflict_check: z.boolean().optional(),
 })
 
-export const updateAllocationSchema = createAllocationSchema.partial().extend({
-  status: z.enum(['planned', 'confirmed', 'active', 'completed', 'canceled']).optional(),
-})
+export const createAllocationSchema = allocationBodySchema.superRefine(allocationTargetRefine)
+
+export const updateAllocationSchema = allocationBodySchema
+  .partial()
+  .extend({
+    status: z.enum(['planned', 'confirmed', 'active', 'completed', 'canceled']).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if ('project_id' in data || 'opportunity_id' in data) {
+      allocationTargetRefine(
+        {
+          project_id: data.project_id,
+          opportunity_id: data.opportunity_id,
+        },
+        ctx
+      )
+    }
+  })
 
 export const createCapacitySchema = z.object({
   freelancer_id: z.string().uuid(),

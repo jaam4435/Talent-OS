@@ -1127,6 +1127,7 @@ export interface Database {
         id: string
         tenant_id: string
         freelancer_id: string
+        conversation_id: string | null
         direction: string
         wa_message_id: string
         phone: string

@@ -1,6 +1,7 @@
 import type { Repositories } from '@/lib/repositories/factory'
 import type { PaginatedResult } from '@/lib/repositories/base/types'
 import type { NotificationService } from '@/lib/services/notification.service'
+import { validateAllocationTarget } from '@/modules/assignment/validation'
 import {
   ASSIGNMENT_EVENT_TYPES,
   type AssignmentAllocation,
@@ -50,11 +51,18 @@ export class AssignmentModuleService {
       return { ok: false, error: 'Assignment conflicts detected', conflicts }
     }
 
+    const projectId = (input.project_id as string | null) ?? null
+    const opportunityId = (input.opportunity_id as string | null) ?? null
+    const targetCheck = validateAllocationTarget(projectId, opportunityId)
+    if (!targetCheck.ok) {
+      return { ok: false, error: targetCheck.error }
+    }
+
     const allocation = await this.repos.assignmentAllocation.create({
       tenant_id: tenantId,
       freelancer_id: input.freelancer_id as string,
-      project_id: (input.project_id as string | null) ?? null,
-      opportunity_id: (input.opportunity_id as string | null) ?? null,
+      project_id: projectId,
+      opportunity_id: opportunityId,
       title: input.title as string,
       status: (input.status as never) ?? 'planned',
       allocation_pct: (input.allocation_pct as number) ?? 100,
@@ -116,6 +124,14 @@ export class AssignmentModuleService {
     const hasErrors = conflicts.some((c) => c.severity === 'error')
     if (hasErrors && !patch.skip_conflict_check) {
       return { ok: false, error: 'Assignment conflicts detected', conflicts }
+    }
+
+    const mergedTargets = validateAllocationTarget(
+      patch.project_id !== undefined ? (patch.project_id as string | null) : current.projectId,
+      patch.opportunity_id !== undefined ? (patch.opportunity_id as string | null) : current.opportunityId
+    )
+    if (!mergedTargets.ok) {
+      return { ok: false, error: mergedTargets.error }
     }
 
     const dbPatch: Record<string, unknown> = {}
