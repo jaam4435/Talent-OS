@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { approvePayment, markPaymentPaid } from '@/app/actions/payments'
+import { useState } from 'react'
+import { useFinance } from '@/modules/finance/hooks/use-finance'
 import { Button } from '@/modules/core/components/ui/button'
 import { Input } from '@/modules/core/components/ui/input'
 import { hasPermission } from '@/modules/core/services/permissions'
@@ -11,41 +11,48 @@ interface PaymentActionsProps {
   paymentId: string
   status: string
   role: UserRole
+  disabled?: boolean
 }
 
-export function PaymentActions({ paymentId, status, role }: PaymentActionsProps) {
-  const [isPending, startTransition] = useTransition()
+export function PaymentActions({ paymentId, status, role, disabled }: PaymentActionsProps) {
+  const { api, error, isPending, run } = useFinance()
   const [reference, setReference] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [localError, setLocalError] = useState<string | null>(null)
 
   const canApprove = hasPermission(role, 'payments:approve') && status === 'pending'
   const canMarkPaid = hasPermission(role, 'payments:pay') && status === 'approved'
+  const busy = disabled || isPending
 
   if (!canApprove && !canMarkPaid) {
     return <span className="text-muted-foreground">—</span>
   }
 
   function handleApprove() {
-    setError(null)
-    startTransition(async () => {
-      const result = await approvePayment(paymentId)
-      if (!result.ok) setError(result.error)
+    setLocalError(null)
+    run(async () => {
+      await api.approvePayment(paymentId)
     })
   }
 
   function handleMarkPaid() {
-    setError(null)
-    startTransition(async () => {
-      const result = await markPaymentPaid(paymentId, reference)
-      if (!result.ok) setError(result.error)
-      else setReference('')
+    setLocalError(null)
+    const trimmed = reference.trim()
+    if (!trimmed) {
+      setLocalError('Payment reference is required')
+      return
+    }
+    run(async () => {
+      await api.markPaid(paymentId, trimmed)
+      setReference('')
     })
   }
+
+  const message = localError ?? error
 
   return (
     <div className="flex flex-col gap-2">
       {canApprove && (
-        <Button size="sm" variant="outline" disabled={isPending} onClick={handleApprove}>
+        <Button size="sm" variant="outline" disabled={busy} onClick={handleApprove}>
           Approve
         </Button>
       )}
@@ -55,15 +62,15 @@ export function PaymentActions({ paymentId, status, role }: PaymentActionsProps)
             placeholder="Payment reference"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
-            disabled={isPending}
+            disabled={busy}
             className="h-8 text-xs"
           />
-          <Button size="sm" disabled={isPending || !reference.trim()} onClick={handleMarkPaid}>
+          <Button size="sm" disabled={busy || !reference.trim()} onClick={handleMarkPaid}>
             Mark paid
           </Button>
         </div>
       )}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {message && <p className="text-xs text-destructive">{message}</p>}
     </div>
   )
 }

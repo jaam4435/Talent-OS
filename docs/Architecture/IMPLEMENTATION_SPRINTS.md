@@ -897,11 +897,11 @@ Additive API sprint. Legacy `app/actions/payments.ts` remains until UI cutover w
 
 ### Acceptance Criteria
 
-- [ ] All four finance REST endpoints operational
-- [ ] Payments UI uses REST exclusively
-- [ ] Invalid state transitions return `VALIDATION_ERROR`
-- [ ] `finance_audit_logs` records approve/mark-paid mutations
-- [ ] MCP finance server reads via module service
+- [x] All four finance REST endpoints operational
+- [x] Payments UI uses REST exclusively
+- [x] Invalid state transitions return `VALIDATION_ERROR`
+- [x] `finance_audit_logs` records approve/mark-paid mutations
+- [x] MCP finance server reads via module service
 
 ### Estimated effort
 
@@ -1584,6 +1584,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | 14 | Analytics UI F3 | — | L | Frontend | ✅ Shipped |
 | 15 | Assignment UI F4 | — | L | Frontend | ✅ Shipped |
 | 16 | Workflow + WhatsApp UI | — | L | Frontend | ✅ Shipped |
+| 17 | Finance REST + UI | 033 | L | Full stack | ✅ Shipped |
 | 17 | Finance REST + UI | 033 | L | Full stack |
 | 18 | Notifications REST | 034 | M | Full stack |
 | 19 | AI + Knowledge UI | — | L | Frontend |

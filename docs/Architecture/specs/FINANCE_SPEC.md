@@ -39,21 +39,16 @@ The Finance & Payments context tracks **milestone-linked payments** through a ma
 
 ## 3. Public APIs
 
-**Current:** No dedicated `/api/finance/*` module REST API. Payments accessed via:
+**Current:** `/api/finance/*` REST module (Sprint 17). Legacy Server Actions deprecated.
 
 | Method | Path | Permission | Description |
 |--------|------|------------|-------------|
-| GET | Server Actions / legacy UI routes | Role-based | List payments |
-| POST | Server Actions | Manager/admin | Approve, mark paid |
+| GET | `/api/finance/payments` | `payments:read` / `finance:read` | List payments |
+| GET | `/api/finance/payments/{id}` | `payments:read` | Payment detail |
+| POST | `/api/finance/payments/{id}/approve` | `payments:approve` / `finance:approve` | Approve pending |
+| POST | `/api/finance/payments/{id}/mark-paid` | `payments:pay` / `finance:mark_paid` | Mark paid with reference |
 
-**Future (recommended):**
-
-| Method | Path | Permission | Description |
-|--------|------|------------|-------------|
-| GET | `/api/finance/payments` | `finance:read` | List payments |
-| GET | `/api/finance/payments/{id}` | `finance:read` | Payment detail |
-| POST | `/api/finance/payments/{id}/approve` | `finance:approve` | Approve pending |
-| POST | `/api/finance/payments/{id}/mark-paid` | `finance:mark_paid` | Mark paid with reference |
+**Legacy (deprecated):** Server Actions in `app/actions/payments.ts`
 
 **MCP:** `lib/mcp/servers/finance.server.ts` — agent read access
 
@@ -63,11 +58,12 @@ The Finance & Payments context tracks **milestone-linked payments** through a ma
 
 | Service | Path | Role |
 |---------|------|------|
-| **FinanceService** | `lib/services/finance.service.ts` | Approve, mark paid, list for UI |
+| **FinanceService** | `lib/services/finance.service.ts` | Legacy facade — delegates to module service |
+| **FinanceModuleService** | `lib/services/finance-module.service.ts` | REST + audit + events |
 
-**Repositories:** `InvoiceRepository` (maps to `payments` table)
+**Repositories:** `InvoiceRepository` (payments table), `FinanceRepository` (audit logs)
 
-**No module layer yet:** Future `modules/finance/` with types, validation, events.
+**Module layer:** `modules/finance/` with types, validation, UI hooks.
 
 ---
 

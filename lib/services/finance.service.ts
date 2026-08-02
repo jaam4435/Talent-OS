@@ -1,20 +1,31 @@
 import type { Repositories } from '@/lib/repositories/factory'
+import type { FinanceModuleService } from '@/lib/services/finance-module.service'
 
 export class FinanceService {
-  constructor(private readonly repos: Repositories) {}
+  constructor(
+    private readonly repos: Repositories,
+    private readonly module: FinanceModuleService
+  ) {}
 
   async getPaymentsForPage(tenantId: string, role: string, userId: string) {
-    let freelancerId: string | undefined
-    if (role === 'freelancer') {
-      freelancerId = (await this.repos.talent.findIdByUserId(userId, tenantId)) ?? undefined
+    const result = await this.module.listPayments(tenantId, role, userId, { limit: 50 })
+    const freelancerMap = new Map(
+      result.data.map((p) => [
+        p.freelancerId,
+        { id: p.freelancerId, full_name: p.freelancerName ?? null },
+      ])
+    )
+    return {
+      payments: result.data.map((p) => ({
+        id: p.id,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        created_at: p.createdAt,
+        freelancer_id: p.freelancerId,
+      })),
+      freelancerMap,
     }
-
-    const result = await this.repos.invoice.listByTenant(tenantId, { freelancerId })
-    const freelancerIds = [...new Set(result.data.map((p) => p.freelancer_id))]
-    const freelancers = await this.repos.talent.findNamesByIds(freelancerIds)
-    const freelancerMap = new Map(freelancers.map((f) => [f.id, f]))
-
-    return { payments: result.data, freelancerMap }
   }
 
   async approvePayment(
@@ -23,28 +34,24 @@ export class FinanceService {
     userId: string,
     notes?: string
   ): Promise<{ ok: true } | { ok: false; error: string }> {
-    const payment = await this.repos.invoice.findById(paymentId, tenantId)
-    if (!payment) return { ok: false, error: 'Payment not found' }
-    if (payment.status !== 'pending') {
-      return { ok: false, error: 'Only pending payments can be approved' }
-    }
-
-    await this.repos.invoice.approve(paymentId, userId, notes?.trim() || null)
+    const result = await this.module.approvePayment(tenantId, paymentId, userId, notes)
+    if (!result.ok) return result
     return { ok: true }
   }
 
   async markPaymentPaid(
     tenantId: string,
     paymentId: string,
-    reference: string
+    reference: string,
+    userId?: string
   ): Promise<{ ok: true } | { ok: false; error: string }> {
-    const payment = await this.repos.invoice.findById(paymentId, tenantId)
-    if (!payment) return { ok: false, error: 'Payment not found' }
-    if (payment.status !== 'approved') {
-      return { ok: false, error: 'Only approved payments can be marked paid' }
-    }
-
-    await this.repos.invoice.markPaid(paymentId, reference)
+    const result = await this.module.markPaymentPaid(
+      tenantId,
+      paymentId,
+      userId ?? 'system',
+      reference
+    )
+    if (!result.ok) return result
     return { ok: true }
   }
 }

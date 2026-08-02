@@ -17,6 +17,7 @@ tags:
   - name: Assignments
   - name: Workflows
   - name: WhatsApp
+  - name: Finance
   - name: AI
   - name: Analytics
   - name: Team
@@ -723,6 +724,63 @@ paths:
       responses:
         '200':
           description: Approval resolved
+  /finance/payments:
+    get:
+      tags: [Finance]
+      summary: List payments
+      operationId: listFinancePayments
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated payment records
+  /finance/payments/{id}:
+    get:
+      tags: [Finance]
+      summary: Get payment detail with timeline
+      operationId: getFinancePayment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Payment detail
+        '404':
+          description: Payment not found
+  /finance/payments/{id}/approve:
+    post:
+      tags: [Finance]
+      summary: Approve pending milestone payment
+      operationId: approveFinancePayment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Approved payment
+        '400':
+          description: Invalid state transition
+  /finance/payments/{id}/mark-paid:
+    post:
+      tags: [Finance]
+      summary: Mark approved payment as paid
+      operationId: markFinancePaymentPaid
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Paid payment
+        '400':
+          description: Invalid state transition or missing reference
   /whatsapp/commands:
     post:
       tags: [WhatsApp]

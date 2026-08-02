@@ -4,6 +4,7 @@ import { requireTenant } from '@/modules/core/services/session'
 import { formatCurrency } from '@/modules/core/utils/format'
 import { getPaymentsForPage } from '@/lib/queries/payments.queries'
 import { PaymentActions } from '@/components/payments/payment-actions'
+import { PaymentDetailPanel } from '@/modules/finance/components/payment-detail-panel'
 
 export const metadata = { title: 'Payments' }
 
@@ -29,6 +30,7 @@ export default async function PaymentsPage() {
                 <th className="p-4 font-medium">Amount</th>
                 <th className="p-4 font-medium">Status</th>
                 <th className="p-4 font-medium">Created</th>
+                <th className="p-4 font-medium">Detail</th>
                 <th className="p-4 font-medium">Actions</th>
               </tr>
             </thead>
@@ -48,6 +50,13 @@ export default async function PaymentsPage() {
                     </td>
                     <td className="p-4 text-muted-foreground">
                       {new Date(payment.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="p-4">
+                      <PaymentDetailPanel
+                        paymentId={payment.id}
+                        freelancerName={freelancer?.full_name ?? '—'}
+                        role={tenant.role}
+                      />
                     </td>
                     <td className="p-4">
                       <PaymentActions

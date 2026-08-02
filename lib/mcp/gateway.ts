@@ -1,4 +1,5 @@
 import { findToolDefinition } from '@/lib/ai/agent/tool-filter'
+import { invokeFinanceTool } from '@/lib/mcp/adapters/finance.adapter'
 import { hasPermission } from '@/modules/core/services/permissions'
 import type { UserRole } from '@/modules/core/types/enums'
 import type {
@@ -8,6 +9,7 @@ import type {
   McpToolCallResult,
 } from '@/lib/mcp/types'
 import { ALL_MCP_SERVER_DEFINITIONS } from '@/lib/mcp/servers'
+import type { FinanceToolInputs, FinanceToolName } from '@/lib/mcp/servers/finance.server'
 
 class DefaultToolAuthorizer {
   async authorize(
@@ -24,7 +26,7 @@ class DefaultToolAuthorizer {
 
 /**
  * MCP gateway — routes tool calls with authorization.
- * Domain adapters will be wired in a future iteration; invoke returns not-implemented for now.
+ * Finance tools are wired to FinanceModuleService; other domains follow in later sprints.
  */
 export class McpGateway implements McpGatewayInterface {
   private readonly authorizer = new DefaultToolAuthorizer()
@@ -47,6 +49,14 @@ export class McpGateway implements McpGatewayInterface {
     }
 
     await this.authorizer.authorize(request.toolName, tool.requiredPermission, request.context)
+
+    if (request.serverId === 'finance') {
+      return invokeFinanceTool(
+        request.toolName as FinanceToolName,
+        request.input as FinanceToolInputs[FinanceToolName],
+        request.context
+      ) as Promise<McpToolCallResult<TOutput>>
+    }
 
     return {
       content: {

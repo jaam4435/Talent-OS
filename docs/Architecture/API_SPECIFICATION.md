@@ -884,18 +884,18 @@ Default sort: `created_at DESC`.
 
 ## 7. Finance & Payments API
 
-**Base path:** 📋 `/api/finance` (planned)  
-**Validation:** 📋 `modules/finance/validation.ts` (planned)  
-**Status:** ⚠️ Legacy Server Actions only — spec defines target REST surface
+**Base path:** `/api/finance`  
+**Validation:** `modules/finance/validation.ts`  
+**Status:** ✅ Implemented
 
 ### 7.1 Endpoints
 
 | Method | Path | Permission | Status | Description |
 |--------|------|------------|--------|-------------|
-| GET | `/api/finance/payments` | `payments:read` | 📋 | List payments |
-| GET | `/api/finance/payments/{id}` | `payments:read` | 📋 | Payment detail |
-| POST | `/api/finance/payments/{id}/approve` | `payments:approve` | 📋 | Approve pending |
-| POST | `/api/finance/payments/{id}/mark-paid` | `payments:pay` | 📋 | Mark paid |
+| GET | `/api/finance/payments` | `payments:read` | ✅ | List payments |
+| GET | `/api/finance/payments/{id}` | `payments:read` | ✅ | Payment detail |
+| POST | `/api/finance/payments/{id}/approve` | `payments:approve` | ✅ | Approve pending |
+| POST | `/api/finance/payments/{id}/mark-paid` | `payments:pay` | ✅ | Mark paid |
 
 **Current access:** `FinanceService` via Server Actions; role permissions `payments:read`, `payments:approve`, `payments:pay`.
 

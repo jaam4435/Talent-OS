@@ -1002,6 +1002,17 @@ export interface Database {
         metadata: Json
         created_at: string
       }>
+      finance_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        payment_id: string
+        actor_id: string | null
+        action: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
