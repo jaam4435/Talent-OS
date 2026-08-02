@@ -6,13 +6,12 @@ export const GET = withApiHandler(
   { auth: 'manager', permissions: ['analytics:read'], rateLimit: 'default', validate: { query: dashboardQuerySchema } },
   async ({ ctx, searchParams }) => {
     const services = await createServices()
-    const refresh = searchParams.get('refresh') === 'true'
-
-    const [legacy, summary] = await Promise.all([
-      services.analyticsModule.getLegacyDashboard(ctx.tenant!.id),
-      services.analyticsModule.getSummary(ctx.tenant!.id, refresh),
-    ])
-
-    return { payload: { legacy, summary } }
+    const payload = await services.analyticsModule.getProjects(ctx.tenant!.id, {
+      period: searchParams.get('period') ?? undefined,
+      from: searchParams.get('from') ?? undefined,
+      to: searchParams.get('to') ?? undefined,
+      refresh: searchParams.get('refresh') === 'true',
+    })
+    return { payload }
   }
 )
