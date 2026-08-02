@@ -17,6 +17,7 @@ tags:
   - name: Analytics
   - name: Team
   - name: Organization
+  - name: CRM
   - name: Webhooks
   - name: Cron
   - name: Internal
@@ -153,6 +154,199 @@ paths:
           description: Paginated talent results
         '403':
           description: Managers only
+  /talent:
+    get:
+      tags: [Talent]
+      summary: Advanced talent list/search
+      operationId: listTalent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated talent profiles
+    post:
+      tags: [Talent]
+      summary: Create talent profile
+      operationId: createTalent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created profile
+  /talent/{id}:
+    get:
+      tags: [Talent]
+      summary: Get talent profile
+      operationId: getTalent
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Talent profile
+    patch:
+      tags: [Talent]
+      summary: Update talent profile
+      operationId: updateTalent
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated profile
+    delete:
+      tags: [Talent]
+      summary: Soft delete talent profile
+      operationId: deleteTalent
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Deleted
+  /talent/{id}/experience:
+    get:
+      tags: [Talent]
+      summary: List work experience
+      operationId: listTalentExperience
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Experience entries
+    post:
+      tags: [Talent]
+      summary: Add work experience
+      operationId: addTalentExperience
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created experience
+  /talent/{id}/documents:
+    get:
+      tags: [Talent]
+      summary: List talent documents
+      operationId: listTalentDocuments
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Document list
+    post:
+      tags: [Talent]
+      summary: Add talent document
+      operationId: addTalentDocument
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created document
+  /talent/{id}/availability:
+    get:
+      tags: [Talent]
+      summary: Availability calendar slots
+      operationId: listTalentAvailability
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Calendar slots
+    post:
+      tags: [Talent]
+      summary: Add availability slot
+      operationId: addTalentAvailability
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created slot
+  /talent/{id}/completeness:
+    get:
+      tags: [Talent]
+      summary: Profile completeness score
+      operationId: getTalentCompleteness
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Completeness breakdown
+  /talent/{id}/ai-profile:
+    get:
+      tags: [Talent]
+      summary: AI-ready profile export
+      operationId: getTalentAiProfile
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: AI profile payload
+  /talent/match:
+    post:
+      tags: [Talent]
+      summary: Skill-based talent matching
+      operationId: matchTalentSkills
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Ranked matches
+  /talent/import:
+    post:
+      tags: [Talent]
+      summary: Bulk CSV import
+      operationId: importTalentCsv
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Import batch result
+  /talent/audit-logs:
+    get:
+      tags: [Talent]
+      summary: List talent audit logs
+      operationId: listTalentAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
   /ai/match:
     post:
       tags: [AI]
@@ -613,22 +807,63 @@ paths:
       summary: List organization audit logs
       operationId: listOrganizationAuditLogs
       security: [{ sessionCookie: [] }]
-      parameters:
-        - name: page
-          in: query
-          schema: { type: integer, default: 1 }
-        - name: limit
-          in: query
-          schema: { type: integer, default: 20 }
-        - name: action
-          in: query
-          schema: { type: string }
-        - name: entity_type
-          in: query
-          schema: { type: string }
       responses:
         '200':
           description: Paginated audit entries
+  /crm/pipeline:
+    get:
+      tags: [CRM]
+      summary: Kanban sales pipeline board
+      operationId: getCrmPipeline
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Deals grouped by stage
+  /crm/leads:
+    get:
+      tags: [CRM]
+      summary: List CRM leads
+      operationId: listCrmLeads
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated leads
+    post:
+      tags: [CRM]
+      summary: Create CRM lead
+      operationId: createCrmLead
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created lead
+  /crm/leads/{id}/convert:
+    post:
+      tags: [CRM]
+      summary: Convert lead to company/deal/client
+      operationId: convertCrmLead
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Conversion result
+  /crm/deals/{id}/stage:
+    patch:
+      tags: [CRM]
+      summary: Move deal to pipeline stage (Kanban)
+      operationId: moveCrmDealStage
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated deal
   /webhooks/n8n:
     post:
       tags: [Webhooks]

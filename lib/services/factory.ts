@@ -20,6 +20,7 @@ import { AgentService } from '@/lib/services/agent.service'
 import { OrganizationService } from '@/lib/services/organization.service'
 import { ObservabilityService } from '@/lib/services/observability.service'
 import { CrmDemandService } from '@/lib/services/crm-demand.service'
+import { TalentModuleService } from '@/lib/services/talent-module.service'
 
 export interface Services {
   project: ProjectService
@@ -39,6 +40,7 @@ export interface Services {
   integration: IntegrationService
   organization: OrganizationService
   crmDemand: CrmDemandService
+  talentModule: TalentModuleService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -75,6 +77,7 @@ function buildServices(repos: Repositories): Services {
     integration,
     organization: new OrganizationService(repos),
     crmDemand: new CrmDemandService(repos, notification),
+    talentModule: new TalentModuleService(repos),
   }
 
   return services
