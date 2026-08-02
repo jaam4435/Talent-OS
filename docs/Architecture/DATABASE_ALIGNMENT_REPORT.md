@@ -517,7 +517,7 @@ Items that **correctly match** the domain model:
 |------|--------|
 | Schema review | Complete (migrations 001–031) |
 | Domain model comparison | Complete |
-| Migration scripts | **None — awaiting approval** |
-| Next step | Review findings; prioritize P0–P1 for migration sprint |
+| Migration scripts | **P0 applied in `032_db_integrity_p0.sql` (Sprint 10)** |
+| Next step | Review findings; prioritize P1–P1 for migration sprint |
 
 **Awaiting approval before any schema changes.**

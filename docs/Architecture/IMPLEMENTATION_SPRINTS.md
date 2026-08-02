@@ -1578,7 +1578,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | 8 | WhatsApp module | 030 | — | Backend ✅ |
 | 9 | Analytics module | 031 | — | Backend ✅ |
 | Sprint 10 | DB integrity P0 | 032 | M | DB + backend | ✅ Shipped |
-| 11 | UI foundation F1 | — | L | Frontend |
+| Sprint 11 | UI foundation F1 | — | L | Frontend | ✅ Shipped |
 | 12 | Organization UI F5 | — | L | Frontend |
 | 13 | CRM sales UI F2 | — | XL | Frontend |
 | 14 | Analytics UI F3 | — | L | Frontend |
