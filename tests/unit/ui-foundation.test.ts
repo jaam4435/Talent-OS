@@ -12,7 +12,8 @@ describe('nav-config', () => {
     expect(hrefs).toContain('/dashboard')
     expect(hrefs).toContain('/talent')
     expect(hrefs).toContain('/opportunities')
-    expect(hrefs).not.toContain('/crm/pipeline')
+    expect(hrefs).toContain('/crm/pipeline')
+    expect(hrefs).toContain('/crm/leads')
   })
 
   it('filters items by role for managers', () => {

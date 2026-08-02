@@ -553,11 +553,11 @@ None required. Optional: add `GET /api/crm/deals/{id}` if detail endpoint missin
 
 ### Acceptance Criteria
 
-- [ ] Manager can move deals across pipeline stages
-- [ ] Lead conversion creates company/contact/deal per API contract
-- [ ] Company detail shows linked opportunities and CRM entities
-- [ ] All CRM pages use `TalentOsClient`, not Server Actions
-- [ ] Role gating: `talent_manager` and `admin` only
+- [x] Manager can move deals across pipeline stages
+- [x] Lead conversion creates company/contact/deal per API contract
+- [x] Company detail shows linked opportunities and CRM entities
+- [x] All CRM pages use `TalentOsClient`, not Server Actions
+- [x] Role gating: `talent_manager` and `admin` only
 
 ### Estimated effort
 
@@ -1580,7 +1580,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | Sprint 10 | DB integrity P0 | 032 | M | DB + backend | ✅ Shipped |
 | Sprint 11 | UI foundation F1 | — | L | Frontend | ✅ Shipped |
 | Sprint 12 | Organization UI F5 | — | L | Frontend | ✅ Shipped |
-| 13 | CRM sales UI F2 | — | XL | Frontend |
+| 13 | CRM sales UI F2 | — | XL | Frontend | ✅ Shipped |
 | 14 | Analytics UI F3 | — | L | Frontend |
 | 15 | Assignment UI F4 | — | L | Frontend |
 | 16 | Workflow + WhatsApp UI | — | L | Frontend |

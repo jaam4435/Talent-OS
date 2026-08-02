@@ -242,6 +242,10 @@ export class CrmDemandService {
     return this.repos.crmDeal.list(tenantId, options)
   }
 
+  async getDeal(tenantId: string, id: string) {
+    return this.repos.crmDeal.findById(id, tenantId)
+  }
+
   async createDeal(
     tenantId: string,
     actorId: string,
