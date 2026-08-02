@@ -114,7 +114,7 @@ export async function POST(request: Request) {
         continue
       }
 
-      const result = await services.whatsapp.processInboundMessage({
+      const result = await services.whatsappPlatform.processInboundMessage({
         message,
         tenantId,
         freelancer: { id: freelancer.id, full_name: freelancer.full_name },

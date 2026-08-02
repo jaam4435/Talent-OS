@@ -16,6 +16,7 @@ tags:
   - name: Projects
   - name: Assignments
   - name: Workflows
+  - name: WhatsApp
   - name: AI
   - name: Analytics
   - name: Team
@@ -658,6 +659,79 @@ paths:
       responses:
         '200':
           description: Paginated audit entries
+  /whatsapp/conversations:
+    get:
+      tags: [WhatsApp]
+      summary: List WhatsApp conversations
+      operationId: listWhatsAppConversations
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated conversation summaries
+  /whatsapp/conversations/{freelancerId}:
+    get:
+      tags: [WhatsApp]
+      summary: Get conversation and memory for a freelancer
+      operationId: getWhatsAppConversation
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Conversation context and memory entries
+  /whatsapp/audit-logs:
+    get:
+      tags: [WhatsApp]
+      summary: List WhatsApp platform audit logs
+      operationId: listWhatsAppAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /whatsapp/observability:
+    get:
+      tags: [WhatsApp]
+      summary: WhatsApp platform observability summary
+      operationId: getWhatsAppObservability
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Module metrics
+  /whatsapp/approvals:
+    get:
+      tags: [WhatsApp]
+      summary: List pending WhatsApp and workflow approvals
+      operationId: listWhatsAppApprovals
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Pending approval gates
+  /whatsapp/approvals/{id}:
+    post:
+      tags: [WhatsApp]
+      summary: Resolve a workflow approval via WhatsApp platform
+      operationId: resolveWhatsAppApproval
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Approval resolved
+  /whatsapp/commands:
+    post:
+      tags: [WhatsApp]
+      summary: Execute a WhatsApp business command
+      operationId: executeWhatsAppCommand
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Command result
   /ai/match:
     post:
       tags: [AI]
