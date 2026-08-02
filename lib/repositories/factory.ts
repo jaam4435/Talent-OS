@@ -83,6 +83,9 @@ import { WorkflowDefinitionRepository } from '@/lib/repositories/workflow-defini
 import { WorkflowExecutionHistoryRepository } from '@/lib/repositories/workflow-execution-history.repository'
 import { WorkflowCompensationRepository } from '@/lib/repositories/workflow-compensation.repository'
 import { WorkflowAuditRepository } from '@/lib/repositories/workflow-audit.repository'
+import { WhatsappAuditRepository } from '@/lib/repositories/whatsapp-audit.repository'
+import { WhatsappMemoryRepository } from '@/lib/repositories/whatsapp-memory.repository'
+import { WhatsappApprovalGateRepository } from '@/lib/repositories/whatsapp-approval-gate.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -159,6 +162,9 @@ export interface Repositories {
   workflowExecutionHistory: WorkflowExecutionHistoryRepository
   workflowCompensation: WorkflowCompensationRepository
   workflowAudit: WorkflowAuditRepository
+  whatsappAudit: WhatsappAuditRepository
+  whatsappMemory: WhatsappMemoryRepository
+  whatsappApprovalGate: WhatsappApprovalGateRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -237,6 +243,9 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     workflowExecutionHistory: new WorkflowExecutionHistoryRepository(ctx),
     workflowCompensation: new WorkflowCompensationRepository(ctx),
     workflowAudit: new WorkflowAuditRepository(ctx),
+    whatsappAudit: new WhatsappAuditRepository(ctx),
+    whatsappMemory: new WhatsappMemoryRepository(ctx),
+    whatsappApprovalGate: new WhatsappApprovalGateRepository(ctx),
   }
 }
 
