@@ -721,11 +721,11 @@ None required.
 
 ### Acceptance Criteria
 
-- [ ] Manager creates allocation with conflict pre-check
-- [ ] Open conflicts visible and resolvable from UI
-- [ ] Capacity view shows weekly hours and concurrent limits
-- [ ] Suggest returns ranked freelancers on create form
-- [ ] Freelancer role cannot access assignment management pages
+- [x] Manager creates allocation with conflict pre-check
+- [x] Open conflicts visible and resolvable from UI
+- [x] Capacity view shows weekly hours and concurrent limits
+- [x] Suggest returns ranked freelancers on create form
+- [x] Freelancer role cannot access assignment management pages
 
 ### Estimated effort
 

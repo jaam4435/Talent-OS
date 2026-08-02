@@ -17,6 +17,7 @@ import {
 } from 'recharts'
 import type { AnalyticsCharts } from '@/modules/analytics/types'
 import { formatSummaryLabel, inferChartType, toRechartsSeries } from '@/modules/analytics/charts'
+import { ChartCard } from '@/modules/analytics/components/chart-card'
 
 const COLORS = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#0891b2', '#ca8a04']
 
