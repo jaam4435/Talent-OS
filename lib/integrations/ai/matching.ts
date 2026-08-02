@@ -139,7 +139,7 @@ export async function executeTalentMatch(aiRequestId: string, actorId?: string |
   let result: AiMatchResult & { promptHash?: string }
   try {
     if (getAiGateway().isConfigured()) {
-      result = await rankTalentWithOpenAi(opportunity, candidates)
+      result = await rankTalentWithOpenAi(opportunity, candidates, aiRequestId)
     } else {
       throw new Error('No AI providers configured')
     }
@@ -152,16 +152,12 @@ export async function executeTalentMatch(aiRequestId: string, actorId?: string |
 
   await updateAiRequest(aiRequestId, {
     status: 'completed',
-    promptHash: result.promptHash,
-    inputTokens: result.inputTokens,
-    outputTokens: result.outputTokens,
-    estimatedCost: result.estimatedCost,
-    durationMs: Date.now() - startedAt,
     result: {
       match_count: result.matches.length,
       used_fallback: result.usedFallback,
       provider: result.provider,
       model: result.model,
+      prompt_hash: result.promptHash,
     },
   })
 

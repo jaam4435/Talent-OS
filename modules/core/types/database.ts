@@ -1006,12 +1006,14 @@ export interface Database {
         id: string
         tenant_id: string
         correlation_id: string | null
-        provider: 'openai' | 'claude'
+        product_id: string
+        provider: 'openai' | 'claude' | 'gemini' | 'openrouter' | 'azure_openai' | 'mock'
         model: string
         request_type: string
         entity_type: string | null
         entity_id: string | null
         prompt_hash: string | null
+        prompt_version: string | null
         input_tokens: number | null
         output_tokens: number | null
         estimated_cost: number | null
