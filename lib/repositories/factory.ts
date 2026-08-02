@@ -63,6 +63,15 @@ import { TalentExperienceRepository } from '@/lib/repositories/talent-experience
 import { TalentDocumentRepository } from '@/lib/repositories/talent-documents.repository'
 import { TalentAvailabilityRepository } from '@/lib/repositories/talent-availability.repository'
 import { TalentImportRepository } from '@/lib/repositories/talent-import.repository'
+import { ProjectAuditRepository } from '@/lib/repositories/project-audit.repository'
+import { ProjectMilestoneRepository } from '@/lib/repositories/project-milestone.repository'
+import { ProjectTaskRepository } from '@/lib/repositories/project-task.repository'
+import { ProjectDeliverableRepository } from '@/lib/repositories/project-deliverable.repository'
+import { ProjectAssetRepository } from '@/lib/repositories/project-asset.repository'
+import { ProjectCommentRepository } from '@/lib/repositories/project-comment.repository'
+import { ProjectDependencyRepository } from '@/lib/repositories/project-dependency.repository'
+import { ProjectTemplateRepository } from '@/lib/repositories/project-template.repository'
+import { ProjectTimelineRepository } from '@/lib/repositories/project-timeline.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -119,6 +128,15 @@ export interface Repositories {
   talentDocument: TalentDocumentRepository
   talentAvailability: TalentAvailabilityRepository
   talentImport: TalentImportRepository
+  projectAudit: ProjectAuditRepository
+  projectMilestone: ProjectMilestoneRepository
+  projectTask: ProjectTaskRepository
+  projectDeliverable: ProjectDeliverableRepository
+  projectAsset: ProjectAssetRepository
+  projectComment: ProjectCommentRepository
+  projectDependency: ProjectDependencyRepository
+  projectTemplate: ProjectTemplateRepository
+  projectTimeline: ProjectTimelineRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -177,6 +195,15 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     talentDocument: new TalentDocumentRepository(ctx),
     talentAvailability: new TalentAvailabilityRepository(ctx),
     talentImport: new TalentImportRepository(ctx),
+    projectAudit: new ProjectAuditRepository(ctx),
+    projectMilestone: new ProjectMilestoneRepository(ctx),
+    projectTask: new ProjectTaskRepository(ctx),
+    projectDeliverable: new ProjectDeliverableRepository(ctx),
+    projectAsset: new ProjectAssetRepository(ctx),
+    projectComment: new ProjectCommentRepository(ctx),
+    projectDependency: new ProjectDependencyRepository(ctx),
+    projectTemplate: new ProjectTemplateRepository(ctx),
+    projectTimeline: new ProjectTimelineRepository(ctx),
   }
 }
 

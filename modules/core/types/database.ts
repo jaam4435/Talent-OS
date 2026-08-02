@@ -151,6 +151,13 @@ export interface Database {
         requirements: Record<string, unknown>
         ai_summary: Record<string, unknown> | null
         ai_status_assessment: Record<string, unknown> | null
+        deleted_at: string | null
+        priority: 'low' | 'medium' | 'high' | 'urgent'
+        deadline: string | null
+        template_id: string | null
+        health_score: number
+        health_status: 'on_track' | 'at_risk' | 'blocked' | 'completed'
+        ai_context: Json
         started_at: string | null
         completed_at: string | null
         created_at: string
@@ -172,6 +179,8 @@ export interface Database {
         reviewed_at: string | null
         reviewed_by: string | null
         review_note: string | null
+        deleted_at: string | null
+        priority: 'low' | 'medium' | 'high' | 'urgent'
         created_at: string
         updated_at: string
       }>
@@ -742,6 +751,110 @@ export interface Database {
         metadata: Json
         created_at: string
       }>
+      project_templates: TableDef<{
+        id: string
+        tenant_id: string
+        name: string
+        description: string | null
+        default_milestones: Json
+        default_tasks: Json
+        is_active: boolean
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_tasks: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        milestone_id: string | null
+        title: string
+        description: string | null
+        status: 'todo' | 'in_progress' | 'done' | 'blocked' | 'canceled'
+        priority: 'low' | 'medium' | 'high' | 'urgent'
+        assignee_id: string | null
+        due_date: string | null
+        sort_order: number
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_deliverables: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        milestone_id: string | null
+        task_id: string | null
+        title: string
+        description: string | null
+        status: 'draft' | 'submitted' | 'approved' | 'rejected'
+        file_path: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_assets: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        asset_type: 'file' | 'link' | 'image' | 'document'
+        name: string
+        file_path: string | null
+        url: string | null
+        mime_type: string | null
+        size_bytes: number | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_comments: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        entity_type: string
+        entity_id: string
+        author_id: string | null
+        body: string
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_dependencies: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        predecessor_type: 'project' | 'milestone' | 'task' | 'deliverable'
+        predecessor_id: string
+        successor_type: 'project' | 'milestone' | 'task' | 'deliverable'
+        successor_id: string
+        notes: string | null
+        deleted_at: string | null
+        created_at: string
+      }>
+      project_timeline_events: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        event_type: string
+        title: string
+        description: string | null
+        actor_id: string | null
+        occurred_at: string
+        metadata: Json
+        created_at: string
+      }>
+      project_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
@@ -1052,6 +1165,17 @@ export interface Database {
           internal_rating: number | null
           skill_match_count: number
           match_ratio: number
+        }>
+      }
+      compute_project_health: {
+        Args: { p_project_id: string }
+        Returns: Array<{
+          health_score: number
+          health_status: string
+          overdue_milestones: number
+          overdue_tasks: number
+          blocked_tasks: number
+          open_deliverables: number
         }>
       }
       search_knowledge_entries: {

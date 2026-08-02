@@ -13,6 +13,7 @@ tags:
   - name: System
   - name: Auth
   - name: Talent
+  - name: Projects
   - name: AI
   - name: Analytics
   - name: Team
@@ -343,6 +344,159 @@ paths:
       tags: [Talent]
       summary: List talent audit logs
       operationId: listTalentAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      operationId: listProjects
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated projects
+    post:
+      tags: [Projects]
+      summary: Create project
+      operationId: createProject
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created project
+  /projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get project
+      operationId: getProject
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Project detail
+    patch:
+      tags: [Projects]
+      summary: Update project
+      operationId: updateProject
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated project
+  /projects/{id}/status:
+    patch:
+      tags: [Projects]
+      summary: Transition project status
+      operationId: transitionProjectStatus
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated status
+  /projects/{id}/health:
+    get:
+      tags: [Projects]
+      summary: Project health score
+      operationId: getProjectHealth
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Health metrics
+  /projects/{id}/timeline:
+    get:
+      tags: [Projects]
+      summary: Project activity timeline
+      operationId: getProjectTimeline
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Timeline events
+  /projects/{id}/tasks:
+    get:
+      tags: [Projects]
+      summary: List project tasks
+      operationId: listProjectTasks
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Task list
+    post:
+      tags: [Projects]
+      summary: Create project task
+      operationId: createProjectTask
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created task
+  /projects/templates:
+    get:
+      tags: [Projects]
+      summary: List project templates
+      operationId: listProjectTemplates
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Template list
+    post:
+      tags: [Projects]
+      summary: Create project template
+      operationId: createProjectTemplate
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created template
+  /projects/templates/{id}/apply:
+    post:
+      tags: [Projects]
+      summary: Apply template to create project
+      operationId: applyProjectTemplate
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created project from template
+  /projects/audit-logs:
+    get:
+      tags: [Projects]
+      summary: List project audit logs
+      operationId: listProjectAuditLogs
       security: [{ sessionCookie: [] }]
       responses:
         '200':
