@@ -1,10 +1,11 @@
 import type { WorkflowDefinition } from '@/lib/workflows/types'
+import { BUSINESS_WORKFLOW_DEFINITIONS } from '@/modules/workflow-engine/business-workflows'
 
 /**
  * Built-in workflow definitions keyed to existing domain_events.
  * Every major business process is modeled as trigger → conditions → steps.
  */
-export const WORKFLOW_REGISTRY: WorkflowDefinition[] = [
+const LEGACY_WORKFLOW_REGISTRY: WorkflowDefinition[] = [
   {
     id: 'wf-opportunity-broadcast',
     name: 'Opportunity Broadcast',
@@ -166,10 +167,20 @@ export const WORKFLOW_REGISTRY: WorkflowDefinition[] = [
   },
 ]
 
+/** Full registry: legacy integrations + reusable business workflows. */
+export const WORKFLOW_REGISTRY: WorkflowDefinition[] = [
+  ...LEGACY_WORKFLOW_REGISTRY,
+  ...BUSINESS_WORKFLOW_DEFINITIONS,
+]
+
 export function findWorkflowsForEvent(eventType: string): WorkflowDefinition[] {
   return WORKFLOW_REGISTRY.filter((w) => w.trigger.eventType === eventType)
 }
 
 export function findWorkflowById(workflowId: string): WorkflowDefinition | undefined {
   return WORKFLOW_REGISTRY.find((w) => w.id === workflowId)
+}
+
+export function listAllWorkflowDefinitions(): WorkflowDefinition[] {
+  return WORKFLOW_REGISTRY
 }

@@ -15,6 +15,7 @@ tags:
   - name: Talent
   - name: Projects
   - name: Assignments
+  - name: Workflows
   - name: AI
   - name: Analytics
   - name: Team
@@ -573,6 +574,86 @@ paths:
       tags: [Assignments]
       summary: List assignment audit logs
       operationId: listAssignmentAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /workflows/definitions:
+    get:
+      tags: [Workflows]
+      summary: List workflow definitions
+      operationId: listWorkflowDefinitions
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Registry or stored definitions
+    post:
+      tags: [Workflows]
+      summary: Create custom workflow definition
+      operationId: createWorkflowDefinition
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created definition
+  /workflows/runs:
+    get:
+      tags: [Workflows]
+      summary: List workflow runs
+      operationId: listWorkflowRuns
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated runs
+  /workflows/jobs:
+    get:
+      tags: [Workflows]
+      summary: List workflow jobs
+      operationId: listWorkflowJobs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated jobs
+  /workflows/history:
+    get:
+      tags: [Workflows]
+      summary: List workflow execution history
+      operationId: listWorkflowHistory
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Step-level history
+  /workflows/compensations:
+    get:
+      tags: [Workflows]
+      summary: List workflow compensations
+      operationId: listWorkflowCompensations
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Compensation queue
+  /workflows/trigger:
+    post:
+      tags: [Workflows]
+      summary: Manually trigger a workflow
+      operationId: triggerWorkflow
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Trigger result with run IDs
+  /workflows/observability:
+    get:
+      tags: [Workflows]
+      summary: Workflow engine observability summary
+      operationId: getWorkflowObservability
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Metrics and business workflow catalog
+  /workflows/audit-logs:
+    get:
+      tags: [Workflows]
+      summary: List workflow audit logs
+      operationId: listWorkflowAuditLogs
       security: [{ sessionCookie: [] }]
       responses:
         '200':

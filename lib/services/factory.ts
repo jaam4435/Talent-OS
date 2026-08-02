@@ -23,6 +23,7 @@ import { CrmDemandService } from '@/lib/services/crm-demand.service'
 import { TalentModuleService } from '@/lib/services/talent-module.service'
 import { ProjectModuleService } from '@/lib/services/project-module.service'
 import { AssignmentModuleService } from '@/lib/services/assignment-module.service'
+import { WorkflowEngineModuleService } from '@/lib/services/workflow-engine-module.service'
 
 export interface Services {
   project: ProjectService
@@ -45,6 +46,7 @@ export interface Services {
   talentModule: TalentModuleService
   projectModule: ProjectModuleService
   assignmentModule: AssignmentModuleService
+  workflowEngineModule: WorkflowEngineModuleService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -84,6 +86,7 @@ function buildServices(repos: Repositories): Services {
     talentModule: new TalentModuleService(repos),
     projectModule: new ProjectModuleService(repos, notification),
     assignmentModule: new AssignmentModuleService(repos, notification),
+    workflowEngineModule: new WorkflowEngineModuleService(repos, workflowEngine),
   }
 
   return services

@@ -282,6 +282,66 @@ export interface Database {
         decision_note: string | null
         created_at: string
       }>
+      workflow_definitions: TableDef<{
+        id: string
+        tenant_id: string | null
+        name: string
+        description: string | null
+        category: string
+        trigger_event_type: string
+        conditions: Json
+        steps: Json
+        compensation: Json
+        queue_name: string
+        is_builtin: boolean
+        is_active: boolean
+        version: number
+        created_at: string
+        updated_at: string
+      }>
+      workflow_execution_history: TableDef<{
+        id: string
+        tenant_id: string
+        run_id: string
+        job_id: string | null
+        step_id: string
+        action_type: string
+        status: string
+        input: Json
+        output: Json
+        error: string | null
+        duration_ms: number | null
+        created_at: string
+      }>
+      workflow_compensations: TableDef<{
+        id: string
+        tenant_id: string
+        run_id: string
+        job_id: string | null
+        step_id: string
+        action_type: string
+        config: Json
+        status: string
+        retry_count: number
+        max_retries: number
+        last_error: string | null
+        scheduled_at: string
+        started_at: string | null
+        completed_at: string | null
+        created_at: string
+      }>
+      workflow_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       whatsapp_conversations: TableDef<{
         id: string
         tenant_id: string
@@ -1140,6 +1200,18 @@ export interface Database {
       get_observability_workflow_health: {
         Args: { p_tenant_id: string }
         Returns: Record<string, unknown>[]
+      }
+      get_workflow_module_summary: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          total_runs: number
+          running_runs: number
+          failed_runs: number
+          pending_jobs: number
+          dead_letter_jobs: number
+          pending_compensations: number
+          avg_duration_ms: number
+        }[]
       }
       get_observability_queue_depth: {
         Args: { p_tenant_id: string }
