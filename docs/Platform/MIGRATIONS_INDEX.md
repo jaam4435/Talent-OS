@@ -2,7 +2,7 @@
 
 Path prefix: `supabase/migrations/`
 
-**Total:** 23 migrations (001–023).
+**Total:** 24 migrations (001–024).
 
 ## Study Priority
 
@@ -28,6 +28,7 @@ Path prefix: `supabase/migrations/`
 | `021_api_idempotency.sql` | API-* | Distributed idempotency store |
 | `022_platform_core.sql` | T-02 | Platform flags + config (Talent OS only) |
 | `023_organization_module.sql` | Org Module | Departments, teams, audit logs, org settings |
+| `024_crm_module.sql` | CRM Module | Leads, deals, pipeline, contacts, contracts |
 
 ### P2 — Core schema (baseline)
 

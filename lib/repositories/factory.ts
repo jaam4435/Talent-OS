@@ -46,6 +46,18 @@ import { OrganizationTeamRepository } from '@/lib/repositories/organization-team
 import { OrganizationMemberRepository } from '@/lib/repositories/organization-member.repository'
 import { OrganizationInviteRepository } from '@/lib/repositories/organization-invite.repository'
 import { OrganizationAuditRepository } from '@/lib/repositories/organization-audit.repository'
+import { CrmAuditRepository } from '@/lib/repositories/crm-audit.repository'
+import { CrmCompanyRepository } from '@/lib/repositories/crm-company.repository'
+import { CrmLeadRepository } from '@/lib/repositories/crm-lead.repository'
+import { CrmContactRepository } from '@/lib/repositories/crm-contact.repository'
+import { CrmPipelineRepository } from '@/lib/repositories/crm-pipeline.repository'
+import { CrmDealRepository } from '@/lib/repositories/crm-deal.repository'
+import { CrmContractRepository } from '@/lib/repositories/crm-contract.repository'
+import {
+  CrmNoteRepository,
+  CrmAttachmentRepository,
+  CrmActivityRepository,
+} from '@/lib/repositories/crm-collateral.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -87,6 +99,16 @@ export interface Repositories {
   organizationMember: OrganizationMemberRepository
   organizationInvite: OrganizationInviteRepository
   organizationAudit: OrganizationAuditRepository
+  crmAudit: CrmAuditRepository
+  crmCompany: CrmCompanyRepository
+  crmLead: CrmLeadRepository
+  crmContact: CrmContactRepository
+  crmPipeline: CrmPipelineRepository
+  crmDeal: CrmDealRepository
+  crmContract: CrmContractRepository
+  crmNote: CrmNoteRepository
+  crmAttachment: CrmAttachmentRepository
+  crmActivity: CrmActivityRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -130,6 +152,16 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     organizationMember: new OrganizationMemberRepository(ctx),
     organizationInvite: new OrganizationInviteRepository(ctx),
     organizationAudit: new OrganizationAuditRepository(ctx),
+    crmAudit: new CrmAuditRepository(ctx),
+    crmCompany: new CrmCompanyRepository(ctx),
+    crmLead: new CrmLeadRepository(ctx),
+    crmContact: new CrmContactRepository(ctx),
+    crmPipeline: new CrmPipelineRepository(ctx),
+    crmDeal: new CrmDealRepository(ctx),
+    crmContract: new CrmContractRepository(ctx),
+    crmNote: new CrmNoteRepository(ctx),
+    crmAttachment: new CrmAttachmentRepository(ctx),
+    crmActivity: new CrmActivityRepository(ctx),
   }
 }
 

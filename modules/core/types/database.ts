@@ -65,6 +65,10 @@ export interface Database {
         contact_name: string | null
         website: string | null
         notes: string | null
+        status: 'prospect' | 'active' | 'client' | 'inactive'
+        industry: string | null
+        ai_context: Json
+        deleted_at: string | null
         created_at: string
         updated_at: string
       }>
@@ -102,6 +106,7 @@ export interface Database {
         discipline: string | null
         client_name: string | null
         company_id: string | null
+        crm_deal_id: string | null
         deadline: string | null
         response_deadline: string | null
         status: string
@@ -534,6 +539,136 @@ export interface Database {
         metadata: Json
         created_at: string
       }>
+      crm_pipeline_stages: TableDef<{
+        id: string
+        tenant_id: string
+        name: string
+        slug: string
+        sort_order: number
+        outcome: 'open' | 'won' | 'lost'
+        color: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_leads: TableDef<{
+        id: string
+        tenant_id: string
+        title: string
+        source: string | null
+        status: 'new' | 'contacted' | 'qualified' | 'unqualified' | 'converted'
+        company_id: string | null
+        contact_id: string | null
+        owner_id: string | null
+        value_estimate: number | null
+        currency: string
+        description: string | null
+        converted_at: string | null
+        converted_company_id: string | null
+        converted_deal_id: string | null
+        ai_context: Json
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_contacts: TableDef<{
+        id: string
+        tenant_id: string
+        company_id: string | null
+        first_name: string
+        last_name: string | null
+        email: string | null
+        phone: string | null
+        job_title: string | null
+        is_primary: boolean
+        ai_context: Json
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_deals: TableDef<{
+        id: string
+        tenant_id: string
+        title: string
+        value: number | null
+        currency: string
+        stage_id: string
+        company_id: string | null
+        lead_id: string | null
+        opportunity_id: string | null
+        owner_id: string | null
+        expected_close_date: string | null
+        probability: number | null
+        ai_context: Json
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_contracts: TableDef<{
+        id: string
+        tenant_id: string
+        deal_id: string | null
+        company_id: string | null
+        title: string
+        status: 'draft' | 'sent' | 'signed' | 'expired' | 'canceled'
+        value: number | null
+        currency: string
+        starts_on: string | null
+        ends_on: string | null
+        signed_at: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_notes: TableDef<{
+        id: string
+        tenant_id: string
+        entity_type: string
+        entity_id: string
+        author_id: string | null
+        body: string
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_attachments: TableDef<{
+        id: string
+        tenant_id: string
+        entity_type: string
+        entity_id: string
+        uploaded_by: string | null
+        file_name: string
+        file_path: string
+        mime_type: string | null
+        size_bytes: number | null
+        deleted_at: string | null
+        created_at: string
+      }>
+      crm_activities: TableDef<{
+        id: string
+        tenant_id: string
+        entity_type: string
+        entity_id: string
+        activity_type: 'call' | 'email' | 'meeting' | 'note' | 'task' | 'other'
+        subject: string
+        description: string | null
+        actor_id: string | null
+        occurred_at: string
+        deleted_at: string | null
+        created_at: string
+      }>
+      crm_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
@@ -771,6 +906,10 @@ export interface Database {
       }
       revoke_member_invite: {
         Args: { p_invite_id: string; p_actor_id: string }
+        Returns: void
+      }
+      seed_crm_pipeline_stages: {
+        Args: { p_tenant_id: string }
         Returns: void
       }
       create_project_with_milestones: {
