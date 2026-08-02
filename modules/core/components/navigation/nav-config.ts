@@ -11,10 +11,12 @@ import {
   GitBranch,
   LayoutDashboard,
   Megaphone,
+  MessageCircle,
   Settings,
   Target,
   UserCircle,
   Users,
+  Workflow,
 } from 'lucide-react'
 import type { UserRole } from '@/modules/core/types/enums'
 import { hasPermission } from '@/modules/core/services/permissions'
@@ -142,6 +144,28 @@ export const NAV_GROUPS: NavGroupConfig[] = [
         icon: Briefcase,
         roles: ['admin', 'talent_manager', 'freelancer', 'client'],
         permissions: ['projects:read'],
+      },
+    ],
+  },
+  {
+    id: 'operations',
+    label: 'Operations',
+    items: [
+      {
+        id: 'workflows',
+        href: '/workflows',
+        label: 'Workflows',
+        icon: Workflow,
+        roles: ['admin', 'talent_manager'],
+        permissions: ['workflow:read'],
+      },
+      {
+        id: 'whatsapp',
+        href: '/whatsapp',
+        label: 'WhatsApp',
+        icon: MessageCircle,
+        roles: ['admin', 'talent_manager'],
+        permissions: ['whatsapp:read'],
       },
     ],
   },
