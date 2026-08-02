@@ -19,6 +19,7 @@ import { KnowledgeService } from '@/lib/services/knowledge.service'
 import { AgentService } from '@/lib/services/agent.service'
 import { OrganizationService } from '@/lib/services/organization.service'
 import { ObservabilityService } from '@/lib/services/observability.service'
+import { CrmDemandService } from '@/lib/services/crm-demand.service'
 
 export interface Services {
   project: ProjectService
@@ -37,6 +38,7 @@ export interface Services {
   ai: AIService
   integration: IntegrationService
   organization: OrganizationService
+  crmDemand: CrmDemandService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -72,6 +74,7 @@ function buildServices(repos: Repositories): Services {
     analytics: new AnalyticsService(repos),
     integration,
     organization: new OrganizationService(repos),
+    crmDemand: new CrmDemandService(repos, notification),
   }
 
   return services
