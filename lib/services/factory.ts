@@ -25,6 +25,7 @@ import { ProjectModuleService } from '@/lib/services/project-module.service'
 import { AssignmentModuleService } from '@/lib/services/assignment-module.service'
 import { WorkflowEngineModuleService } from '@/lib/services/workflow-engine-module.service'
 import { WhatsAppPlatformModuleService } from '@/lib/services/whatsapp-platform-module.service'
+import { AnalyticsModuleService } from '@/lib/services/analytics-module.service'
 
 export interface Services {
   project: ProjectService
@@ -49,6 +50,7 @@ export interface Services {
   assignmentModule: AssignmentModuleService
   workflowEngineModule: WorkflowEngineModuleService
   whatsappPlatform: WhatsAppPlatformModuleService
+  analyticsModule: AnalyticsModuleService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -90,6 +92,7 @@ function buildServices(repos: Repositories): Services {
     assignmentModule: new AssignmentModuleService(repos, notification),
     workflowEngineModule: new WorkflowEngineModuleService(repos, workflowEngine),
     whatsappPlatform: null as never,
+    analyticsModule: null as never,
   }
 
   services.whatsappPlatform = new WhatsAppPlatformModuleService(
@@ -103,6 +106,8 @@ function buildServices(repos: Repositories): Services {
     notification,
     talent
   )
+
+  services.analyticsModule = new AnalyticsModuleService(repos, services.analytics)
 
   return services
 }

@@ -797,16 +797,128 @@ paths:
   /analytics/dashboard:
     get:
       tags: [Analytics]
-      summary: Dashboard analytics summary (managers only)
+      summary: Dashboard analytics summary (legacy + module overview)
       operationId: getDashboardAnalytics
       security: [{ sessionCookie: [] }]
       responses:
         '200':
-          description: Dashboard data
+          description: Legacy KPIs and module summary
         '401':
           description: Unauthorized
         '403':
           description: Requires manager role and analytics:read permission
+  /analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: Combined analytics module summary
+      operationId: getAnalyticsSummary
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: All dashboard summaries
+  /analytics/organizations:
+    get:
+      tags: [Analytics]
+      summary: Organization analytics dashboard
+      operationId: getAnalyticsOrganizations
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Organization metrics and charts
+  /analytics/projects:
+    get:
+      tags: [Analytics]
+      summary: Project analytics dashboard
+      operationId: getAnalyticsProjects
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Project metrics and charts
+  /analytics/talent:
+    get:
+      tags: [Analytics]
+      summary: Talent analytics dashboard
+      operationId: getAnalyticsTalent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Talent metrics and charts
+  /analytics/utilization:
+    get:
+      tags: [Analytics]
+      summary: Utilization analytics dashboard
+      operationId: getAnalyticsUtilization
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Utilization metrics and charts
+  /analytics/revenue:
+    get:
+      tags: [Analytics]
+      summary: Revenue analytics dashboard
+      operationId: getAnalyticsRevenue
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Revenue metrics and charts
+  /analytics/delivery:
+    get:
+      tags: [Analytics]
+      summary: Delivery analytics dashboard
+      operationId: getAnalyticsDelivery
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Delivery metrics and charts
+  /analytics/ai-usage:
+    get:
+      tags: [Analytics]
+      summary: AI usage analytics dashboard
+      operationId: getAnalyticsAiUsage
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: AI usage metrics and charts
+  /analytics/workflows:
+    get:
+      tags: [Analytics]
+      summary: Workflow performance analytics dashboard
+      operationId: getAnalyticsWorkflows
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Workflow performance metrics and charts
+  /analytics/exports:
+    get:
+      tags: [Analytics]
+      summary: List analytics exports
+      operationId: listAnalyticsExports
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated export history
+    post:
+      tags: [Analytics]
+      summary: Create analytics export
+      operationId: createAnalyticsExport
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Export record with content
+  /analytics/exports/{id}:
+    get:
+      tags: [Analytics]
+      summary: Get analytics export by ID
+      operationId: getAnalyticsExport
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Export content
   /openapi:
     get:
       tags: [System]

@@ -86,6 +86,7 @@ import { WorkflowAuditRepository } from '@/lib/repositories/workflow-audit.repos
 import { WhatsappAuditRepository } from '@/lib/repositories/whatsapp-audit.repository'
 import { WhatsappMemoryRepository } from '@/lib/repositories/whatsapp-memory.repository'
 import { WhatsappApprovalGateRepository } from '@/lib/repositories/whatsapp-approval-gate.repository'
+import { AnalyticsModuleRepository, AnalyticsExportRepository } from '@/lib/repositories/analytics-module.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -165,6 +166,8 @@ export interface Repositories {
   whatsappAudit: WhatsappAuditRepository
   whatsappMemory: WhatsappMemoryRepository
   whatsappApprovalGate: WhatsappApprovalGateRepository
+  analyticsModule: AnalyticsModuleRepository
+  analyticsExport: AnalyticsExportRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -246,6 +249,8 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     whatsappAudit: new WhatsappAuditRepository(ctx),
     whatsappMemory: new WhatsappMemoryRepository(ctx),
     whatsappApprovalGate: new WhatsappApprovalGateRepository(ctx),
+    analyticsModule: new AnalyticsModuleRepository(ctx),
+    analyticsExport: new AnalyticsExportRepository(ctx),
   }
 }
 
