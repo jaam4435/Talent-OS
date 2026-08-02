@@ -988,11 +988,11 @@ Additive API + optional preferences table. Existing notifications page enhanced;
 
 ### Acceptance Criteria
 
-- [ ] Users list and mark notifications via REST
-- [ ] Header badge reflects unread count
-- [ ] Preferences disable categories without breaking creation
-- [ ] RLS prevents cross-user notification access
-- [ ] Existing workflow notify steps still create notifications
+- [x] Users list and mark notifications via REST
+- [x] Header badge reflects unread count
+- [x] Preferences disable categories without breaking creation
+- [x] RLS prevents cross-user notification access
+- [x] Existing workflow notify steps still create notifications
 
 ### Estimated effort
 
@@ -1585,6 +1585,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | 15 | Assignment UI F4 | — | L | Frontend | ✅ Shipped |
 | 16 | Workflow + WhatsApp UI | — | L | Frontend | ✅ Shipped |
 | 17 | Finance REST + UI | 033 | L | Full stack | ✅ Shipped |
+| 18 | Notifications REST + UI | 034 | M | Full stack | ✅ Shipped |
 | 17 | Finance REST + UI | 033 | L | Full stack |
 | 18 | Notifications REST | 034 | M | Full stack |
 | 19 | AI + Knowledge UI | — | L | Frontend |

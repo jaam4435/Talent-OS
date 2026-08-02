@@ -1,5 +1,6 @@
 import { findToolDefinition } from '@/lib/ai/agent/tool-filter'
 import { invokeFinanceTool } from '@/lib/mcp/adapters/finance.adapter'
+import { invokeNotificationTool } from '@/lib/mcp/adapters/notification.adapter'
 import { hasPermission } from '@/modules/core/services/permissions'
 import type { UserRole } from '@/modules/core/types/enums'
 import type {
@@ -10,6 +11,7 @@ import type {
 } from '@/lib/mcp/types'
 import { ALL_MCP_SERVER_DEFINITIONS } from '@/lib/mcp/servers'
 import type { FinanceToolInputs, FinanceToolName } from '@/lib/mcp/servers/finance.server'
+import type { NotificationToolInputs, NotificationToolName } from '@/lib/mcp/servers/notification.server'
 
 class DefaultToolAuthorizer {
   async authorize(
@@ -26,7 +28,7 @@ class DefaultToolAuthorizer {
 
 /**
  * MCP gateway — routes tool calls with authorization.
- * Finance tools are wired to FinanceModuleService; other domains follow in later sprints.
+ * Finance and notification tools are wired to module services; other domains follow in later sprints.
  */
 export class McpGateway implements McpGatewayInterface {
   private readonly authorizer = new DefaultToolAuthorizer()
@@ -54,6 +56,14 @@ export class McpGateway implements McpGatewayInterface {
       return invokeFinanceTool(
         request.toolName as FinanceToolName,
         request.input as FinanceToolInputs[FinanceToolName],
+        request.context
+      ) as Promise<McpToolCallResult<TOutput>>
+    }
+
+    if (request.serverId === 'notification') {
+      return invokeNotificationTool(
+        request.toolName as NotificationToolName,
+        request.input as NotificationToolInputs[NotificationToolName],
         request.context
       ) as Promise<McpToolCallResult<TOutput>>
     }

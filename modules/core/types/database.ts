@@ -213,6 +213,17 @@ export interface Database {
         read_at: string | null
         created_at: string
       }>
+      notification_preferences: TableDef<{
+        id: string
+        tenant_id: string
+        user_id: string
+        category: string
+        channel: string
+        enabled: boolean
+        metadata: Json
+        created_at: string
+        updated_at: string
+      }>
       domain_events: TableDef<{
         id: string
         tenant_id: string

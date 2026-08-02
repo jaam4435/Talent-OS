@@ -26,6 +26,8 @@ import { AssignmentModuleService } from '@/lib/services/assignment-module.servic
 import { WorkflowEngineModuleService } from '@/lib/services/workflow-engine-module.service'
 import { WhatsAppPlatformModuleService } from '@/lib/services/whatsapp-platform-module.service'
 import { FinanceModuleService } from '@/lib/services/finance-module.service'
+import { NotificationModuleService } from '@/lib/services/notification-module.service'
+import { AnalyticsModuleService } from '@/lib/services/analytics-module.service'
 
 export interface Services {
   project: ProjectService
@@ -52,10 +54,12 @@ export interface Services {
   whatsappPlatform: WhatsAppPlatformModuleService
   analyticsModule: AnalyticsModuleService
   financeModule: FinanceModuleService
+  notificationModule: NotificationModuleService
 }
 
 function buildServices(repos: Repositories): Services {
-  const notification = new NotificationService(repos)
+  const notificationModule = new NotificationModuleService(repos)
+  const notification = new NotificationService(repos, notificationModule)
   const workflow = new WorkflowService(repos, notification)
   const ai = new AIService(repos)
   const crm = new CRMService(repos, notification, workflow)
@@ -111,6 +115,7 @@ function buildServices(repos: Repositories): Services {
 
   services.analyticsModule = new AnalyticsModuleService(repos, services.analytics)
   services.financeModule = financeModule
+  services.notificationModule = notificationModule
 
   return services
 }

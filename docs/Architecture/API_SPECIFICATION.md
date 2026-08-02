@@ -1446,16 +1446,18 @@ Pass `?refresh=true` to invalidate tenant cache before fetch.
 
 ## 13. Notifications API
 
-**Base path:** 📋 `/api/notifications` (planned)  
-**Status:** ⚠️ Server Actions + workflow `notify` action only
+**Base path:** `/api/notifications`  
+**Validation:** `modules/notifications/validation.ts`  
+**Status:** ✅ Implemented
 
-### 13.1 Planned endpoints
+### 13.1 Endpoints
 
-| Method | Path | Permission | Description |
-|--------|------|------------|-------------|
-| GET | `/api/notifications` | Authenticated | List own notifications |
-| PATCH | `/api/notifications/{id}/read` | Authenticated | Mark read |
-| POST | `/api/notifications/read-all` | Authenticated | Mark all read |
+| Method | Path | Permission | Status | Description |
+|--------|------|------------|--------|-------------|
+| GET | `/api/notifications` | Authenticated | ✅ | List own notifications |
+| PATCH | `/api/notifications/{id}/read` | Authenticated | ✅ | Mark read |
+| POST | `/api/notifications/read-all` | Authenticated | ✅ | Mark all read |
+| GET/PATCH | `/api/notifications/preferences` | Authenticated | ✅ | Category preferences |
 
 ### 13.2 Request models (planned)
 

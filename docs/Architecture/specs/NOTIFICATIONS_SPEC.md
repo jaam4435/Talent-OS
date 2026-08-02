@@ -32,27 +32,21 @@ The Notifications context delivers **in-app notifications** to users triggered b
 - Email delivery (via n8n workflows — not direct SMTP)
 - Push notifications (mobile — future)
 - WhatsApp outbound (WhatsApp BC via n8n)
-- Notification preferences/settings (future)
+- Notification preferences/settings — ✅ `notification_preferences` table + REST
 - Template management (workflow BC / n8n)
 
 ---
 
 ## 3. Public APIs
 
-**Current:** Accessed via Server Actions and internal service calls. No dedicated module REST namespace.
+**Current:** `/api/notifications/*` REST module (Sprint 18). Workflow `notify` action unchanged.
 
 | Method | Path | Permission | Description |
 |--------|------|------------|-------------|
-| GET | Legacy UI / Server Actions | Authenticated | List user notifications |
-| PATCH | Legacy UI / Server Actions | Authenticated | Mark read |
-
-**Future (recommended):**
-
-| Method | Path | Permission | Description |
-|--------|------|------------|-------------|
-| GET | `/api/notifications` | Authenticated | List notifications |
-| PATCH | `/api/notifications/{id}/read` | Authenticated | Mark single read |
+| GET | `/api/notifications` | Authenticated | List own notifications |
+| PATCH | `/api/notifications/{id}/read` | Authenticated | Mark read |
 | POST | `/api/notifications/read-all` | Authenticated | Mark all read |
+| GET/PATCH | `/api/notifications/preferences` | Authenticated | Category preferences |
 
 **MCP:** `lib/mcp/servers/notification.server.ts` — agent create notification
 
@@ -64,9 +58,10 @@ The Notifications context delivers **in-app notifications** to users triggered b
 
 | Service | Path | Role |
 |---------|------|------|
-| **NotificationService** | `lib/services/notification.service.ts` | Create, list, mark read |
+| **NotificationService** | `lib/services/notification.service.ts` | Legacy facade — delegates to module service |
+| **NotificationModuleService** | `lib/services/notification-module.service.ts` | REST, preferences, instrumentation |
 
-**Repositories:** `NotificationRepository`
+**Repositories:** `NotificationRepository` (notifications + preferences)
 
 **Callers:** ProjectModuleService, AssignmentModuleService, WorkflowEngine actions, WhatsAppPlatformModuleService
 
