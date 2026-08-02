@@ -79,6 +79,10 @@ import { AssignmentScheduleRepository } from '@/lib/repositories/assignment-sche
 import { AssignmentRequirementRepository } from '@/lib/repositories/assignment-requirement.repository'
 import { AssignmentConflictRepository } from '@/lib/repositories/assignment-conflict.repository'
 import { AssignmentHistoryRepository } from '@/lib/repositories/assignment-history.repository'
+import { WorkflowDefinitionRepository } from '@/lib/repositories/workflow-definition.repository'
+import { WorkflowExecutionHistoryRepository } from '@/lib/repositories/workflow-execution-history.repository'
+import { WorkflowCompensationRepository } from '@/lib/repositories/workflow-compensation.repository'
+import { WorkflowAuditRepository } from '@/lib/repositories/workflow-audit.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -151,6 +155,10 @@ export interface Repositories {
   assignmentRequirement: AssignmentRequirementRepository
   assignmentConflict: AssignmentConflictRepository
   assignmentHistory: AssignmentHistoryRepository
+  workflowDefinition: WorkflowDefinitionRepository
+  workflowExecutionHistory: WorkflowExecutionHistoryRepository
+  workflowCompensation: WorkflowCompensationRepository
+  workflowAudit: WorkflowAuditRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -225,6 +233,10 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     assignmentRequirement: new AssignmentRequirementRepository(ctx),
     assignmentConflict: new AssignmentConflictRepository(ctx),
     assignmentHistory: new AssignmentHistoryRepository(ctx),
+    workflowDefinition: new WorkflowDefinitionRepository(ctx),
+    workflowExecutionHistory: new WorkflowExecutionHistoryRepository(ctx),
+    workflowCompensation: new WorkflowCompensationRepository(ctx),
+    workflowAudit: new WorkflowAuditRepository(ctx),
   }
 }
 
