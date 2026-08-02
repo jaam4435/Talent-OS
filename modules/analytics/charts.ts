@@ -68,3 +68,47 @@ function csvEscape(value: string): string {
 export function chartMeta(type: 'pie' | 'bar' | 'line', seriesKey: string) {
   return { type, seriesKey }
 }
+
+export type RechartsSeriesPoint = {
+  name: string
+  value: number
+}
+
+/** Map chart data points to Recharts-friendly rows. */
+export function toRechartsSeries(points: ChartDataPoint[]): RechartsSeriesPoint[] {
+  return points.map((point) => ({
+    name: point.label ?? point.x ?? 'Unknown',
+    value: point.y,
+  }))
+}
+
+/** Infer chart type from series key naming conventions. */
+export function inferChartType(seriesKey: string): 'pie' | 'bar' | 'line' {
+  const key = seriesKey.toLowerCase()
+  if (key.includes('over_time') || key.includes('timeline') || key.includes('trend')) {
+    return 'line'
+  }
+  if (key.includes('distribution') || key.includes('share') || key.includes('mix')) {
+    return 'pie'
+  }
+  if (key.startsWith('by_') || key.includes('breakdown')) {
+    return 'bar'
+  }
+  return 'bar'
+}
+
+/** Human-readable label for summary metric keys. */
+export function formatSummaryLabel(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+/** Format summary values for KPI cards. */
+export function formatSummaryValue(value: number | string | null | undefined): string {
+  if (value == null || value === '') return '—'
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? String(value) : value.toFixed(1)
+  }
+  return String(value)
+}

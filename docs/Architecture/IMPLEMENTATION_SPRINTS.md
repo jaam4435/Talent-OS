@@ -640,11 +640,11 @@ None required. Verify export download content-type headers.
 
 ### Acceptance Criteria
 
-- [ ] All 8 dashboards render with real API data
-- [ ] Period filter changes query params and refreshes charts
-- [ ] CSV/JSON export downloads successfully
-- [ ] `admin` and `talent_manager` access only
-- [ ] Loading skeletons during fetch
+- [x] All 8 dashboards render with real API data
+- [x] Period filter changes query params and refreshes charts
+- [x] CSV/JSON export downloads successfully
+- [x] `admin` and `talent_manager` access only
+- [x] Loading skeletons during fetch
 
 ### Estimated effort
 
@@ -1581,7 +1581,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | Sprint 11 | UI foundation F1 | — | L | Frontend | ✅ Shipped |
 | Sprint 12 | Organization UI F5 | — | L | Frontend | ✅ Shipped |
 | 13 | CRM sales UI F2 | — | XL | Frontend | ✅ Shipped |
-| 14 | Analytics UI F3 | — | L | Frontend |
+| 14 | Analytics UI F3 | — | L | Frontend | ✅ Shipped |
 | 15 | Assignment UI F4 | — | L | Frontend |
 | 16 | Workflow + WhatsApp UI | — | L | Frontend |
 | 17 | Finance REST + UI | 033 | L | Full stack |
