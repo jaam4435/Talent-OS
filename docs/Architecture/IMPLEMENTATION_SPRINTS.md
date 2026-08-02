@@ -1579,7 +1579,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | 9 | Analytics module | 031 | — | Backend ✅ |
 | Sprint 10 | DB integrity P0 | 032 | M | DB + backend | ✅ Shipped |
 | Sprint 11 | UI foundation F1 | — | L | Frontend | ✅ Shipped |
-| 12 | Organization UI F5 | — | L | Frontend |
+| Sprint 12 | Organization UI F5 | — | L | Frontend | ✅ Shipped |
 | 13 | CRM sales UI F2 | — | XL | Frontend |
 | 14 | Analytics UI F3 | — | L | Frontend |
 | 15 | Assignment UI F4 | — | L | Frontend |

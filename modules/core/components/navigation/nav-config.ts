@@ -3,6 +3,7 @@ import {
   BarChart3,
   Bell,
   Briefcase,
+  Building2,
   CreditCard,
   LayoutDashboard,
   Megaphone,
@@ -131,6 +132,13 @@ export const NAV_GROUPS: NavGroupConfig[] = [
     id: 'admin',
     label: 'Admin',
     items: [
+      {
+        id: 'organization',
+        href: '/organization',
+        label: 'Organization',
+        icon: Building2,
+        roles: ['admin'],
+      },
       {
         id: 'settings',
         href: '/settings',
