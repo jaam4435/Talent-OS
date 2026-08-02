@@ -119,6 +119,13 @@ export class KnowledgeService {
     return this.repos.knowledge.listByCompany(tenantId, companyId, params)
   }
 
+  async listEntries(
+    tenantId: string,
+    params?: PaginationParams & { category?: KnowledgeCategory; query?: string }
+  ) {
+    return this.repos.knowledge.listEntries(tenantId, params)
+  }
+
   async search(
     tenantId: string,
     params: KnowledgeSearchParams

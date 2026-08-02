@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BarChart3,
   Bell,
+  Bot,
   Briefcase,
   Building,
   Building2,
@@ -17,6 +18,7 @@ import {
   UserCircle,
   Users,
   Workflow,
+  BookOpen,
 } from 'lucide-react'
 import type { UserRole } from '@/modules/core/types/enums'
 import { hasPermission } from '@/modules/core/services/permissions'
@@ -166,6 +168,22 @@ export const NAV_GROUPS: NavGroupConfig[] = [
         icon: MessageCircle,
         roles: ['admin', 'talent_manager'],
         permissions: ['whatsapp:read'],
+      },
+      {
+        id: 'ai-agents',
+        href: '/ai/agents',
+        label: 'AI Agents',
+        icon: Bot,
+        roles: ['admin', 'talent_manager'],
+        permissions: ['agent:run'],
+      },
+      {
+        id: 'knowledge',
+        href: '/knowledge',
+        label: 'Knowledge',
+        icon: BookOpen,
+        roles: ['admin', 'talent_manager'],
+        permissions: ['ai:summary'],
       },
     ],
   },

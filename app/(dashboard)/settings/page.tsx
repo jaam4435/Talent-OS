@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Building2, CreditCard, Plug, Users } from 'lucide-react'
+import { Bot, Building2, CreditCard, Plug, Users } from 'lucide-react'
 import { BreadcrumbNav } from '@/modules/core/components/navigation/breadcrumb-nav'
 import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { OrganizationBrandingForm } from '@/modules/organization/components/organization-forms'
@@ -33,6 +33,12 @@ const LINKS = [
     title: 'Integrations',
     description: 'WhatsApp, n8n, and third-party connections.',
     icon: Plug,
+  },
+  {
+    href: '/settings/agents',
+    title: 'Agent settings',
+    description: 'Enable agents, tool allowlists, and reasoning policies.',
+    icon: Bot,
   },
 ] as const
 

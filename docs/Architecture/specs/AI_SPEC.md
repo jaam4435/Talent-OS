@@ -306,6 +306,21 @@ This context **is** the AI platform. Key capabilities:
 
 ---
 
+## Appendix — UI surfaces (Sprint 19)
+
+| Route | Purpose |
+|-------|---------|
+| `/ai/agents` | Agent launcher grid |
+| `/ai/agents/{agentId}` | Agent chat session |
+| `/knowledge` | Knowledge entry list + search |
+| `/knowledge/{id}` | Entry detail + edit |
+| `/knowledge/new` | Create entry |
+| `/settings/agents` | Admin agent enable/tool settings |
+
+Opportunity detail includes AI match panel (REST). Talent detail shows AI match insights when scores exist.
+
+---
+
 ## Appendix — File map
 
 | Artifact | Path |

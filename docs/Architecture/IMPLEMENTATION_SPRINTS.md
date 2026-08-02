@@ -1069,11 +1069,11 @@ Optional: consolidate agent settings under `/api/ai/agents/settings` if not rout
 
 ### Acceptance Criteria
 
-- [ ] Admin configures agent settings from UI
-- [ ] Manager launches agent session and receives responses
-- [ ] Knowledge entries searchable and editable
-- [ ] Opportunity match returns ranked freelancers
-- [ ] AI disabled state handled gracefully
+- [x] Admin configures agent settings from UI
+- [x] Manager launches agent session and receives responses
+- [x] Knowledge entries searchable and editable
+- [x] Opportunity match returns ranked freelancers
+- [x] AI disabled state handled gracefully
 
 ### Estimated effort
 
@@ -1586,9 +1586,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | 16 | Workflow + WhatsApp UI | — | L | Frontend | ✅ Shipped |
 | 17 | Finance REST + UI | 033 | L | Full stack | ✅ Shipped |
 | 18 | Notifications REST + UI | 034 | M | Full stack | ✅ Shipped |
-| 17 | Finance REST + UI | 033 | L | Full stack |
-| 18 | Notifications REST | 034 | M | Full stack |
-| 19 | AI + Knowledge UI | — | L | Frontend |
+| 19 | AI + Knowledge UI | — | L | Frontend | ✅ Shipped |
 | 20 | Project delivery tabs | — | L | Frontend |
 | 21 | DB performance P1 | 035 | M | DB + backend |
 | 22 | Production polish F6 | — | L | Frontend + API |

@@ -20,6 +20,8 @@ tags:
   - name: Finance
   - name: Notifications
   - name: AI
+  - name: Agents
+  - name: Knowledge
   - name: Analytics
   - name: Team
   - name: Organization
@@ -831,6 +833,72 @@ paths:
       responses:
         '200':
           description: Updated preferences
+  /agents:
+    get:
+      tags: [Agents]
+      summary: List configured agents
+      operationId: listAgents
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Agent summaries
+  /agents/{agentId}/config:
+    get:
+      tags: [Agents]
+      summary: Get agent configuration
+      operationId: getAgentConfig
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Agent config
+    patch:
+      tags: [Agents]
+      summary: Update agent configuration
+      operationId: updateAgentConfig
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Updated config
+  /agents/{agentId}/run:
+    post:
+      tags: [Agents]
+      summary: Execute an agent turn
+      operationId: runAgent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Agent response
+  /knowledge/entries:
+    get:
+      tags: [Knowledge]
+      summary: List knowledge entries
+      operationId: listKnowledgeEntries
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated entries
+    post:
+      tags: [Knowledge]
+      summary: Create knowledge entry
+      operationId: createKnowledgeEntry
+      security: [{ sessionCookie: [] }]
+      responses:
+        '201':
+          description: Created entry
+  /knowledge/search:
+    post:
+      tags: [Knowledge]
+      summary: Search knowledge entries
+      operationId: searchKnowledgeEntries
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Search results
   /whatsapp/commands:
     post:
       tags: [WhatsApp]
