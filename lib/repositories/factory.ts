@@ -58,6 +58,11 @@ import {
   CrmAttachmentRepository,
   CrmActivityRepository,
 } from '@/lib/repositories/crm-collateral.repository'
+import { TalentAuditRepository } from '@/lib/repositories/talent-audit.repository'
+import { TalentExperienceRepository } from '@/lib/repositories/talent-experience.repository'
+import { TalentDocumentRepository } from '@/lib/repositories/talent-documents.repository'
+import { TalentAvailabilityRepository } from '@/lib/repositories/talent-availability.repository'
+import { TalentImportRepository } from '@/lib/repositories/talent-import.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -109,6 +114,11 @@ export interface Repositories {
   crmNote: CrmNoteRepository
   crmAttachment: CrmAttachmentRepository
   crmActivity: CrmActivityRepository
+  talentAudit: TalentAuditRepository
+  talentExperience: TalentExperienceRepository
+  talentDocument: TalentDocumentRepository
+  talentAvailability: TalentAvailabilityRepository
+  talentImport: TalentImportRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -162,6 +172,11 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     crmNote: new CrmNoteRepository(ctx),
     crmAttachment: new CrmAttachmentRepository(ctx),
     crmActivity: new CrmActivityRepository(ctx),
+    talentAudit: new TalentAuditRepository(ctx),
+    talentExperience: new TalentExperienceRepository(ctx),
+    talentDocument: new TalentDocumentRepository(ctx),
+    talentAvailability: new TalentAvailabilityRepository(ctx),
+    talentImport: new TalentImportRepository(ctx),
   }
 }
 

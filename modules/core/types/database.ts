@@ -91,6 +91,14 @@ export interface Database {
         tags: string[]
         metadata: Json
         last_active_at: string | null
+        deleted_at: string | null
+        timezone: string | null
+        employment_type: 'freelance' | 'contract' | 'part_time' | 'full_time'
+        languages: Json
+        ai_context: Json
+        ai_summary: string | null
+        profile_completeness: number
+        cv_file_path: string | null
         created_at: string
         updated_at: string
       }>
@@ -669,6 +677,71 @@ export interface Database {
         metadata: Json
         created_at: string
       }>
+      talent_experience: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        company: string
+        title: string
+        description: string | null
+        starts_on: string
+        ends_on: string | null
+        skills: string[]
+        sort_order: number
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      talent_documents: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        doc_type: 'cv' | 'certificate' | 'reference' | 'portfolio' | 'other'
+        file_name: string
+        file_path: string
+        mime_type: string | null
+        size_bytes: number | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      talent_availability_slots: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        starts_at: string
+        ends_at: string
+        status: 'available' | 'busy' | 'unavailable' | 'booked'
+        notes: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      talent_import_batches: TableDef<{
+        id: string
+        tenant_id: string
+        uploaded_by: string | null
+        file_name: string
+        status: 'pending' | 'processing' | 'completed' | 'failed'
+        total_rows: number
+        success_count: number
+        error_count: number
+        errors: Json
+        created_at: string
+        completed_at: string | null
+      }>
+      talent_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
@@ -943,6 +1016,43 @@ export interface Database {
           p_offset?: number | null
         }
         Returns: Tables<'freelancers'>[]
+      }
+      search_talent_advanced: {
+        Args: {
+          p_tenant_id: string
+          p_query?: string | null
+          p_discipline?: string | null
+          p_availability?: string | null
+          p_min_rate?: number | null
+          p_max_rate?: number | null
+          p_min_rating?: number | null
+          p_skills?: string[] | null
+          p_tags?: string[] | null
+          p_employment_type?: string | null
+          p_timezone?: string | null
+          p_min_completeness?: number | null
+          p_sort?: string | null
+          p_limit?: number | null
+          p_offset?: number | null
+        }
+        Returns: Tables<'freelancers'>[]
+      }
+      match_talent_skills: {
+        Args: {
+          p_tenant_id: string
+          p_required_skills: string[]
+          p_discipline?: string | null
+          p_limit?: number | null
+        }
+        Returns: Array<{
+          freelancer_id: string
+          full_name: string
+          discipline: string
+          day_rate: number | null
+          internal_rating: number | null
+          skill_match_count: number
+          match_ratio: number
+        }>
       }
       search_knowledge_entries: {
         Args: {
