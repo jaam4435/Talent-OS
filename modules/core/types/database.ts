@@ -855,6 +855,93 @@ export interface Database {
         metadata: Json
         created_at: string
       }>
+      assignment_capacity: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        weekly_hours: number
+        max_concurrent_assignments: number
+        effective_from: string
+        effective_to: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_allocations: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        project_id: string | null
+        opportunity_id: string | null
+        title: string
+        status: 'planned' | 'confirmed' | 'active' | 'completed' | 'canceled'
+        allocation_pct: number
+        starts_at: string
+        ends_at: string
+        notes: string | null
+        created_by: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_schedules: TableDef<{
+        id: string
+        tenant_id: string
+        allocation_id: string
+        starts_at: string
+        ends_at: string
+        hours: number
+        notes: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_requirements: TableDef<{
+        id: string
+        tenant_id: string
+        allocation_id: string
+        required_skills: string[]
+        min_hours: number | null
+        description: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_conflicts: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        conflict_type: 'double_booking' | 'over_allocation' | 'availability_gap'
+        severity: 'warning' | 'error'
+        allocation_id_a: string
+        allocation_id_b: string | null
+        details: Json
+        resolved_at: string | null
+        deleted_at: string | null
+        created_at: string
+      }>
+      assignment_history: TableDef<{
+        id: string
+        tenant_id: string
+        allocation_id: string
+        action: string
+        actor_id: string | null
+        before_state: Json | null
+        after_state: Json | null
+        created_at: string
+      }>
+      assignment_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
@@ -1176,6 +1263,42 @@ export interface Database {
           overdue_tasks: number
           blocked_tasks: number
           open_deliverables: number
+        }>
+      }
+      detect_assignment_conflicts: {
+        Args: {
+          p_tenant_id: string
+          p_freelancer_id: string
+          p_starts_at: string
+          p_ends_at: string
+          p_allocation_pct?: number | null
+          p_exclude_allocation_id?: string | null
+        }
+        Returns: Array<{
+          conflict_type: string
+          severity: string
+          conflicting_allocation_id: string | null
+          overlapping_pct: number | null
+          message: string
+        }>
+      }
+      suggest_assignment_candidates: {
+        Args: {
+          p_tenant_id: string
+          p_required_skills?: string[] | null
+          p_starts_at?: string | null
+          p_ends_at?: string | null
+          p_limit?: number | null
+        }
+        Returns: Array<{
+          freelancer_id: string
+          full_name: string
+          discipline: string
+          day_rate: number | null
+          internal_rating: number | null
+          skill_match_count: number
+          current_allocation_pct: number
+          availability: string
         }>
       }
       search_knowledge_entries: {

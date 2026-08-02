@@ -22,6 +22,7 @@ import { ObservabilityService } from '@/lib/services/observability.service'
 import { CrmDemandService } from '@/lib/services/crm-demand.service'
 import { TalentModuleService } from '@/lib/services/talent-module.service'
 import { ProjectModuleService } from '@/lib/services/project-module.service'
+import { AssignmentModuleService } from '@/lib/services/assignment-module.service'
 
 export interface Services {
   project: ProjectService
@@ -43,6 +44,7 @@ export interface Services {
   crmDemand: CrmDemandService
   talentModule: TalentModuleService
   projectModule: ProjectModuleService
+  assignmentModule: AssignmentModuleService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -81,6 +83,7 @@ function buildServices(repos: Repositories): Services {
     crmDemand: new CrmDemandService(repos, notification),
     talentModule: new TalentModuleService(repos),
     projectModule: new ProjectModuleService(repos, notification),
+    assignmentModule: new AssignmentModuleService(repos, notification),
   }
 
   return services

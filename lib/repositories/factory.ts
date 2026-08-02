@@ -72,6 +72,13 @@ import { ProjectCommentRepository } from '@/lib/repositories/project-comment.rep
 import { ProjectDependencyRepository } from '@/lib/repositories/project-dependency.repository'
 import { ProjectTemplateRepository } from '@/lib/repositories/project-template.repository'
 import { ProjectTimelineRepository } from '@/lib/repositories/project-timeline.repository'
+import { AssignmentAuditRepository } from '@/lib/repositories/assignment-audit.repository'
+import { AssignmentAllocationRepository } from '@/lib/repositories/assignment-allocation.repository'
+import { AssignmentCapacityRepository } from '@/lib/repositories/assignment-capacity.repository'
+import { AssignmentScheduleRepository } from '@/lib/repositories/assignment-schedule.repository'
+import { AssignmentRequirementRepository } from '@/lib/repositories/assignment-requirement.repository'
+import { AssignmentConflictRepository } from '@/lib/repositories/assignment-conflict.repository'
+import { AssignmentHistoryRepository } from '@/lib/repositories/assignment-history.repository'
 
 export interface Repositories {
   talent: TalentRepository
@@ -137,6 +144,13 @@ export interface Repositories {
   projectDependency: ProjectDependencyRepository
   projectTemplate: ProjectTemplateRepository
   projectTimeline: ProjectTimelineRepository
+  assignmentAudit: AssignmentAuditRepository
+  assignmentAllocation: AssignmentAllocationRepository
+  assignmentCapacity: AssignmentCapacityRepository
+  assignmentSchedule: AssignmentScheduleRepository
+  assignmentRequirement: AssignmentRequirementRepository
+  assignmentConflict: AssignmentConflictRepository
+  assignmentHistory: AssignmentHistoryRepository
 }
 
 function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContext>>): Repositories {
@@ -204,6 +218,13 @@ function buildRepositories(ctx: Awaited<ReturnType<typeof createRepositoryContex
     projectDependency: new ProjectDependencyRepository(ctx),
     projectTemplate: new ProjectTemplateRepository(ctx),
     projectTimeline: new ProjectTimelineRepository(ctx),
+    assignmentAudit: new AssignmentAuditRepository(ctx),
+    assignmentAllocation: new AssignmentAllocationRepository(ctx),
+    assignmentCapacity: new AssignmentCapacityRepository(ctx),
+    assignmentSchedule: new AssignmentScheduleRepository(ctx),
+    assignmentRequirement: new AssignmentRequirementRepository(ctx),
+    assignmentConflict: new AssignmentConflictRepository(ctx),
+    assignmentHistory: new AssignmentHistoryRepository(ctx),
   }
 }
 
