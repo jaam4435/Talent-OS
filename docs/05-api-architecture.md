@@ -4,6 +4,8 @@
 **Pattern:** Server Actions + Route Handlers + Supabase Client  
 **Auth:** Supabase Auth JWT in cookies (SSR)
 
+> **Contracts & diagrams:** See [14-api-contracts-and-sequence-diagrams.md](14-api-contracts-and-sequence-diagrams.md) for formal request/response schemas and sequence diagrams.
+
 ---
 
 ## 1. Architecture Overview
@@ -138,24 +140,38 @@
 
 ### 3.9 Analytics
 
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/analytics/dashboard` | Summary metrics | Admin, Manager |
-| `GET` | `/api/analytics/fill-rate` | Fill rate over time | Admin, Manager |
-| `GET` | `/api/analytics/utilization` | Talent utilization | Admin, Manager |
-| `GET` | `/api/analytics/payments` | Payment aging | Admin |
+| Method | Endpoint | Description | Role | Status |
+|---|---|---|---|---|
+| `GET` | `/api/analytics/dashboard` | Summary metrics | Admin, Manager | Implemented |
+| `GET` | `/api/analytics/fill-rate` | Fill rate over time | Admin, Manager | Planned |
+| `GET` | `/api/analytics/utilization` | Talent utilization | Admin, Manager | Planned |
+| `GET` | `/api/analytics/payments` | Payment aging | Admin | Planned |
 
-### 3.10 Integrations (Webhooks)
+### 3.10 AI Talent Matching
 
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| `POST` | `/api/webhooks/n8n` | n8n callback events | HMAC signature |
-| `POST` | `/api/webhooks/whatsapp` | WhatsApp inbound messages | Meta verify token |
-| `GET` | `/api/webhooks/whatsapp` | WhatsApp webhook verification | Meta challenge |
-| `POST` | `/api/integrations/whatsapp/test` | Send test message | Admin |
-| `PATCH` | `/api/integrations/[provider]` | Save integration config | Admin |
+| Method | Endpoint | Description | Role | Status |
+|---|---|---|---|---|
+| `POST` | `/api/ai/match` | Request AI ranking | Admin, Manager | Implemented |
+| `GET` | `/api/ai/match/[opportunityId]` | Get scores + status | Admin, Manager | Implemented |
+| `POST` | `/api/internal/ai/execute-match` | Execute match (cron/n8n) | `CRON_SECRET` | Implemented |
 
-### 3.11 Notifications
+### 3.11 Cron & Internal
+
+| Method | Endpoint | Description | Auth | Status |
+|---|---|---|---|---|
+| `GET` | `/api/cron/dispatch-events` | Poll outbox, dispatch to n8n | `CRON_SECRET` | Implemented |
+
+### 3.12 Integrations (Webhooks)
+
+| Method | Endpoint | Description | Auth | Status |
+|---|---|---|---|---|
+| `POST` | `/api/webhooks/n8n` | n8n callback events | HMAC signature | Implemented |
+| `POST` | `/api/webhooks/whatsapp` | WhatsApp inbound messages | Meta signature | Implemented |
+| `GET` | `/api/webhooks/whatsapp` | WhatsApp webhook verification | Meta challenge | Implemented |
+| `POST` | `/api/integrations/whatsapp/test` | Send test message | Admin | Planned |
+| `PATCH` | `/api/integrations/[provider]` | Save integration config | Admin | Planned |
+
+### 3.13 Notifications
 
 | Method | Endpoint | Description | Role |
 |---|---|---|---|
@@ -170,6 +186,9 @@
 Server Actions handle form-based mutations with automatic revalidation.
 
 ```typescript
+// app/actions/ai.ts
+export async function runAiTalentMatch(opportunityId: string) { ... }
+
 // app/actions/freelancers.ts
 'use server'
 
@@ -290,7 +309,11 @@ interface N8nEvent {
 
 | Event | Trigger | n8n Action |
 |---|---|---|
-| `tenant.created` | New signup | Welcome email |
+| `ai.match_requested` | AI match API | OpenAI rank → write scores | Implemented |
+| `ai.match_completed` | n8n callback | Notify manager | Implemented |
+| `whatsapp.response_processed` | Inbound gateway | Confirmation template | Implemented |
+| `whatsapp.unrecognized` | Inbound gateway | Escalation routing | Implemented |
+| `tenant.created` | New signup | Welcome email | Planned |
 | `opportunity.broadcast` | Broadcast API | WhatsApp to recipients |
 | `opportunity.response` | Freelancer responds | Notify manager |
 | `project.assigned` | Project created | WhatsApp to freelancer |
