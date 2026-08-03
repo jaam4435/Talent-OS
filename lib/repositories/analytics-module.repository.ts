@@ -4,6 +4,9 @@ import { toPaginatedResult, type PaginatedResult } from '@/lib/repositories/base
 import type { AnalyticsDashboardPayload, AnalyticsExportRecord, AnalyticsModuleSummary } from '@/modules/analytics/types'
 import { normalizeCharts } from '@/modules/analytics/charts'
 
+/** Log analytics RPC calls slower than this threshold (ms). */
+const ANALYTICS_SLOW_RPC_MS = 500
+
 export class AnalyticsModuleRepository extends BaseRepository {
   async getOrganizations(tenantId: string, ttlMs: number): Promise<AnalyticsDashboardPayload> {
     return this.fetchDashboard(tenantId, 'organizations', ttlMs, async () => {
@@ -147,6 +150,54 @@ export class AnalyticsModuleRepository extends BaseRepository {
     this.invalidateTable(`analytics:${tenantId}`)
   }
 
+  async refreshTenantSnapshots(
+    tenantId: string,
+    ttlMinutes = 15
+  ): Promise<{ snapshotsRefreshed: number; expiresAt: string }> {
+    const { data, error } = await this.ctx.supabase.rpc('refresh_analytics_tenant_snapshots', {
+      p_tenant_id: tenantId,
+      p_ttl_minutes: ttlMinutes,
+    })
+    this.throwIfError(error)
+    const row = (data ?? {}) as { snapshots_refreshed?: number; expires_at?: string }
+    return {
+      snapshotsRefreshed: row.snapshots_refreshed ?? 0,
+      expiresAt: row.expires_at ?? new Date().toISOString(),
+    }
+  }
+
+  private async getPersistedSnapshot(
+    tenantId: string,
+    dashboard: string
+  ): Promise<AnalyticsDashboardPayload | null> {
+    const { data, error } = await this.ctx.supabase
+      .from('analytics_cache_snapshots')
+      .select('payload, expires_at')
+      .eq('tenant_id', tenantId)
+      .eq('cache_key', dashboard)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle()
+
+    this.throwIfError(error)
+    if (!data?.payload) return null
+
+    return this.parsePayload(data.payload)
+  }
+
+  private async runTimedRpc<T>(
+    label: string,
+    tenantId: string,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    const startedAt = Date.now()
+    const result = await fn()
+    const durationMs = Date.now() - startedAt
+    if (durationMs > ANALYTICS_SLOW_RPC_MS) {
+      console.warn('[analytics] slow RPC', { label, tenantId, durationMs })
+    }
+    return result
+  }
+
   private async fetchDashboard(
     tenantId: string,
     dashboard: string,
@@ -154,8 +205,23 @@ export class AnalyticsModuleRepository extends BaseRepository {
     fn: () => Promise<AnalyticsDashboardPayload>,
     range?: { from?: string; to?: string }
   ): Promise<AnalyticsDashboardPayload> {
+    const hasCustomRange = Boolean(range?.from || range?.to)
+
+    if (!hasCustomRange) {
+      const persisted = await this.getPersistedSnapshot(tenantId, dashboard)
+      if (persisted) {
+        return {
+          ...persisted,
+          cachedAt: new Date().toISOString(),
+          cacheTtlMs: ttlMs,
+        }
+      }
+    }
+
     const cacheKey = this.cacheKey(`analytics:${tenantId}:${dashboard}`, range ?? {})
-    const payload = await this.withCache(cacheKey, ttlMs, fn)
+    const payload = await this.withCache(cacheKey, ttlMs, () =>
+      this.runTimedRpc(dashboard, tenantId, fn)
+    )
     return {
       ...payload,
       cachedAt: new Date().toISOString(),

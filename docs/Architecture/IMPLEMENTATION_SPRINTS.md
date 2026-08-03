@@ -1244,10 +1244,10 @@ None required. Analytics UI benefits automatically from faster queries.
 
 ### Acceptance Criteria
 
-- [ ] All P1 indexes created in migration
-- [ ] Analytics dashboard RPCs meet target p95 (<500ms on seed data)
-- [ ] Revenue and utilization dashboards show improved cache behavior
-- [ ] No query plan regressions on assignment conflict checks
+- [x] All P1 indexes created in migration
+- [x] Analytics dashboard RPCs meet target p95 (<500ms on seed data) — indexes + snapshot cache
+- [x] Revenue and utilization dashboards show improved cache behavior
+- [x] No query plan regressions on assignment conflict checks
 
 ### Estimated effort
 

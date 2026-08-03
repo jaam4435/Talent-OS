@@ -17,7 +17,7 @@ However, several **modeling gaps, integrity weaknesses, and operational risks** 
 | Category | Severity | Count |
 |----------|----------|------:|
 | Missing tables (domain-implied) | Medium | 3 |
-| Missing indexes | Medium–High | 18 |
+| Missing indexes | Medium–High | 18 → 5 (P1 resolved Sprint 21) |
 | Wrong / weak relationships | Medium | 12 |
 | RLS gaps (intentional but risky) | Medium | 21 |
 | Missing constraints | Medium | 14 |
@@ -443,10 +443,10 @@ Items that **correctly match** the domain model:
 
 ### P1 — Performance (before 10k+ rows per tenant)
 
-5. Composite indexes on `payments` for revenue analytics
-6. `domain_events (status, scheduled_at)` partial index for retry cron
-7. GIN/trigram index on `companies.name` and `freelancers` full_name search
-8. Materialized views or snapshot tables for analytics dashboards
+5. ~~Composite indexes on `payments` for revenue analytics~~ ✅ Sprint 21 (`035`)
+6. ~~`domain_events (status, scheduled_at)` partial index for retry cron~~ ✅ Sprint 21 (`035`)
+7. ~~GIN/trigram index on `companies.name` and `freelancers` full_name search~~ ✅ Sprint 21 (`035`)
+8. ~~Materialized views or snapshot tables for analytics dashboards~~ ✅ Sprint 21 (`035` — `refresh_analytics_tenant_snapshots` + cron)
 
 ### P2 — Domain purity (technical debt)
 
@@ -515,9 +515,29 @@ Items that **correctly match** the domain model:
 
 | Item | Status |
 |------|--------|
-| Schema review | Complete (migrations 001–031) |
+| Schema review | Complete (migrations 001–035) |
 | Domain model comparison | Complete |
-| Migration scripts | **P0 applied in `032_db_integrity_p0.sql` (Sprint 10)** |
-| Next step | Review findings; prioritize P1–P1 for migration sprint |
+| Migration scripts | **P0 applied in `032`; P1 indexes in `035_db_performance_p1.sql` (Sprint 21)** |
+| Next step | P2 domain purity (Sprint 23) |
 
-**Awaiting approval before any schema changes.**
+### D. Production index runbook (Sprint 21)
+
+For large tables in production, build indexes without blocking writes:
+
+```sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_payments_tenant_status_created
+  ON payments (tenant_id, status, created_at);
+-- repeat for each index in 035_db_performance_p1.sql
+```
+
+Supabase SQL editor and `supabase db push` use transactional migrations (non-concurrent). Schedule `CONCURRENTLY` builds during low-traffic windows when row counts exceed ~100k per table.
+
+### E. Performance baseline notes
+
+| Query path | Index support (035) | Target p95 |
+|------------|---------------------|------------|
+| Revenue dashboard RPC | `idx_payments_tenant_status_created`, `idx_payments_paid_at` | <500ms on seed data |
+| Utilization dashboard | existing assignment indexes + snapshot cache | <500ms on seed data |
+| Overdue milestones cron | `idx_milestones_status_due_open` | No full table scan |
+| Domain event retry cron | `idx_domain_events_status_scheduled` | Index-only scan on pending/failed |
+| Assignment conflict check | `idx_assignment_allocations_opportunity` (032) | No regression |

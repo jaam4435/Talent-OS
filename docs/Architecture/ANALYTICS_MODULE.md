@@ -102,7 +102,14 @@ Two-layer caching strategy:
 | Organizations, Projects, Talent, Delivery, AI Usage, Workflows | 120s |
 | Utilization, Revenue | 180s |
 
-2. **Optional DB snapshots** — `analytics_cache_snapshots` table for future persistent cache (schema ready).
+2. **Optional DB snapshots** — `analytics_cache_snapshots` table with cron refresh:
+
+| Mechanism | Detail |
+|-----------|--------|
+| SQL function | `refresh_analytics_tenant_snapshots(tenant_id, ttl_minutes)` |
+| Cron | `GET /api/cron/analytics-snapshot` every 15 minutes (Vercel) |
+| Read path | Repository checks persisted snapshot before in-process cache / RPC |
+| Slow query log | RPCs exceeding 500ms log `[analytics] slow RPC` |
 
 Pass `?refresh=true` on any dashboard endpoint to invalidate tenant cache before fetching.
 

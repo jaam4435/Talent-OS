@@ -167,4 +167,29 @@ export class AnalyticsModuleService {
   ): Promise<PaginatedResult<AnalyticsExportRecord>> {
     return this.repos.analyticsExport.list(tenantId, options)
   }
+
+  /** Pre-warm analytics_cache_snapshots for all tenants (cron). */
+  async refreshAllSnapshots(ttlMinutes = 15): Promise<{
+    tenants: number
+    refreshed: number
+    errors: string[]
+  }> {
+    const tenantIds = await this.repos.observability.listActiveTenantIds()
+    let refreshed = 0
+    const errors: string[] = []
+
+    for (const tenantId of tenantIds) {
+      try {
+        const result = await this.repos.analyticsModule.refreshTenantSnapshots(tenantId, ttlMinutes)
+        refreshed += result.snapshotsRefreshed
+        await this.repos.analyticsModule.invalidateTenantCache(tenantId)
+      } catch (error) {
+        errors.push(
+          `${tenantId}: ${error instanceof Error ? error.message : 'refresh failed'}`
+        )
+      }
+    }
+
+    return { tenants: tenantIds.length, refreshed, errors }
+  }
 }
