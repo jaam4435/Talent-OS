@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import type { CrmDeal, CrmPipelineBoard } from '@/modules/crm/types'
-import { useCrm } from '@/modules/crm/hooks/use-crm'
+import { crmApi } from '@/lib/api/crm-api'
+import { getUserMessageForApiError } from '@/lib/api/user-messages'
 import { Badge } from '@/modules/core/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 import { formatCurrency } from '@/modules/core/utils/format'
@@ -13,28 +14,88 @@ interface PipelineBoardProps {
   board: CrmPipelineBoard
 }
 
+function moveDealInBoard(board: CrmPipelineBoard, dealId: string, stageId: string): CrmPipelineBoard {
+  let movingDeal: CrmDeal | null = null
+
+  const stages = board.stages.map((stage) => {
+    const deal = stage.deals.find((row) => row.id === dealId)
+    if (!deal) return stage
+    movingDeal = deal
+    return { ...stage, deals: stage.deals.filter((row) => row.id !== dealId) }
+  })
+
+  if (!movingDeal) return board
+
+  const deal = movingDeal as CrmDeal
+  const targetStage = stages.find((stage) => stage.id === stageId)
+  if (!targetStage) return board
+
+  return {
+    ...board,
+    stages: stages.map((stage) =>
+      stage.id === stageId
+        ? {
+            ...stage,
+            deals: [{ ...deal, stageId }, ...stage.deals],
+          }
+        : stage
+    ),
+  }
+}
+
 export function PipelineBoard({ board }: PipelineBoardProps) {
-  const { api, error, isPending, run } = useCrm()
+  const [localBoard, setLocalBoard] = useState(board)
   const [draggingDealId, setDraggingDealId] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    setLocalBoard(board)
+  }, [board])
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(null), 4000)
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
   function handleDrop(stageId: string, dealId: string) {
     if (isPending) return
-    run(async () => {
-      await api.moveDealStage(dealId, stageId)
+
+    const previous = localBoard
+    const currentStageId = previous.stages.find((stage) =>
+      stage.deals.some((deal) => deal.id === dealId)
+    )?.id
+
+    if (!currentStageId || currentStageId === stageId) return
+
+    setLocalBoard(moveDealInBoard(previous, dealId, stageId))
+
+    startTransition(async () => {
+      try {
+        await crmApi.moveDealStage(dealId, stageId)
+      } catch (error) {
+        setLocalBoard(previous)
+        setToast(getUserMessageForApiError(error))
+      }
     })
   }
 
   return (
     <div className="space-y-4">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {toast ? (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {toast}
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-        <span>{board.totals.count} deals</span>
-        <span>{formatCurrency(board.totals.value)} pipeline value</span>
+        <span>{localBoard.totals.count} deals</span>
+        <span>{formatCurrency(localBoard.totals.value)} pipeline value</span>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {board.stages.map((stage) => (
+        {localBoard.stages.map((stage) => (
           <div
             key={stage.id}
             className="min-w-[280px] flex-1"
@@ -67,11 +128,11 @@ export function PipelineBoard({ board }: PipelineBoardProps) {
                     <DealCard
                       key={deal.id}
                       deal={deal}
-                      stages={board.stages}
+                      stages={localBoard.stages}
                       disabled={isPending}
                       onDragStart={() => setDraggingDealId(deal.id)}
                       onDragEnd={() => setDraggingDealId(null)}
-                      onStageChange={(stageId) => handleDrop(stageId, deal.id)}
+                      onStageChange={(nextStageId) => handleDrop(nextStageId, deal.id)}
                     />
                   ))
                 )}

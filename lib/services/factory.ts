@@ -28,6 +28,7 @@ import { WhatsAppPlatformModuleService } from '@/lib/services/whatsapp-platform-
 import { FinanceModuleService } from '@/lib/services/finance-module.service'
 import { NotificationModuleService } from '@/lib/services/notification-module.service'
 import { AnalyticsModuleService } from '@/lib/services/analytics-module.service'
+import { SearchService } from '@/lib/services/search.service'
 
 export interface Services {
   project: ProjectService
@@ -55,6 +56,7 @@ export interface Services {
   analyticsModule: AnalyticsModuleService
   financeModule: FinanceModuleService
   notificationModule: NotificationModuleService
+  search: SearchService
 }
 
 function buildServices(repos: Repositories): Services {
@@ -116,6 +118,7 @@ function buildServices(repos: Repositories): Services {
   services.analyticsModule = new AnalyticsModuleService(repos, services.analytics)
   services.financeModule = financeModule
   services.notificationModule = notificationModule
+  services.search = new SearchService(repos)
 
   return services
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Bot, Building2, CreditCard, Plug, Users } from 'lucide-react'
+import { Activity, Bot, Building2, CreditCard, Plug, Users } from 'lucide-react'
 import { BreadcrumbNav } from '@/modules/core/components/navigation/breadcrumb-nav'
 import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { OrganizationBrandingForm } from '@/modules/organization/components/organization-forms'
@@ -39,6 +39,12 @@ const LINKS = [
     title: 'Agent settings',
     description: 'Enable agents, tool allowlists, and reasoning policies.',
     icon: Bot,
+  },
+  {
+    href: '/settings/observability',
+    title: 'Observability',
+    description: 'Logs, alerts, API latency, and trace lookup.',
+    icon: Activity,
   },
 ] as const
 

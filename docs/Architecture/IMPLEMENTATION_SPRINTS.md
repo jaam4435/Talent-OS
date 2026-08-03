@@ -1327,11 +1327,11 @@ None.
 
 ### Acceptance Criteria
 
-- [ ] Cmd+K finds talent, project, company by name
-- [ ] Mobile layout usable for core 5 destinations
-- [ ] Pipeline drag reverts on API failure with toast
-- [ ] Admin views observability dashboard
-- [ ] No performance regression on initial page load
+- [x] Cmd+K finds talent, project, company by name
+- [x] Mobile layout usable for core 5 destinations
+- [x] Pipeline drag reverts on API failure with toast
+- [x] Admin views observability dashboard
+- [x] No performance regression on initial page load
 
 ### Estimated effort
 
@@ -1588,8 +1588,8 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | 18 | Notifications REST + UI | 034 | M | Full stack | ✅ Shipped |
 | 19 | AI + Knowledge UI | — | L | Frontend | ✅ Shipped |
 | 20 | Project delivery tabs | — | L | Frontend |
-| 21 | DB performance P1 | 035 | M | DB + backend |
-| 22 | Production polish F6 | — | L | Frontend + API |
+| 21 | DB performance P1 | 035 | M | DB + backend | ✅ Shipped |
+| 22 | Production polish F6 | — | L | Frontend + API | ✅ Shipped |
 | 23 | Domain purity P2 | 036 | M | DB + backend |
 | 24 | Talent marketplace | 037 | XL | Full stack (deferred) |
 

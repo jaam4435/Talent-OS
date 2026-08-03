@@ -94,6 +94,17 @@ Migration: `supabase/migrations/022_platform_core.sql`
 
 ---
 
+## Search & observability UI (Sprint 22)
+
+| Feature | Route / component | Notes |
+|---------|-------------------|-------|
+| Federated search | `GET /api/search?q=` | Talent, projects, companies, deals — tenant-scoped, 60 req/min |
+| Command palette | `CommandPalette` — ⌘K / Ctrl+K | Recent items in `localStorage` |
+| Mobile nav | `MobileNav` — 5 tabs | Hidden `md+`; sidebar on desktop |
+| Observability | `/settings/observability` | Admin-only; logs, alerts, trace lookup |
+
+---
+
 ## Related documents
 
 - [Talent OS Implementation Roadmap](./TALENT_OS_IMPLEMENTATION_ROADMAP.md) — active plan

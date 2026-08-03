@@ -144,7 +144,7 @@ Delivery / Projects / Website Redesign / Milestones
 | Role badge | `RoleBadge` | ✅ |
 | Notifications bell | Link to `/notifications` | 🚧 icon only |
 | User menu | Profile, sign out | 🚧 sign out only |
-| Global search | Cross-entity search (Cmd+K) | 📋 |
+| Global search | Cross-entity search (Cmd+K) | ✅ |
 
 ### 3.5 Mobile navigation
 
@@ -507,7 +507,7 @@ Notification + email via workflow `notify` action.
 | `RoleBadge` | Role pill | ✅ |
 | `BreadcrumbNav` | Context path | 📋 |
 | `DetailTabs` | Tabbed detail pages | 📋 |
-| `CommandPalette` | Global search (Cmd+K) | 📋 |
+| `CommandPalette` | Global search (Cmd+K) | ✅ |
 
 ### 8.2 UI primitives (`modules/core/components/ui/`) ✅
 
@@ -1025,7 +1025,7 @@ Field-level: map Zod `issues` to `<FormField error={...} />`
 | **F3 — Analytics UI** | 8 dashboards + Recharts + exports | Insights module complete |
 | **F4 — Operations UI** | Workflows, assignments, WhatsApp | Orchestration visibility |
 | **F5 — Admin UI** | Organization module pages | Settings replacement |
-| **F6 — Polish** | Cmd+K search, mobile nav, optimistic Kanban | Production polish (Sprint 10) |
+| **F6 — Polish** | Cmd+K search, mobile nav, optimistic Kanban | ✅ Sprint 22 |
 
 ---
 
