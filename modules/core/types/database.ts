@@ -99,6 +99,8 @@ export interface Database {
         ai_summary: string | null
         profile_completeness: number
         cv_file_path: string | null
+        marketplace_visible: boolean
+        marketplace_published_at: string | null
         created_at: string
         updated_at: string
       }>

@@ -36,8 +36,29 @@ export interface TalentProfile {
   aiSummary: string | null
   profileCompleteness: number
   cvFilePath: string | null
+  marketplaceVisible: boolean
+  marketplacePublishedAt: string | null
   lastActiveAt: string | null
   createdAt: string
+  updatedAt: string
+}
+
+/** Public marketplace profile — no PII beyond anonymized display name. */
+export interface TalentMarketplaceProfile {
+  id: string
+  displayName: string
+  discipline: string
+  skills: string[]
+  tags: string[]
+  bio: string | null
+  portfolioUrl: string | null
+  timezone: string | null
+  employmentType: TalentEmploymentType
+  languages: TalentLanguage[]
+  availability: string
+  profileCompleteness: number
+  aiSummary: string | null
+  publishedAt: string | null
   updatedAt: string
 }
 
@@ -149,6 +170,8 @@ export const TALENT_EVENT_TYPES = {
   AVAILABILITY_UPDATED: 'talent.availability.updated',
   IMPORT_COMPLETED: 'talent.import.completed',
   COMPLETENESS_UPDATED: 'talent.completeness.updated',
+  MARKETPLACE_PUBLISHED: 'talent.marketplace.published',
+  MARKETPLACE_UNPUBLISHED: 'talent.marketplace.unpublished',
 } as const
 
 /** AI/MCP entity descriptors for tool routing */

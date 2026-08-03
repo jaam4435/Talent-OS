@@ -11,6 +11,11 @@ export async function getTalentProfile(freelancerId: string, tenantId: string) {
   return services.talent.getTalentProfile(freelancerId, tenantId)
 }
 
+export async function getTalentModuleProfile(freelancerId: string, tenantId: string) {
+  const services = await createServices()
+  return services.talentModule.getTalent(tenantId, freelancerId)
+}
+
 export async function getTalentActivity(freelancerId: string, limit = 10) {
   const services = await createServices()
   return services.talent.getTalentActivity(freelancerId, limit)

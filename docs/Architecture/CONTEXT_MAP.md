@@ -263,7 +263,36 @@ Analytics has **no upstream influence**. It reads published data; never mutates 
 |----------------|-----------|
 | **Talent Demand** (separate from Sales CRM) | Opportunity/shortlist/broadcast is a distinct ubiquitous language from leads/deals |
 | **Billing** (separate from Finance/Payments) | Stripe/subscriptions would be a new BC, not an extension of milestone payments |
-| **Marketplace** (Sprint 11) | External talent marketplace would be ACL + new aggregate roots |
+| **Marketplace** (Sprint 24) | Public read-only talent discovery — ACL between Talent Supply BC and external consumers |
+
+### Marketplace ACL (Sprint 24)
+
+```
+┌─────────────────────────────────────┐
+│  Talent Supply BC (freelancers)     │
+│  • Full profile + PII               │
+│  • tenant_id RLS                    │
+│  • marketplace_visible (admin)      │
+└──────────────┬──────────────────────┘
+               │ ACL: field allowlist + anonymize display name
+               ▼
+┌─────────────────────────────────────┐
+│  Marketplace read surface           │
+│  • talent_marketplace_profiles view │
+│  • /api/talent/marketplace (GET)    │
+│  • /marketplace page                │
+└──────────────┬──────────────────────┘
+               │ feature flag: marketplace_enabled (default off)
+               ▼
+         Public consumers (read-only, no writes)
+```
+
+| Boundary rule | Enforcement |
+|---------------|-------------|
+| No email/phone/tenant/internal fields | DB view column allowlist + `mapMarketplaceProfile()` |
+| Cross-tenant catalog | Intentional when flag on; only `marketplace_visible = true` rows |
+| Disabled feature | API + page return **404** (no feature leak) |
+| Admin eligibility | Manager PATCH `/api/talent/[id]/marketplace` |
 
 ---
 

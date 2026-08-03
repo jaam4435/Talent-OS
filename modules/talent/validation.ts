@@ -118,3 +118,15 @@ export const auditQuerySchema = z.object({
   action: z.string().optional(),
   entity_type: z.string().optional(),
 })
+
+export const marketplaceListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  q: z.string().max(120).optional(),
+  discipline: z.string().optional(),
+  availability: z.enum(['available', 'busy', 'unavailable']).optional(),
+})
+
+export const marketplaceVisibilitySchema = z.object({
+  visible: z.boolean(),
+})

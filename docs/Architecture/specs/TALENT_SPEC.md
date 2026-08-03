@@ -287,7 +287,7 @@ Namespace: `talent.*` — see `TALENT_EVENT_TYPES` in `modules/talent/types.ts`.
 
 1. **External portfolio sync** — Behance, Dribbble, GitHub profile import
 2. **Certification verification** — Third-party credential validation
-3. **Talent marketplace** — Sprint 11 public discovery (read-only export)
+3. **Talent marketplace** — ✅ Sprint 24 read-only public discovery (`/marketplace`, feature-flagged)
 4. **Skill taxonomy** — Controlled vocabulary vs free-form tags
 5. **Availability forecasting** — Predict capacity from historical patterns
 6. **Consolidate legacy TalentService** — Single module service path

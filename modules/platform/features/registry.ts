@@ -12,6 +12,7 @@ export const PLATFORM_FLAG_KEYS = {
   AI_PM: 'ai_pm',
   HYBRID_SEARCH: 'hybrid_search',
   WORKFLOW_ENGINE: 'workflow_engine',
+  MARKETPLACE_ENABLED: 'marketplace_enabled',
 } as const
 
 export const LEGACY_TENANT_FLAG_MAP: Record<string, string> = {

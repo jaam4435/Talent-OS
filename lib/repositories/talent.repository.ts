@@ -358,4 +358,65 @@ export class TalentRepository extends BaseRepository {
     this.throwIfError(error)
     return data ?? []
   }
+
+  async listMarketplaceProfiles(options: {
+    page?: number
+    limit?: number
+    q?: string
+    discipline?: string
+    availability?: string
+  }): Promise<PaginatedResult<{
+    id: string
+    full_name: string
+    discipline: string
+    skills: string[] | null
+    tags: string[] | null
+    bio: string | null
+    portfolio_url: string | null
+    timezone: string | null
+    employment_type: string | null
+    languages: unknown
+    availability: string
+    profile_completeness: number | null
+    ai_summary: string | null
+    marketplace_published_at: string | null
+    updated_at: string
+  }>> {
+    const { limit, offset, page } = this.paginate(options)
+    let query = this.ctx.supabase
+      .from('freelancers')
+      .select(
+        'id, full_name, discipline, skills, tags, bio, portfolio_url, timezone, employment_type, languages, availability, profile_completeness, ai_summary, marketplace_published_at, updated_at',
+        { count: 'exact' }
+      )
+      .eq('marketplace_visible', true)
+      .is('deleted_at', null)
+      .order('profile_completeness', { ascending: false })
+      .order('updated_at', { ascending: false })
+
+    if (options.discipline) query = query.eq('discipline', options.discipline)
+    if (options.availability) query = query.eq('availability', options.availability)
+    if (options.q?.trim()) {
+      const q = options.q.trim().replace(/,/g, '')
+      query = query.or(`discipline.ilike.%${q}%,bio.ilike.%${q}%`)
+    }
+
+    const { data, count, error } = await query.range(offset, offset + limit - 1)
+    this.throwIfError(error)
+    return toPaginatedResult(data ?? [], { limit, page }, count ?? undefined)
+  }
+
+  async findMarketplaceProfile(id: string) {
+    const { data, error } = await this.ctx.supabase
+      .from('freelancers')
+      .select(
+        'id, full_name, discipline, skills, tags, bio, portfolio_url, timezone, employment_type, languages, availability, profile_completeness, ai_summary, marketplace_published_at, updated_at'
+      )
+      .eq('id', id)
+      .eq('marketplace_visible', true)
+      .is('deleted_at', null)
+      .maybeSingle()
+    this.throwIfError(error)
+    return data ?? null
+  }
 }

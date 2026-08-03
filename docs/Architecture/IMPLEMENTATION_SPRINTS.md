@@ -1489,10 +1489,10 @@ Optional: `talent_marketplace_profiles` view or RLSrelaxed read replica table.
 
 ### Acceptance Criteria
 
-- [ ] Feature flag off → no public routes exposed
-- [ ] Feature flag on → read-only profiles visible per policy
-- [ ] No cross-tenant data leakage
-- [ ] Admin controls marketplace eligibility per freelancer
+- [x] Feature flag off → no public routes exposed
+- [x] Feature flag on → read-only profiles visible per policy
+- [x] No cross-tenant data leakage
+- [x] Admin controls marketplace eligibility per freelancer
 
 ### Estimated effort
 

@@ -30,6 +30,8 @@ function baseRow(overrides: Partial<Tables<'freelancers'>> = {}): Tables<'freela
     ai_summary: 'Strong full-stack engineer',
     profile_completeness: 0,
     cv_file_path: null,
+    marketplace_visible: false,
+    marketplace_published_at: null,
     created_at: '2026-01-01T00:00:00.000Z',
     updated_at: '2026-01-01T00:00:00.000Z',
     ...overrides,

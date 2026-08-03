@@ -10,9 +10,11 @@ import {
   type TalentExperience,
   type TalentImportBatch,
   type TalentLanguage,
+  type TalentMarketplaceProfile,
   type TalentProfile,
   type TalentSkillMatch,
 } from '@/modules/talent/types'
+import { mapMarketplaceProfile } from '@/modules/talent/marketplace'
 
 type TalentRow = Tables<'freelancers'>
 
@@ -38,6 +40,8 @@ export function mapTalentProfile(row: TalentRow): TalentProfile {
     aiSummary: row.ai_summary ?? null,
     profileCompleteness: row.profile_completeness ?? 0,
     cvFilePath: row.cv_file_path ?? null,
+    marketplaceVisible: row.marketplace_visible ?? false,
+    marketplacePublishedAt: row.marketplace_published_at ?? null,
     lastActiveAt: row.last_active_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -600,6 +604,56 @@ export class TalentModuleService {
 
   async listAuditLogs(tenantId: string, options: Parameters<typeof this.repos.talentAudit.list>[1]) {
     return this.repos.talentAudit.list(tenantId, options)
+  }
+
+  async listMarketplaceProfiles(options: {
+    page?: number
+    limit?: number
+    q?: string
+    discipline?: string
+    availability?: string
+  }): Promise<PaginatedResult<TalentMarketplaceProfile>> {
+    const result = await this.repos.talent.listMarketplaceProfiles(options)
+    return {
+      ...result,
+      data: result.data.map(mapMarketplaceProfile),
+    }
+  }
+
+  async getMarketplaceProfile(id: string): Promise<TalentMarketplaceProfile | null> {
+    const row = await this.repos.talent.findMarketplaceProfile(id)
+    return row ? mapMarketplaceProfile(row) : null
+  }
+
+  async setMarketplaceVisibility(
+    tenantId: string,
+    actorId: string,
+    id: string,
+    visible: boolean
+  ): Promise<{ ok: true; talent: TalentProfile } | { ok: false; error: string }> {
+    const current = await this.repos.talent.findModuleById(id, tenantId)
+    if (!current) return { ok: false, error: 'Talent not found' }
+
+    const now = visible ? new Date().toISOString() : null
+    const row = await this.repos.talent.updateModule(id, tenantId, {
+      marketplace_visible: visible,
+      marketplace_published_at: visible ? now : null,
+    })
+
+    await this.auditAndEmit({
+      tenantId,
+      actorId,
+      action: visible ? 'talent.marketplace.published' : 'talent.marketplace.unpublished',
+      entityType: 'talent',
+      entityId: id,
+      eventType: visible
+        ? TALENT_EVENT_TYPES.MARKETPLACE_PUBLISHED
+        : TALENT_EVENT_TYPES.MARKETPLACE_UNPUBLISHED,
+      beforeState: { marketplaceVisible: current.marketplace_visible ?? false },
+      afterState: { marketplaceVisible: visible, publishedAt: now },
+    })
+
+    return { ok: true, talent: mapTalentProfile(row) }
   }
 
   private async refreshCompleteness(tenantId: string, actorId: string, talentId: string) {
