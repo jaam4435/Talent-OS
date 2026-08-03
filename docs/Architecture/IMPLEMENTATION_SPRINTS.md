@@ -1587,7 +1587,7 @@ Example: `cursor/sprint-10-db-integrity-p0-5fb1`
 | 17 | Finance REST + UI | 033 | L | Full stack | ✅ Shipped |
 | 18 | Notifications REST + UI | 034 | M | Full stack | ✅ Shipped |
 | 19 | AI + Knowledge UI | — | L | Frontend | ✅ Shipped |
-| 20 | Project delivery tabs | — | L | Frontend |
+| 20 | Project delivery tabs | — | L | Frontend | ✅ Shipped |
 | 21 | DB performance P1 | 035 | M | DB + backend | ✅ Shipped |
 | 22 | Production polish F6 | — | L | Frontend + API | ✅ Shipped |
 | 23 | Domain purity P2 | 036 | M | DB + backend |
