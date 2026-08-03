@@ -1,11 +1,6 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { ProjectTracker } from '@/components/projects/project-tracker'
 import { AiSummaryCard } from '@/components/ai/ai-summary-card'
 import { StatusAssessmentCard } from '@/components/ai/status-assessment-card'
-import { PageHeader } from '@/modules/core/components/shared/page-header'
-import { Badge } from '@/modules/core/components/ui/badge'
-import { Button } from '@/modules/core/components/ui/button'
 import { runProjectSummary } from '@/app/actions/ai-pm'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
@@ -25,9 +20,9 @@ export default async function ProjectDetailPage({
   const manager = isManager(tenant.role)
 
   const detail = await getProjectDetail(id, tenant.id)
-  if (!detail) notFound()
+  if (!detail) return null
 
-  const { project, milestones, freelancer, activity } = detail
+  const { project, milestones, activity } = detail
   const milestoneRows = mapProjectMilestones(milestones)
 
   const pmData = manager
@@ -40,20 +35,6 @@ export default async function ProjectDetailPage({
 
   return (
     <div>
-      <PageHeader
-        title={project.title}
-        description={freelancer ? `Assigned to ${freelancer.full_name}` : undefined}
-      >
-        <Button asChild variant="outline">
-          <Link href="/projects">All projects</Link>
-        </Button>
-      </PageHeader>
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        <Badge className="capitalize">{project.status}</Badge>
-        {project.client_name ? <Badge variant="outline">{project.client_name}</Badge> : null}
-      </div>
-
       {manager && pmData ? (
         <>
           <ProjectAssignmentSummary

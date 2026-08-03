@@ -377,6 +377,7 @@ paths:
       tags: [Projects]
       summary: Get project
       operationId: getProject
+      description: Tenant-scoped read; freelancers with projects:read may access assigned projects.
       security: [{ sessionCookie: [] }]
       parameters:
         - name: id

@@ -283,11 +283,11 @@ interface NavItem {
 ── DELIVERY (Projects) ──
 /projects                            ✅ List
 /projects/new                        ✅ Create
-/projects/[id]                         ✅ Detail (tracker)
-/projects/[id]/tasks                 📋 Task board
-/projects/[id]/deliverables          📋 Deliverables
-/projects/[id]/timeline              📋 Timeline feed
-/projects/templates                  📋 Template library
+/projects/[id]                         ✅ Detail (tracker + milestones)
+/projects/[id]/tasks                 ✅ Task board
+/projects/[id]/deliverables          ✅ Deliverables
+/projects/[id]/timeline              ✅ Timeline feed
+/projects/templates                  ✅ Template library
 
 ── PLANNING (Assignments) ──
 /assignments                         📋 Allocation list
@@ -1002,7 +1002,7 @@ Field-level: map Zod `issues` to `<FormField error={...} />`
 | Organization | `/organization`, `/settings` | `modules/organization/components/` | P1 |
 | CRM & Demand | `/crm`, `/opportunities` | `modules/crm/components/` | P1 |
 | Talent Supply | `/talent` | `components/talent/` ✅ | P2 (extend) |
-| Project Delivery | `/projects` | `components/projects/` ✅ | P2 (tabs) |
+| Project Delivery | `/projects` | `components/projects/` ✅ | P2 ✅ |
 | Resource Assignment | `/assignments` | `modules/assignment/components/` | P1 |
 | Finance & Payments | `/payments` | `components/payments/` ✅ | P2 |
 | Workflow Orchestration | `/workflows` | `modules/workflow-engine/components/` | P1 |

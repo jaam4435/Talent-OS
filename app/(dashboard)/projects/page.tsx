@@ -26,9 +26,14 @@ export default async function ProjectsPage() {
     <div>
       <PageHeader title="Projects" description="Track active engagements and milestones">
         {isManager(tenant.role) ? (
-          <Button asChild>
-            <Link href="/projects/new">New project</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href="/projects/templates">Templates</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/projects/new">New project</Link>
+            </Button>
+          </div>
         ) : null}
       </PageHeader>
 

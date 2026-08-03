@@ -184,6 +184,24 @@ Run: `npm test`
 
 ---
 
+## UI appendix (Sprint 20)
+
+| Route | Component | API |
+|-------|-----------|-----|
+| `/projects/[id]` | Overview — `ProjectTracker`, milestones | Server queries + layout health |
+| `/projects/[id]/tasks` | `TaskBoard` | `GET/POST/PATCH /api/projects/{id}/tasks` |
+| `/projects/[id]/deliverables` | `DeliverableList` | `GET/POST/PATCH /api/projects/{id}/deliverables` |
+| `/projects/[id]/timeline` | `TimelineFeed` | `GET /api/projects/{id}/timeline` |
+| `/projects/templates` | `TemplateLibrary` | `GET /api/projects/templates`, `POST .../apply` |
+
+Shared layout: `app/(dashboard)/projects/[id]/layout.tsx` — breadcrumbs, health badge, status controls (manager), `ProjectSubNav`.
+
+Client API: `lib/api/project-api.ts` · Hook: `modules/project/hooks/use-project-delivery.ts`
+
+Freelancer read access: GET sub-resource routes use `auth: 'tenant'`; `project:read` permission aliases to `projects:read`.
+
+---
+
 ## Migrations index
 
 | # | File | Module |

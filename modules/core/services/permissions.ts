@@ -132,14 +132,16 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
   ],
 }
 
-const FINANCE_PERMISSION_ALIASES: Record<string, string> = {
+const PERMISSION_ALIASES: Record<string, string> = {
   'finance:read': 'payments:read',
   'finance:approve': 'payments:approve',
   'finance:mark_paid': 'payments:pay',
+  /** Freelancers have projects:read; managers use project:read in module APIs. */
+  'project:read': 'projects:read',
 }
 
 export function hasPermission(role: UserRole, permission: string) {
-  const resolved = FINANCE_PERMISSION_ALIASES[permission] ?? permission
+  const resolved = PERMISSION_ALIASES[permission] ?? permission
   return PERMISSION_MAP[role]?.includes(resolved) ?? false
 }
 
@@ -148,7 +150,7 @@ export function getPermissionsForRole(role: UserRole): string[] {
 }
 
 export function requirePermission(role: UserRole, permission: string) {
-  const resolved = FINANCE_PERMISSION_ALIASES[permission] ?? permission
+  const resolved = PERMISSION_ALIASES[permission] ?? permission
   if (!PERMISSION_MAP[role]?.includes(resolved)) {
     throw new Error(`FORBIDDEN: missing permission ${permission}`)
   }

@@ -1149,11 +1149,11 @@ None required (sub-resource APIs shipped Sprint 4).
 
 ### Acceptance Criteria
 
-- [ ] All project sub-tabs load data from REST APIs
-- [ ] Tasks creatable and status-updatable from UI
-- [ ] Deliverables show submission workflow state
-- [ ] Template apply creates project from template
-- [ ] Freelancer sees read-only appropriate tabs
+- [x] All project sub-tabs load data from REST APIs
+- [x] Tasks creatable and status-updatable from UI
+- [x] Deliverables show submission workflow state
+- [x] Template apply creates project from template
+- [x] Freelancer sees read-only appropriate tabs
 
 ### Estimated effort
 

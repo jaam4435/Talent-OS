@@ -3,7 +3,7 @@ import { AppError } from '@/modules/core/api/response'
 import { createServices } from '@/lib/services/factory'
 
 export const GET = withApiHandler(
-  { auth: 'manager', permissions: ['project:read'], rateLimit: 'default' },
+  { auth: 'tenant', permissions: ['project:read'], rateLimit: 'default' },
   async ({ ctx, params }) => {
     const services = await createServices()
     const health = await services.projectModule.getHealth(ctx.tenant!.id, params!.id)

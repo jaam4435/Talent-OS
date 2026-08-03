@@ -4,7 +4,7 @@ import { createServices } from '@/lib/services/factory'
 import { updateProjectSchema } from '@/modules/project/validation'
 
 export const GET = withApiHandler(
-  { auth: 'manager', permissions: ['project:read'], rateLimit: 'default' },
+  { auth: 'tenant', permissions: ['project:read'], rateLimit: 'default' },
   async ({ ctx, params }) => {
     const services = await createServices()
     const project = await services.projectModule.getProject(ctx.tenant!.id, params!.id)
