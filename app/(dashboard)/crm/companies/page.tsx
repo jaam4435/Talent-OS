@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { Building2 } from 'lucide-react'
+import { Building2, Plus } from 'lucide-react'
 import { listCrmCompanies } from '@/lib/queries/crm.queries'
 import { CrmListFilters } from '@/modules/crm/components/crm-list-filters'
 import { Badge } from '@/modules/core/components/ui/badge'
+import { Button } from '@/modules/core/components/ui/button'
 import { DataTable, type DataTableColumn } from '@/modules/core/components/shared/data-table'
 import { EmptyState } from '@/modules/core/components/shared/empty-state'
 import { Pagination } from '@/modules/core/components/shared/pagination'
@@ -66,6 +67,15 @@ export default async function CrmCompaniesPage({
 
   return (
     <div>
+      <div className="mb-6 flex justify-end">
+        <Button asChild>
+          <Link href="/crm/companies/new">
+            <Plus className="mr-2 h-4 w-4" />
+            New company
+          </Link>
+        </Button>
+      </div>
+
       <Suspense fallback={null}>
         <CrmListFilters
           pathname="/crm/companies"
@@ -97,7 +107,12 @@ export default async function CrmCompaniesPage({
         <EmptyState
           icon={Building2}
           title="No companies found"
-          description="Companies appear when leads are converted or created via CRM."
+          description="Create your first company or adjust filters."
+          action={
+            <Button asChild>
+              <Link href="/crm/companies/new">New company</Link>
+            </Button>
+          }
         />
       ) : (
         <>

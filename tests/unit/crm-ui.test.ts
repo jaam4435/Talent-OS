@@ -18,6 +18,7 @@ describe('CRM UI routes', () => {
     'app/(dashboard)/crm/leads/new/page.tsx',
     'app/(dashboard)/crm/leads/[id]/page.tsx',
     'app/(dashboard)/crm/companies/page.tsx',
+    'app/(dashboard)/crm/companies/new/page.tsx',
     'app/(dashboard)/crm/companies/[id]/page.tsx',
     'app/(dashboard)/crm/deals/[id]/page.tsx',
     'app/(dashboard)/crm/contracts/page.tsx',
@@ -56,6 +57,7 @@ describe('CRM API client', () => {
   it('uses REST endpoints for mutations', () => {
     const src = read('lib/api/crm-api.ts')
     expect(src).toContain('/api/crm/leads')
+    expect(src).toContain('/api/crm/companies')
     expect(src).toContain('/api/crm/deals/')
     expect(src).toContain('/api/crm/leads/')
     expect(src).toContain('/convert')

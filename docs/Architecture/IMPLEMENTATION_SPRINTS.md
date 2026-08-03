@@ -1413,10 +1413,10 @@ Migration sprint with backward-compatible constraints. Application changes are a
 
 ### Acceptance Criteria
 
-- [ ] No duplicate company names per tenant
-- [ ] Soft-deleted opportunities excluded from default lists
-- [ ] Signed contracts require `signed_at`
-- [ ] Module audit tables are primary write path for new mutations
+- [x] No duplicate company names per tenant
+- [x] Soft-deleted opportunities excluded from default lists
+- [x] Signed contracts require `signed_at`
+- [x] Module audit tables are primary write path for new mutations
 
 ### Estimated effort
 

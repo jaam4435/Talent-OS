@@ -30,6 +30,7 @@ Talent OS uses an **outbox pattern**: domain mutations emit rows to `domain_even
 | Module services | `*ModuleService.auditAndEmit()` → `WorkflowService.emitEvent()` |
 | Legacy services | Direct `WorkflowService.emitEvent()` |
 | DB triggers | `005_event_infrastructure.sql` — `opportunity.opened`, `payment.{status}` |
+| Legacy activity trigger | `log_activity()` — **deprecated for module entities (Sprint 23 `036`)**; writes no-op for bounded-context types |
 | Workflow actions | `emit_event` step in `lib/workflows/actions.ts` |
 | WhatsApp platform | Audit actions mapped to `WHATSAPP_EVENT_TYPES` |
 

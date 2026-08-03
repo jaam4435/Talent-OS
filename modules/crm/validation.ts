@@ -77,7 +77,7 @@ export const moveDealStageSchema = z.object({
   stage_id: z.string().uuid(),
 })
 
-export const createContractSchema = z.object({
+const contractFieldsSchema = z.object({
   title: z.string().min(2).max(200),
   deal_id: z.string().uuid().optional().nullable(),
   company_id: z.string().uuid().optional().nullable(),
@@ -86,9 +86,21 @@ export const createContractSchema = z.object({
   status: z.enum(['draft', 'sent', 'signed', 'expired', 'canceled']).optional(),
   starts_on: z.string().date().optional().nullable(),
   ends_on: z.string().date().optional().nullable(),
+  signed_at: z.string().datetime().optional().nullable(),
 })
 
-export const updateContractSchema = createContractSchema.partial()
+const signedAtRequired = (data: { status?: string; signed_at?: string | null }) =>
+  data.status !== 'signed' || data.signed_at != null
+
+export const createContractSchema = contractFieldsSchema.refine(signedAtRequired, {
+  message: 'signed_at is required when status is signed',
+  path: ['signed_at'],
+})
+
+export const updateContractSchema = contractFieldsSchema.partial().refine(signedAtRequired, {
+  message: 'signed_at is required when status is signed',
+  path: ['signed_at'],
+})
 
 export const createNoteSchema = z.object({
   entity_type: z.string().min(2).max(40),

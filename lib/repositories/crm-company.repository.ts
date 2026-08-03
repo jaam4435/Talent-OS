@@ -86,6 +86,7 @@ export class CrmCompanyRepository extends BaseRepository {
       .select('id, name, slug, status, contact_email, contact_name, website, industry, notes, created_at, updated_at')
       .single()
 
+    if (error?.code === '23505') throw this.mapError(error, 'A company with this name already exists.')
     this.throwIfError(error)
     if (!data) this.notFound('Company')
     this.invalidateTable('companies')

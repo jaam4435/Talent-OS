@@ -2,6 +2,7 @@ import type { Repositories } from '@/lib/repositories/factory'
 import { CRM_EVENT_TYPES, type CrmActivityType, type CrmDeal, type CrmLead, type CrmPipelineBoard } from '@/modules/crm/types'
 import type { PaginatedResult } from '@/lib/repositories/base/types'
 import type { NotificationService } from '@/lib/services/notification.service'
+import { DomainError, ErrorCodes } from '@/modules/core/utils/errors'
 
 export class CrmDemandService {
   constructor(
@@ -321,6 +322,11 @@ export class CrmDemandService {
   }
 
   async createContract(tenantId: string, actorId: string, input: Record<string, unknown>) {
+    const status = (input.status as string | undefined) ?? 'draft'
+    if (status === 'signed' && !input.signed_at) {
+      throw new DomainError(ErrorCodes.VALIDATION, 'signed_at is required when status is signed')
+    }
+
     const contract = await this.repos.crmContract.create({ ...input, tenant_id: tenantId })
     await this.auditAndEmit({
       tenantId,

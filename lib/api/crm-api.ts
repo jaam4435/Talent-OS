@@ -91,6 +91,21 @@ export const crmApi = {
     })
   },
 
+  createCompany(body: {
+    name: string
+    contact_email?: string | null
+    contact_name?: string | null
+    website?: string | null
+    industry?: string | null
+    status?: string
+    notes?: string | null
+  }) {
+    return crmRequest<CrmCompany>('/api/crm/companies', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
   updateCompany(
     id: string,
     body: Partial<{
@@ -140,6 +155,7 @@ export const crmApi = {
     status?: string
     starts_on?: string | null
     ends_on?: string | null
+    signed_at?: string | null
   }) {
     return crmRequest<CrmContract>('/api/crm/contracts', {
       method: 'POST',

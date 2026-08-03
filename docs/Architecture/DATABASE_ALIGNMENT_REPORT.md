@@ -257,10 +257,10 @@ Domain invariants documented in specs but **not enforced at database level**.
 |-------|-----------|-----------------|---------------|
 | `assignment_allocations` | Must reference project XOR opportunity | Partial | ❌ Missing |
 | `assignment_allocations` | `allocation_pct` 1–100 when active | Yes (`027`) | ✅ CHECK exists (allows 0) |
-| `crm_contracts` | `signed` status requires `signed_at` | Yes (validation) | ❌ Missing |
+| `crm_contracts` | `signed` status requires `signed_at` | Yes (validation) | ✅ CHECK (`036`) |
 | `crm_contracts` | `ends_on >= starts_on` | No | ❌ Missing |
 | `crm_deals` | `value >= 0` | Yes (validation) | ❌ Missing |
-| `companies` | Unique `(tenant_id, name)` | Partial | ❌ Only slug unique |
+| `companies` | Unique `(tenant_id, name)` | Partial | ✅ Unique index on `lower(name)` (`036`) |
 | `member_invites` | Pending invite unique per email | Policy | ⚠️ `UNIQUE (tenant_id, email)` too strict |
 | `opportunities` | `response_deadline > created_at` | No | ❌ Missing |
 | `payments` | `amount > 0` | Implicit | ❌ Missing CHECK |
@@ -282,7 +282,7 @@ Soft delete (`deleted_at`) added in module migrations for most entities, but **l
 
 | Table | `deleted_at` |
 |-------|--------------|
-| `opportunities`, `opportunity_recipients` | ❌ Hard delete only |
+| `opportunities`, `opportunity_recipients` | ✅ `deleted_at` (`036`) |
 | `shortlists`, `shortlist_items` | ❌ |
 | `payments`, `notifications` | ❌ |
 | `whatsapp_messages` | ❌ |
@@ -450,11 +450,11 @@ Items that **correctly match** the domain model:
 
 ### P2 — Domain purity (technical debt)
 
-9. Consolidate audit: deprecate `activity_logs` writes in favor of module audit tables
-10. Add `deleted_at` to `opportunities` and `opportunity_recipients`
+9. ~~Consolidate audit: deprecate `activity_logs` writes in favor of module audit tables~~ ✅ Sprint 23 (`036` — `log_activity` no-op for module entities)
+10. ~~Add `deleted_at` to `opportunities` and `opportunity_recipients`~~ ✅ Sprint 23 (`036`)
 11. Add `finance_audit_logs` table when Finance REST module ships
-12. Enforce `companies (tenant_id, lower(name))` uniqueness
-13. Add CHECK on `crm_contracts` signed_at when status = signed
+12. ~~Enforce `companies (tenant_id, lower(name))` uniqueness~~ ✅ Sprint 23 (`036`)
+13. ~~Add CHECK on `crm_contracts` signed_at when status = signed~~ ✅ Sprint 23 (`036`)
 
 ### P3 — Future enhancements
 
@@ -515,10 +515,10 @@ Items that **correctly match** the domain model:
 
 | Item | Status |
 |------|--------|
-| Schema review | Complete (migrations 001–035) |
+| Schema review | Complete (migrations 001–036) |
 | Domain model comparison | Complete |
-| Migration scripts | **P0 applied in `032`; P1 indexes in `035_db_performance_p1.sql` (Sprint 21)** |
-| Next step | P2 domain purity (Sprint 23) |
+| Migration scripts | **P0 applied in `032`; P1 indexes in `035`; P2 domain purity in `036` (Sprint 23)** |
+| Next step | Sprint 24 — Talent Marketplace (deferred) |
 
 ### D. Production index runbook (Sprint 21)
 
