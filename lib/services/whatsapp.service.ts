@@ -284,6 +284,27 @@ Pending opportunity: ${pending ? pending.opportunity_id : 'none'}`,
       }
     }
 
+    if (
+      handler.intent === 'assignment.accept' ||
+      handler.intent === 'assignment.reject' ||
+      handler.intent === 'project.approve' ||
+      handler.intent === 'milestone.approve' ||
+      handler.intent === 'milestone.revision' ||
+      handler.intent === 'deliverable.submit' ||
+      handler.intent === 'approval.approve' ||
+      handler.intent === 'approval.reject'
+    ) {
+      return {
+        event: 'whatsapp.business_action',
+        idempotencyKey: `wa-action:${message.waMessageId}:${handler.intent}`,
+        data: {
+          freelancer_id: freelancer.id,
+          intent: handler.intent,
+          ...handler.data,
+        },
+      }
+    }
+
     return null
   }
 }

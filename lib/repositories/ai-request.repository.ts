@@ -13,6 +13,8 @@ export interface CreateAiRequestInput {
   entityType?: string
   entityId?: string
   promptHash?: string
+  promptVersion?: string
+  productId?: string
 }
 
 export interface UpdateAiRequestInput {
@@ -24,6 +26,7 @@ export interface UpdateAiRequestInput {
   estimatedCost?: number
   durationMs?: number
   promptHash?: string
+  promptVersion?: string
 }
 
 export class AiRequestRepository extends BaseRepository {
@@ -39,6 +42,8 @@ export class AiRequestRepository extends BaseRepository {
         entity_type: input.entityType ?? null,
         entity_id: input.entityId ?? null,
         prompt_hash: input.promptHash ?? null,
+        prompt_version: input.promptVersion ?? null,
+        product_id: input.productId ?? 'talent_os',
         status: 'pending',
       })
       .select('id')
@@ -79,6 +84,7 @@ export class AiRequestRepository extends BaseRepository {
         estimated_cost: patch.estimatedCost,
         duration_ms: patch.durationMs,
         prompt_hash: patch.promptHash,
+        prompt_version: patch.promptVersion,
         completed_at:
           patch.status === 'completed' || patch.status === 'failed'
             ? new Date().toISOString()
