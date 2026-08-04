@@ -23,7 +23,7 @@ Complete every item before production cutover.
 
 ## 2. Database Migrations
 
-Apply in order via `supabase db push` or `./scripts/push-supabase-schema.sh`:
+Apply in order via `supabase db push` or `./scripts/push-supabase-schema.sh` (migrations **001–022**):
 
 - [ ] Migrations 001–019 (baseline)
 - [ ] `020_enterprise_hardening.sql` — secure RPCs, view revokes, phone index

@@ -54,7 +54,7 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | 2 | [User Stories](docs/02-user-stories.md) | 36 stories across 9 epics with acceptance criteria |
 | 3 | [Database Schema](docs/03-database-schema.md) | ERD, tables, enums, views, storage buckets |
 | 4 | [**Complete Supabase Schema**](docs/04-supabase-complete-schema.md) | Tables, FKs, RLS matrix, triggers, migrations |
-| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–021 |
+| 5 | [Supabase SQL](supabase/migrations/) | Migration files 001–022 |
 | 6 | [API Architecture](docs/05-api-architecture.md) | REST endpoints, server actions, event contracts |
 | 7 | [Folder Structure](docs/06-folder-structure.md) | Next.js project tree and conventions |
 | 8 | [Authentication Design](docs/07-authentication-design.md) | Auth flows, RBAC, session management |
@@ -69,6 +69,22 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | — | [**Production Readiness Report**](docs/Platform/PRODUCTION_READINESS_REPORT.md) | Post-P0 readiness assessment (v3) |
 | — | [**Distributed State Architecture**](docs/Platform/DISTRIBUTED_STATE_ARCHITECTURE.md) | Redis + Postgres distributed state |
 | — | [SECURITY.md](SECURITY.md) | Security policy and controls |
+
+### Platform Architecture (design)
+
+| Document | Description |
+|----------|-------------|
+| [AI Platform](docs/Architecture/AI_PLATFORM.md) | Shared AI gateway, prompts, embeddings, cost, observability |
+| [AI Gap Analysis](docs/Architecture/AI_GAP_ANALYSIS.md) | Implementation maturity vs target (~38%) |
+| [AI Implementation Roadmap](docs/Architecture/AI_IMPLEMENTATION_ROADMAP.md) | 83 PRs: Platform Core + 6 platform waves + AI |
+| [Platform Core](docs/Architecture/PLATFORM_CORE.md) | Shared SDK: org context, products, flags MVP, config, events |
+| [**Talent OS Scope Review**](docs/Architecture/TALENT_OS_SCOPE_REVIEW.md) | **Single-product scope audit — awaiting approval** |
+| [Engineering Execution Plan](docs/Architecture/ENGINEERING_EXECUTION_PLAN.md) | 5 sprints × 3 weeks — PR assignment, release, and demo plan |
+| [Billing Platform](docs/Architecture/BILLING_PLATFORM.md) | SaaS billing: org → subscription → plan → seats → usage → invoice → payments |
+| [Feature Flags Platform](docs/Architecture/FEATURE_FLAGS_PLATFORM.md) | Feature → environment → org → rollout → experiment |
+| [Search Platform](docs/Architecture/SEARCH_PLATFORM.md) | Search → keyword → semantic → hybrid → filters → saved search |
+| [Audit Platform](docs/Architecture/AUDIT_PLATFORM.md) | Actor → action → object → before → after → timestamp → source |
+| [Workflow Platform](docs/Architecture/WORKFLOW_PLATFORM.md) | Lead → opportunity → proposal → project → assignment → QA → delivery → invoice |
 
 ## Enterprise Architecture Highlights
 
@@ -90,8 +106,8 @@ The [enterprise architecture document](docs/11-enterprise-system-architecture.md
 Run all migrations in order against your Supabase project:
 
 ```bash
-supabase db push
-# Migrations 001–021 (see supabase/migrations/)
+SUPABASE_DB_PASSWORD='your-db-password' ./scripts/push-supabase-schema.sh
+# Migrations 001–022 (see supabase/migrations/)
 ```
 
 ## Quick Start (Development)
@@ -105,8 +121,8 @@ npm install
 cp .env.local.example .env.local
 # Fill in Supabase URL, anon key, service role key
 
-# Run Supabase migrations
-supabase db push
+# Run Supabase migrations (requires database password — see docs/21-supabase-connection.md)
+SUPABASE_DB_PASSWORD='your-db-password' ./scripts/push-supabase-schema.sh
 
 # Start dev server
 npm run dev
