@@ -1,16 +1,13 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { ProjectTracker } from '@/components/projects/project-tracker'
 import { AiSummaryCard } from '@/components/ai/ai-summary-card'
 import { StatusAssessmentCard } from '@/components/ai/status-assessment-card'
-import { PageHeader } from '@/modules/core/components/shared/page-header'
-import { Badge } from '@/modules/core/components/ui/badge'
-import { Button } from '@/modules/core/components/ui/button'
 import { runProjectSummary } from '@/app/actions/ai-pm'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
 import { getProjectDetail, mapProjectMilestones } from '@/lib/queries/projects.queries'
+import { listProjectAssignments } from '@/lib/queries/assignment.queries'
 import { getProjectSummaryResult, getStatusAssessmentResult } from '@/lib/queries/ai.queries'
+import { ProjectAssignmentSummary } from '@/modules/assignment/components/project-assignment-summary'
 import type { ProjectStatus } from '@/modules/core/types/enums'
 
 export default async function ProjectDetailPage({
@@ -23,37 +20,30 @@ export default async function ProjectDetailPage({
   const manager = isManager(tenant.role)
 
   const detail = await getProjectDetail(id, tenant.id)
-  if (!detail) notFound()
+  if (!detail) return null
 
-  const { project, milestones, freelancer, activity } = detail
+  const { project, milestones, activity } = detail
   const milestoneRows = mapProjectMilestones(milestones)
 
   const pmData = manager
     ? await Promise.all([
         getProjectSummaryResult(id, tenant.id),
         getStatusAssessmentResult(id, tenant.id),
+        listProjectAssignments(tenant.id, id),
       ])
     : null
 
   return (
     <div>
-      <PageHeader
-        title={project.title}
-        description={freelancer ? `Assigned to ${freelancer.full_name}` : undefined}
-      >
-        <Button asChild variant="outline">
-          <Link href="/projects">All projects</Link>
-        </Button>
-      </PageHeader>
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        <Badge className="capitalize">{project.status}</Badge>
-        {project.client_name ? <Badge variant="outline">{project.client_name}</Badge> : null}
-      </div>
-
       {manager && pmData ? (
-        <div className="mb-6 grid gap-4 lg:grid-cols-2">
-          <AiSummaryCard
+        <>
+          <ProjectAssignmentSummary
+            projectId={project.id}
+            projectFreelancerId={project.freelancer_id}
+            allocations={pmData[2].data}
+          />
+          <div className="mb-6 grid gap-4 lg:grid-cols-2">
+            <AiSummaryCard
             title="AI project summary"
             description="Auto-generated status narrative from milestones and activity."
             actionLabel="Generate summary"
@@ -103,7 +93,8 @@ export default async function ProjectDetailPage({
             initialAssessment={(pmData[1].assessment as Record<string, unknown> | null) ?? null}
             initialRequest={pmData[1].latestRequest}
           />
-        </div>
+          </div>
+        </>
       ) : null}
 
       <ProjectTracker

@@ -17,7 +17,17 @@ import { WorkflowEngineService } from '@/lib/services/workflow-engine.service'
 import { WhatsAppService } from '@/lib/services/whatsapp.service'
 import { KnowledgeService } from '@/lib/services/knowledge.service'
 import { AgentService } from '@/lib/services/agent.service'
+import { OrganizationService } from '@/lib/services/organization.service'
 import { ObservabilityService } from '@/lib/services/observability.service'
+import { CrmDemandService } from '@/lib/services/crm-demand.service'
+import { TalentModuleService } from '@/lib/services/talent-module.service'
+import { ProjectModuleService } from '@/lib/services/project-module.service'
+import { AssignmentModuleService } from '@/lib/services/assignment-module.service'
+import { WorkflowEngineModuleService } from '@/lib/services/workflow-engine-module.service'
+import { WhatsAppPlatformModuleService } from '@/lib/services/whatsapp-platform-module.service'
+import { FinanceModuleService } from '@/lib/services/finance-module.service'
+import { NotificationModuleService } from '@/lib/services/notification-module.service'
+import { AnalyticsModuleService } from '@/lib/services/analytics-module.service'
 
 export interface Services {
   project: ProjectService
@@ -35,10 +45,21 @@ export interface Services {
   notification: NotificationService
   ai: AIService
   integration: IntegrationService
+  organization: OrganizationService
+  crmDemand: CrmDemandService
+  talentModule: TalentModuleService
+  projectModule: ProjectModuleService
+  assignmentModule: AssignmentModuleService
+  workflowEngineModule: WorkflowEngineModuleService
+  whatsappPlatform: WhatsAppPlatformModuleService
+  analyticsModule: AnalyticsModuleService
+  financeModule: FinanceModuleService
+  notificationModule: NotificationModuleService
 }
 
 function buildServices(repos: Repositories): Services {
-  const notification = new NotificationService(repos)
+  const notificationModule = new NotificationModuleService(repos)
+  const notification = new NotificationService(repos, notificationModule)
   const workflow = new WorkflowService(repos, notification)
   const ai = new AIService(repos)
   const crm = new CRMService(repos, notification, workflow)
@@ -52,6 +73,7 @@ function buildServices(repos: Repositories): Services {
 
   let services!: Services
   const workflowEngine = new WorkflowEngineService(repos, async () => services)
+  const financeModule = new FinanceModuleService(repos)
 
   services = {
     notification,
@@ -66,10 +88,34 @@ function buildServices(repos: Repositories): Services {
     talent,
     project,
     assignment: new AssignmentService(repos, notification, workflow),
-    finance: new FinanceService(repos),
+    finance: new FinanceService(repos, financeModule),
     analytics: new AnalyticsService(repos),
     integration,
+    organization: new OrganizationService(repos),
+    crmDemand: new CrmDemandService(repos, notification),
+    talentModule: new TalentModuleService(repos),
+    projectModule: new ProjectModuleService(repos, notification),
+    assignmentModule: new AssignmentModuleService(repos, notification),
+    workflowEngineModule: new WorkflowEngineModuleService(repos, workflowEngine),
+    whatsappPlatform: null as never,
+    analyticsModule: null as never,
   }
+
+  services.whatsappPlatform = new WhatsAppPlatformModuleService(
+    repos,
+    whatsapp,
+    crm,
+    services.projectModule,
+    services.assignmentModule,
+    workflow,
+    services.workflowEngineModule,
+    notification,
+    talent
+  )
+
+  services.analyticsModule = new AnalyticsModuleService(repos, services.analytics)
+  services.financeModule = financeModule
+  services.notificationModule = notificationModule
 
   return services
 }

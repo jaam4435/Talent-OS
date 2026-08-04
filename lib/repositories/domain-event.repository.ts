@@ -60,6 +60,15 @@ export class DomainEventRepository extends BaseRepository {
     return data ?? null
   }
 
+  async findById(eventId: string) {
+    const { data } = await this.ctx.supabase
+      .from('domain_events')
+      .select('*')
+      .eq('id', eventId)
+      .maybeSingle()
+    return data ?? null
+  }
+
   async listPendingForDispatch(limit = 50) {
     const { data, error } = await this.ctx.supabase
       .from('domain_events')

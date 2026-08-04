@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Sparkles, RefreshCw } from 'lucide-react'
-import { runAiTalentMatch } from '@/app/actions/ai'
+import { aiApi } from '@/lib/api/ai-api'
+import { getUserMessageForApiError } from '@/lib/api/user-messages'
 import { broadcastOpportunity } from '@/app/actions/opportunities'
 import { addToShortlist } from '@/app/actions/shortlists'
 import { Button } from '@/modules/core/components/ui/button'
@@ -95,21 +96,19 @@ export function AiMatchPanel({
     setError(null)
     setActionMessage(null)
     startTransition(async () => {
-      const result = await runAiTalentMatch(opportunityId)
-      if (!result.ok) {
-        setError(result.error)
-        return
+      try {
+        const result = await aiApi.runTalentMatch(opportunityId)
+        setLatestRequest({
+          id: result.aiRequestId,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          completedAt: null,
+          result: null,
+        })
+        setTimeout(() => void refreshResults(), 1500)
+      } catch (err) {
+        setError(getUserMessageForApiError(err))
       }
-
-      setLatestRequest({
-        id: result.aiRequestId,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        completedAt: null,
-        result: null,
-      })
-
-      setTimeout(() => void refreshResults(), 1500)
     })
   }
 
@@ -179,7 +178,7 @@ export function AiMatchPanel({
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error ? <p className="text-sm text-destructive">{formatError(error)}</p> : null}
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
         {actionMessage ? <p className="text-sm text-muted-foreground">{actionMessage}</p> : null}
 
         {latestRequest ? (
@@ -280,17 +279,4 @@ export function AiMatchPanel({
       </CardContent>
     </Card>
   )
-}
-
-function formatError(code: string) {
-  switch (code) {
-    case 'AI_MATCHING_DISABLED':
-      return 'AI matching is disabled for your agency. Enable it in settings.'
-    case 'AI_MONTHLY_LIMIT_EXCEEDED':
-      return 'Monthly AI request limit reached. Upgrade your plan or wait until next month.'
-    case 'OPPORTUNITY_NOT_FOUND':
-      return 'Opportunity not found.'
-    default:
-      return code.length < 80 ? code : 'Could not complete action. Please try again.'
-  }
 }
