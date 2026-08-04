@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Bell, LogOut } from 'lucide-react'
 import { RoleBadge } from '@/modules/core/components/auth/role-badge'
 import { Button } from '@/modules/core/components/ui/button'
@@ -22,8 +23,10 @@ export function Header({ session }: HeaderProps) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
+        <Button variant="ghost" size="icon" aria-label="Notifications" asChild>
+          <Link href="/notifications">
+            <Bell className="h-4 w-4" />
+          </Link>
         </Button>
         <form action="/api/auth/signout" method="post">
           <Button variant="outline" size="sm" type="submit">

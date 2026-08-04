@@ -2,6 +2,8 @@ import { type LucideIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 import { cn } from '@/modules/core/utils'
 
+export { EmptyState } from '@/modules/core/components/shared/empty-state'
+
 interface PageHeaderProps {
   title: string
   description?: string
@@ -40,21 +42,5 @@ export function StatCard({ title, value, icon: Icon, className }: StatCardProps)
         <div className="text-2xl font-bold">{value}</div>
       </CardContent>
     </Card>
-  )
-}
-
-interface EmptyStateProps {
-  title: string
-  description: string
-  action?: React.ReactNode
-}
-
-export function EmptyState({ title, description, action }: EmptyStateProps) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
-      {action ? <div className="mt-6">{action}</div> : null}
-    </div>
   )
 }
