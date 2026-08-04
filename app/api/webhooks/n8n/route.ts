@@ -1,8 +1,14 @@
+import { createHash } from 'crypto'
 import { withApiHandler } from '@/modules/core/api/handler'
 import { AppError } from '@/modules/core/api/response'
 import { verifySignature } from '@/lib/integrations/encryption'
 import { assertProductionSecrets, isProduction, requireWebhookSecret } from '@/lib/env'
 import { createAdminServices } from '@/lib/services/factory'
+
+function stableDevIdempotencyKey(payload: unknown): string {
+  const hash = createHash('sha256').update(JSON.stringify(payload)).digest('hex').slice(0, 16)
+  return `n8n:dev:${hash}`
+}
 
 export const POST = withApiHandler(
   { auth: 'none', rateLimit: 'webhook', legacyEnvelope: true },
@@ -19,7 +25,10 @@ export const POST = withApiHandler(
     }
 
     const idempotencyKey =
-      headerKey ?? (payload.event ? `n8n:${payload.event}:dev` : `n8n:unknown:${Date.now()}`)
+      headerKey ??
+      (payload.event
+        ? stableDevIdempotencyKey(payload)
+        : stableDevIdempotencyKey({ unknown: true }))
 
     if (secret && !verifySignature(payload, secret, signature)) {
       throw new AppError('WEBHOOK_INVALID_SIGNATURE', 'Invalid signature', 401)

@@ -1,5 +1,7 @@
 import { BaseRepository } from '@/lib/repositories/base/base.repository'
 import type { Json } from '@/modules/core/types/database'
+import { toPaginatedResult, type PaginatedResult } from '@/lib/repositories/base/types'
+import type { WorkflowJobRecord, WorkflowRunRecord } from '@/modules/workflow-engine/types'
 
 export class WorkflowRepository extends BaseRepository {
   async createRun(input: {
@@ -47,6 +49,79 @@ export class WorkflowRepository extends BaseRepository {
       .eq('id', runId)
       .maybeSingle()
     return data ?? null
+  }
+
+  async listRuns(
+    tenantId: string,
+    options: {
+      page?: number
+      limit?: number
+      status?: string
+      workflowId?: string
+      triggerEventType?: string
+    }
+  ): Promise<PaginatedResult<WorkflowRunRecord>> {
+    const { limit, offset, page } = this.paginate(options)
+
+    let query = this.ctx.supabase
+      .from('workflow_runs')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+
+    if (options.status) query = query.eq('status', options.status)
+    if (options.workflowId) query = query.eq('workflow_id', options.workflowId)
+    if (options.triggerEventType) query = query.eq('trigger_event_type', options.triggerEventType)
+
+    const { data, error, count } = await query.range(offset, offset + limit - 1)
+    this.throwIfError(error)
+
+    return toPaginatedResult(
+      (data ?? []).map((row) => this.mapRunRow(row)),
+      { limit, page },
+      count ?? undefined
+    )
+  }
+
+  async listJobs(
+    tenantId: string,
+    options: {
+      page?: number
+      limit?: number
+      runId?: string
+      status?: string
+      queueName?: string
+    }
+  ): Promise<PaginatedResult<WorkflowJobRecord>> {
+    const { limit, offset, page } = this.paginate(options)
+
+    let query = this.ctx.supabase
+      .from('workflow_jobs')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+
+    if (options.runId) query = query.eq('run_id', options.runId)
+    if (options.status) query = query.eq('status', options.status)
+    if (options.queueName) query = query.eq('queue_name', options.queueName)
+
+    const { data, error, count } = await query.range(offset, offset + limit - 1)
+    this.throwIfError(error)
+
+    return toPaginatedResult(
+      (data ?? []).map((row) => this.mapJobRow(row)),
+      { limit, page },
+      count ?? undefined
+    )
+  }
+
+  async findJobById(jobId: string) {
+    const { data } = await this.ctx.supabase
+      .from('workflow_jobs')
+      .select('*')
+      .eq('id', jobId)
+      .maybeSingle()
+    return data ? this.mapJobRow(data) : null
   }
 
   async updateRunStatus(
@@ -129,7 +204,7 @@ export class WorkflowRepository extends BaseRepository {
     this.throwIfError(error)
   }
 
-  async markJobFailed(jobId: string, errorMessage: string) {
+  async markJobFailed(jobId: string, errorMessage: string): Promise<'failed' | 'dead_letter'> {
     const { data: job } = await this.ctx.supabase
       .from('workflow_jobs')
       .select('retry_count, max_retries')
@@ -154,6 +229,7 @@ export class WorkflowRepository extends BaseRepository {
       .eq('id', jobId)
 
     this.throwIfError(error)
+    return status
   }
 
   async countPendingJobsForRun(runId: string): Promise<number> {
@@ -268,5 +344,51 @@ export class WorkflowRepository extends BaseRepository {
       .in('status', ['failed', 'dead_letter'])
 
     this.throwIfError(error)
+  }
+
+  async getModuleSummary(tenantId: string) {
+    const { data, error } = await this.ctx.supabase.rpc('get_workflow_module_summary', {
+      p_tenant_id: tenantId,
+    })
+    this.throwIfError(error)
+    return (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined
+  }
+
+  private mapRunRow(row: Record<string, unknown>): WorkflowRunRecord {
+    return {
+      id: row.id as string,
+      tenantId: row.tenant_id as string,
+      workflowId: row.workflow_id as string,
+      triggerEventId: (row.trigger_event_id as string | null) ?? null,
+      triggerEventType: row.trigger_event_type as string,
+      status: row.status as string,
+      context: (row.context as Record<string, unknown>) ?? {},
+      currentStepId: (row.current_step_id as string | null) ?? null,
+      correlationId: row.correlation_id as string,
+      startedAt: (row.started_at as string | null) ?? null,
+      completedAt: (row.completed_at as string | null) ?? null,
+      lastError: (row.last_error as string | null) ?? null,
+      createdAt: row.created_at as string,
+    }
+  }
+
+  private mapJobRow(row: Record<string, unknown>): WorkflowJobRecord {
+    return {
+      id: row.id as string,
+      tenantId: row.tenant_id as string,
+      runId: row.run_id as string,
+      stepId: row.step_id as string,
+      queueName: row.queue_name as string,
+      actionType: row.action_type as string,
+      config: (row.config as Record<string, unknown>) ?? {},
+      status: row.status as string,
+      retryCount: row.retry_count as number,
+      maxRetries: row.max_retries as number,
+      lastError: (row.last_error as string | null) ?? null,
+      scheduledAt: row.scheduled_at as string,
+      startedAt: (row.started_at as string | null) ?? null,
+      completedAt: (row.completed_at as string | null) ?? null,
+      createdAt: row.created_at as string,
+    }
   }
 }

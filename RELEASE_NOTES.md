@@ -1,91 +1,90 @@
-# Release Notes — Platform P0 Production Blockers
+# Release Notes — AI Platform Phase B (Security & Integrity)
 
-**Version:** 0.2.0  
-**Date:** July 31, 2026  
-**Branch:** `cursor/p0-production-blockers-5fb1`
+**Version:** 0.3.0  
+**Date:** August 2, 2026  
+**Branch:** `cursor/ai-pr-phase-b-foundation-5fb1`  
+**Roadmap:** [AI_IMPLEMENTATION_ROADMAP.md](./docs/Archive/AI_IMPLEMENTATION_ROADMAP.md) PR-01–PR-09 → [TALENT_OS_IMPLEMENTATION_ROADMAP.md](./docs/Architecture/TALENT_OS_IMPLEMENTATION_ROADMAP.md) T-06–T-11
 
 ## Summary
 
-Eliminates remaining P0 production blockers from the post-hardening gap analysis: distributed state (Redis + Postgres), security scanning CI, RLS integration tests, E2E critical workflow tests, and complete OpenAPI documentation.
+Implements AI Platform Phase B: CI-safe testing, extended AI ledger schema, direct execution default, unified request logging, gateway pipeline refactor, circuit breakers, input guardrails, and PII redaction.
 
-**No UI changes. No breaking API changes.**
-
----
-
-## Distributed State
-
-### Rate limiting (Redis)
-- Replaced in-memory API rate limits with **Upstash Redis** via `@upstash/ratelimit`
-- AI gateway rate limiter now uses the same distributed store
-- WhatsApp webhook rate limiting uses async distributed checks
-- In-memory fallback for dev/CI when Redis is not configured
-
-### Idempotency (PostgreSQL)
-- New migration `021_api_idempotency.sql` — `api_idempotency_responses` table
-- API `Idempotency-Key` header persisted to Postgres (service role)
-- In-memory fallback for tests (`IDEMPOTENCY_STORE=memory`)
-
-### Distributed caching (Redis)
-- `RepositoryCache` replaced with `DistributedCache` (Redis + memory fallback)
-- Dashboard and other cached repository reads share state across instances
+**No breaking API changes.** Existing `getAiGateway()` entry point preserved.
 
 ---
 
-## Security CI
+## T-06 / PR-01 — MockProvider + test harness
 
-| Workflow | Purpose |
-|----------|---------|
-| `.github/workflows/codeql.yml` | CodeQL static analysis (JavaScript/TypeScript) |
-| `.github/workflows/security.yml` | npm audit, Gitleaks secret scan, Trivy filesystem scan |
-| `.github/dependabot.yml` | Weekly dependency and GitHub Actions updates |
+- Added `lib/ai/providers/mock.provider.ts` for deterministic CI output
+- Added `tests/unit/ai/mock-provider.test.ts` (9 tests)
+- Zero live provider calls required in CI
+
+## T-07 / PR-02 — Extended `ai_requests` schema
+
+- Migration `029_ai_requests_extend.sql`
+- New columns: `product_id` (default `talent_os`), `prompt_version`
+- Extended `ai_provider` enum: `gemini`, `openrouter`, `azure_openai`, `mock`
+
+## T-08 / PR-03–04 — Direct execution + agent tagging
+
+- Default async AI path is in-process (`AI_EXECUTION_MODE` unset or not `n8n`)
+- Agent reasoning calls tagged with `feature: 'agent_reasoning'` for ledger/observability
+
+## T-09 / PR-05 — Unified AI ledger
+
+- Gateway accepts `aiRequestId` on requests; updates existing row instead of creating duplicates
+- Async executors pass `aiRequestId` through integrations; token/cost writes removed from executors
+- Single write path: pending row → gateway update
+
+## T-10 / PR-06–07 — Gateway pipeline + circuit breakers
+
+- Refactored gateway into `lib/ai/gateway/gateway.ts` pipeline
+- Redis/memory-backed per-provider circuit breaker (`lib/ai/middleware/circuit-breaker.ts`)
+- Returns 503 when circuit is open
+
+## T-11 / PR-08–09 — Guardrails + PII
+
+- Input guardrails block common injection patterns (`lib/ai/security/guardrails/input.ts`)
+- PII redaction for email, phone, SSN before provider calls (`lib/ai/security/pii/redactor.ts`)
+- Configurable via `AI_GUARDRAILS_ENABLED`, `AI_PII_REDACTION_ENABLED`
+
+---
+
+## Environment variables (new/updated)
+
+```
+AI_EXECUTION_MODE=direct          # default; set n8n for legacy async path
+AI_MOCK_PROVIDER=true             # enable MockProvider (auto in Vitest)
+AI_GUARDRAILS_ENABLED=true        # production default
+AI_PII_REDACTION_ENABLED=true     # production default
+AI_CIRCUIT_BREAKER_ENABLED=true   # production default
+AI_CIRCUIT_BREAKER_THRESHOLD=5    # failures before open
+```
 
 ---
 
 ## Testing
 
-| Suite | Count | Scope |
-|-------|------:|-------|
-| Unit tests | 21+ | Encryption, env, permissions, pagination |
-| Integration tests | 20+ | RLS migrations, idempotency, distributed state |
-| E2E (Playwright) | 10 | Health, OpenAPI, auth guards, webhooks, AI/talent APIs |
+| Suite | Count |
+|-------|------:|
+| Total | 204 |
+| New AI unit tests | 9 |
+| New AI integration checks | 4 |
 
-New scripts: `npm run test:e2e`, `npm run test:all`
-
----
-
-## Documentation
-
-- Complete `docs/openapi.yaml` — all 24 route handlers documented
-- `docs/Platform/DISTRIBUTED_STATE_ARCHITECTURE.md` — architecture diagram
-- `PRODUCTION_CHECKLIST.md` — pre-deploy checklist
-- `docs/Platform/PRODUCTION_READINESS_REPORT.md` — updated readiness assessment
-- Updated `SECURITY.md`, `.env.local.example`, README
+Run: `npm test`
 
 ---
 
-## Environment (new required in production)
+## Upgrade steps
 
-```
-UPSTASH_REDIS_REST_URL=https://...
-UPSTASH_REDIS_REST_TOKEN=...
-```
-
----
-
-## Upgrade Steps
-
-1. Merge this branch to `main`
-2. Create Upstash Redis instance and set env vars in Vercel
-3. Run `supabase db push` (migration 021)
-4. Verify: `npm run test:all && npm run build`
-5. Follow `PRODUCTION_CHECKLIST.md`
+1. Apply migration `029_ai_requests_extend.sql`
+2. Verify `npm test && npm run build`
+3. Confirm `AI_EXECUTION_MODE` is unset or `direct` in production
 
 ---
 
-## Known Remaining Gaps (not P0)
+## Next (Phase C — not in this release)
 
-- MCP tool adapters (feature work)
-- SSO/MFA (feature work)
-- Marketplace (not implemented)
-- Observability dashboard UI
-- Durable job queue replacement for crons
+- T-12: Talent OS AI client (`createAiClient()`)
+- T-13: Prompt platform DB migration
+- T-14: Budget enforcement

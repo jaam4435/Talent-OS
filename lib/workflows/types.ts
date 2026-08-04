@@ -63,6 +63,8 @@ export interface WorkflowDefinition {
   conditions?: WorkflowCondition[]
   queue?: WorkflowQueue
   steps: WorkflowStep[]
+  /** Saga rollback steps executed when a step reaches dead_letter. */
+  compensation?: ActionStep[]
 }
 
 export interface WorkflowTriggerContext {
