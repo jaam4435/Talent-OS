@@ -1,0 +1,23 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cron/dispatch-events",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/process-workflow-jobs",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/check-overdue-milestones",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/evaluate-alerts",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

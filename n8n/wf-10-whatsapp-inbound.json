@@ -1,0 +1,55 @@
+{
+  "name": "WF-10 WhatsApp Response Confirm",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp.response_processed",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT config FROM integration_configs WHERE tenant_id = $1 AND provider = 'whatsapp'",
+        "options": { "queryReplacement": "={{ $json.tenant_id }}" }
+      },
+      "id": "fetch-config",
+      "name": "Fetch WhatsApp Config",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.config.phone_number_id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $json.config.access_token }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Webhook').item.json.data.phone.replace('+','') }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"quick_response_confirm\",\n    \"language\": { \"code\": \"en\" },\n    \"components\": [\n      {\n        \"type\": \"body\",\n        \"parameters\": [\n          { \"type\": \"text\", \"text\": \"{{ $('Webhook').item.json.data.freelancer_name }}\" },\n          { \"type\": \"text\", \"text\": \"{{ $('Webhook').item.json.data.response }}\" }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "id": "send-confirm",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [440, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Fetch WhatsApp Config", "type": "main", "index": 0 }]] },
+    "Fetch WhatsApp Config": { "main": [[{ "node": "Send Confirmation", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "talentos" }, { "name": "whatsapp" }]
+}

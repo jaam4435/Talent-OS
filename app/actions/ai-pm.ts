@@ -1,0 +1,118 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { requireTenant } from '@/modules/core/services/session'
+import { requirePermission } from '@/modules/core/services/permissions'
+import { isManager } from '@/modules/core/services/permissions'
+import { createServices } from '@/lib/services/factory'
+import type { ParsedRequirements } from '@/lib/services/ai.service'
+
+export async function parseRequirementsFromText(input: {
+  title: string
+  description?: string
+  budget?: number
+  currency?: string
+}) {
+  const { tenant } = await requireTenant()
+  if (!isManager(tenant.role)) {
+    return { ok: false as const, error: 'FORBIDDEN' }
+  }
+  requirePermission(tenant.role, 'ai:brief_parse')
+
+  try {
+    const services = await createServices()
+    const result = await services.ai.parseBriefText({
+      title: input.title,
+      description: input.description ?? null,
+      budget: input.budget ?? null,
+      currency: input.currency ?? tenant.currency,
+    })
+
+    return { ok: true as const, requirements: result.requirements, usedFallback: result.usedFallback }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'BRIEF_PARSE_FAILED'
+    return { ok: false as const, error: message }
+  }
+}
+
+export async function runBriefParse(opportunityId: string) {
+  const { tenant, user } = await requireTenant()
+  requirePermission(tenant.role, 'ai:brief_parse')
+
+  try {
+    const services = await createServices()
+    const result = await services.ai.requestBriefParse({
+      tenantId: tenant.id,
+      opportunityId,
+      actorId: user.id,
+    })
+
+    revalidatePath(`/opportunities/${opportunityId}`)
+    return { ok: true as const, ...result }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'BRIEF_PARSE_FAILED'
+    return { ok: false as const, error: message }
+  }
+}
+
+export async function runProjectSummary(projectId: string) {
+  const { tenant, user } = await requireTenant()
+  requirePermission(tenant.role, 'ai:summary')
+
+  try {
+    const services = await createServices()
+    const result = await services.ai.requestProjectSummary({
+      tenantId: tenant.id,
+      projectId,
+      actorId: user.id,
+    })
+
+    revalidatePath(`/projects/${projectId}`)
+    return { ok: true as const, ...result }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'SUMMARY_FAILED'
+    return { ok: false as const, error: message }
+  }
+}
+
+export async function runShortlistSummary(opportunityId: string) {
+  const { tenant, user } = await requireTenant()
+  requirePermission(tenant.role, 'ai:summary')
+
+  try {
+    const services = await createServices()
+    const result = await services.ai.requestShortlistSummary({
+      tenantId: tenant.id,
+      opportunityId,
+      actorId: user.id,
+    })
+
+    revalidatePath(`/opportunities/${opportunityId}/shortlist`)
+    return { ok: true as const, ...result }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'SUMMARY_FAILED'
+    return { ok: false as const, error: message }
+  }
+}
+
+export async function runStatusAssessment(projectId: string) {
+  const { tenant, user } = await requireTenant()
+  requirePermission(tenant.role, 'ai:status')
+
+  try {
+    const services = await createServices()
+    const result = await services.ai.requestStatusAssessment({
+      tenantId: tenant.id,
+      projectId,
+      actorId: user.id,
+    })
+
+    revalidatePath(`/projects/${projectId}`)
+    return { ok: true as const, ...result }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'STATUS_ASSESSMENT_FAILED'
+    return { ok: false as const, error: message }
+  }
+}
+
+export type { ParsedRequirements }

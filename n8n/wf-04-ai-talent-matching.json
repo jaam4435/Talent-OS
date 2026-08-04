@@ -1,0 +1,83 @@
+{
+  "name": "WF-04 AI Talent Matching",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai.match_requested",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TALENTOS_APP_URL }}/api/internal/ai/execute-match",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.TALENTOS_CRON_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"ai_request_id\": \"{{ $json.data.ai_request_id }}\",\n  \"actor_id\": \"{{ $json.actor_id }}\"\n}"
+      },
+      "id": "execute-match",
+      "name": "Execute AI Match",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TALENTOS_CALLBACK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Signature",
+              "value": "=sha256={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "X-Idempotency-Key",
+              "value": "=ai-match-done:{{ $json.data.ai_request_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"ai.match_completed\",\n  \"tenant_id\": \"{{ $('Webhook').item.json.tenant_id }}\",\n  \"correlation_id\": \"{{ $('Webhook').item.json.correlation_id }}\",\n  \"data\": {\n    \"ai_request_id\": \"{{ $('Webhook').item.json.data.ai_request_id }}\",\n    \"opportunity_id\": \"{{ $('Webhook').item.json.data.opportunity_id }}\",\n    \"match_count\": {{ $json.data.matchCount ?? 0 }},\n    \"notification_user_id\": \"{{ $('Webhook').item.json.actor_id }}\",\n    \"message\": \"AI talent matches are ready.\"\n  }\n}"
+      },
+      "id": "callback-app",
+      "name": "Callback TalentOS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Execute AI Match", "type": "main", "index": 0 }]]
+    },
+    "Execute AI Match": {
+      "main": [[{ "node": "Callback TalentOS", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
