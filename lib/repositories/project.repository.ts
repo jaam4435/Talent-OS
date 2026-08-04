@@ -242,4 +242,100 @@ export class ProjectRepository extends BaseRepository {
       revisionCount: milestoneRows.filter((m) => m.status === 'revision').length,
     }
   }
+
+  async findModuleById(projectId: string, tenantId: string): Promise<ProjectRow | null> {
+    const { data } = await this.ctx.supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    return data ?? null
+  }
+
+  async updateModule(projectId: string, tenantId: string, patch: Record<string, unknown>): Promise<ProjectRow> {
+    const { data, error } = await this.ctx.supabase
+      .from('projects')
+      .update(patch as never)
+      .eq('id', projectId)
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .select('*')
+      .single()
+    this.throwIfError(error)
+    this.invalidateTable('projects')
+    if (!data) this.notFound('Project')
+    return data
+  }
+
+  async softDelete(projectId: string, tenantId: string): Promise<void> {
+    const { error } = await this.ctx.supabase
+      .from('projects')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', projectId)
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+    this.throwIfError(error)
+    this.invalidateTable('projects')
+  }
+
+  async listModule(
+    tenantId: string,
+    filters?: {
+      q?: string
+      status?: string
+      priority?: string
+      healthStatus?: string
+      freelancerId?: string
+      companyId?: string
+    },
+    pagination?: PaginationParams
+  ): Promise<PaginatedResult<ProjectRow>> {
+    const { limit, offset, page } = this.paginate(pagination)
+    let query = this.ctx.supabase
+      .from('projects')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+
+    if (filters?.status) query = query.eq('status', filters.status)
+    if (filters?.priority) query = query.eq('priority', filters.priority as never)
+    if (filters?.healthStatus) query = query.eq('health_status', filters.healthStatus as never)
+    if (filters?.freelancerId) query = query.eq('freelancer_id', filters.freelancerId)
+    if (filters?.companyId) query = query.eq('company_id', filters.companyId)
+    if (filters?.q?.trim()) query = query.ilike('title', `%${filters.q.trim()}%`)
+
+    const { data, count, error } = await query.range(offset, offset + limit - 1)
+    this.throwIfError(error)
+    return toPaginatedResult(data ?? [], { limit, page }, count ?? undefined)
+  }
+
+  async computeHealth(projectId: string) {
+    const { data, error } = await this.ctx.supabase.rpc('compute_project_health', {
+      p_project_id: projectId,
+    })
+    this.throwIfError(error)
+    const row = (data as Array<Record<string, unknown>> | null)?.[0]
+    if (!row) {
+      return {
+        health_score: 100,
+        health_status: 'on_track',
+        overdue_milestones: 0,
+        overdue_tasks: 0,
+        blocked_tasks: 0,
+        open_deliverables: 0,
+      }
+    }
+    return row
+  }
+
+  async refreshHealth(projectId: string, tenantId: string): Promise<void> {
+    const health = await this.computeHealth(projectId)
+    await this.updateModule(projectId, tenantId, {
+      health_score: health.health_score,
+      health_status: health.health_status,
+    })
+  }
 }

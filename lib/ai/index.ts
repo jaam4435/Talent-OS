@@ -22,6 +22,8 @@ export {
   AiFeatureDisabledError,
   AiConfigurationError,
   AiStructuredParseError,
+  AiGuardrailError,
+  AiCircuitOpenError,
   isAiGatewayError,
   isRetryableAiError,
 } from '@/lib/ai/errors'
@@ -62,6 +64,7 @@ export {
   AnthropicProvider,
   GeminiProvider,
   OpenRouterProvider,
+  MockProvider,
 } from '@/lib/ai/providers'
 
 export type { AiProviderInterface } from '@/lib/ai/providers/interface'

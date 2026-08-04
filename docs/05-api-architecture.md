@@ -50,118 +50,68 @@
 
 ## 3. Route Handlers (`/app/api/`)
 
-### 3.1 Authentication
+**Canonical HTTP catalog:** [`docs/openapi.yaml`](./openapi.yaml) (served at `GET /api/openapi`).
 
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| `POST` | `/api/auth/callback` | OAuth/magic link callback | Public |
-| `POST` | `/api/auth/invite` | Accept team invite | Invite token |
-| `GET` | `/api/auth/session` | Current session + tenant context | Session |
+Domain CRUD (talent, opportunities, projects, milestones, payments) is implemented via **Server Actions** in `app/actions/`, not REST route handlers.
 
-### 3.2 Tenants
+### 3.1 Implemented REST routes (24 core + 15 organization = 39 route files)
 
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `POST` | `/api/tenants` | Create agency workspace | Public (signup) |
-| `GET` | `/api/tenants/[slug]` | Get tenant by slug | Member |
-| `PATCH` | `/api/tenants/[id]` | Update settings | Admin |
-| `POST` | `/api/tenants/[id]/invite` | Invite team member | Admin |
+| Method | Endpoint | Auth | Notes |
+|--------|----------|------|-------|
+| `GET` | `/api/health` | Public | Liveness probe |
+| `GET` | `/api/openapi` | Public | OpenAPI spec |
+| `GET` | `/api/auth/session` | Optional session | Current user + tenant |
+| `GET` | `/api/auth/callback` | Public | OAuth/magic link redirect |
+| `POST` | `/api/auth/signout` | Public | Sign out + redirect |
+| `GET` | `/api/auth/invite/[token]` | Public | Invite preview |
+| `GET` | `/api/talent/search` | Tenant (manager) | Roster search |
+| `POST` | `/api/ai/match` | Tenant + `ai:match` | Idempotent AI match |
+| `GET` | `/api/ai/match/[opportunityId]` | Tenant + `ai:match` | Match status |
+| `GET` | `/api/ai/pm/[entityType]/[entityId]` | Tenant | AI PM results |
+| `GET` | `/api/analytics/dashboard` | Manager + `analytics:read` | Dashboard metrics |
+| `GET` | `/api/team/members` | Admin | Team listing |
+| `GET` | `/api/observability/dashboard` | Manager | Ops dashboard |
+| `GET` | `/api/observability/alerts` | Manager | Open alerts |
+| `GET` | `/api/observability/logs` | Manager | Structured logs |
+| `GET` | `/api/observability/traces/[correlationId]` | Manager | Trace spans |
+| `GET` | `/api/cron/dispatch-events` | Cron secret | Event dispatcher |
+| `GET` | `/api/cron/process-workflow-jobs` | Cron secret | Workflow jobs |
+| `GET` | `/api/cron/check-overdue-milestones` | Cron secret | Overdue milestones |
+| `GET` | `/api/cron/evaluate-alerts` | Cron secret | Alert evaluation |
+| `POST` | `/api/internal/ai/execute` | Cron secret | AI worker |
+| `POST` | `/api/internal/ai/execute-match` | Cron secret | Match worker |
+| `POST` | `/api/webhooks/n8n` | HMAC + idempotency key | n8n callbacks |
+| `GET` | `/api/webhooks/whatsapp` | Meta verify token | Webhook verification |
+| `POST` | `/api/webhooks/whatsapp` | HMAC signature | Inbound WhatsApp |
 
-### 3.3 Freelancers (Talent)
+**Organization module** (`/api/organization/*`) — see [ORGANIZATION_MODULE.md](./Architecture/ORGANIZATION_MODULE.md):
 
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/freelancers` | List/search talent | Manager |
-| `POST` | `/api/freelancers` | Create profile | Manager |
-| `GET` | `/api/freelancers/[id]` | Get profile | Manager, Self |
-| `PATCH` | `/api/freelancers/[id]` | Update profile | Manager, Self* |
-| `DELETE` | `/api/freelancers/[id]` | Remove talent | Manager |
-| `POST` | `/api/freelancers/import` | CSV bulk import | Manager |
-| `GET` | `/api/freelancers/suggest` | Suggest for opportunity | Manager |
+| Method | Endpoint | Auth | Notes |
+|--------|----------|------|-------|
+| `GET` / `PATCH` | `/api/organization` | Tenant / Admin | Profile + settings |
+| `GET` / `PATCH` | `/api/organization/branding` | Tenant / Admin | Logo + colors |
+| `GET` / `PATCH` | `/api/organization/settings` | Tenant / Admin | Business hours |
+| `GET` | `/api/organization/subscription` | Admin + billing | External billing ref |
+| `GET` | `/api/organization/permissions` | Tenant | Role → permission map |
+| `GET` / `POST` | `/api/organization/departments` | Manager | Paginated CRUD |
+| `GET` / `PATCH` / `DELETE` | `/api/organization/departments/[id]` | Manager | Soft delete |
+| `GET` / `POST` | `/api/organization/teams` | Manager | Paginated CRUD |
+| `GET` / `PATCH` / `DELETE` | `/api/organization/teams/[id]` | Manager | Soft delete |
+| `GET` / `POST` / `DELETE` | `/api/organization/teams/[id]/members` | Manager | Team membership |
+| `GET` | `/api/organization/members` | Admin | Paginated, filter, search |
+| `GET` / `PATCH` / `DELETE` | `/api/organization/members/[id]` | Admin | Role, suspend, remove |
+| `GET` / `POST` | `/api/organization/invitations` | Admin | Idempotent create |
+| `DELETE` | `/api/organization/invitations/[id]` | Admin | Revoke |
+| `GET` | `/api/organization/audit-logs` | Admin | Before/after audit trail |
 
-*Self: cannot update `internal_rating`, `internal_notes`
+### 3.2 Planned REST (not implemented)
 
-### 3.4 Opportunities
+The sections below describe a **future public API surface**. Today these operations use Server Actions:
 
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/opportunities` | List opportunities | Manager, Freelancer* |
-| `POST` | `/api/opportunities` | Create opportunity | Manager |
-| `GET` | `/api/opportunities/[id]` | Get detail + recipients | Manager, Freelancer* |
-| `PATCH` | `/api/opportunities/[id]` | Update opportunity | Manager |
-| `POST` | `/api/opportunities/[id]/broadcast` | Broadcast to talent | Manager |
-| `POST` | `/api/opportunities/[id]/respond` | Freelancer response | Freelancer |
-
-*Freelancer: only own recipients
-
-### 3.5 Shortlists
-
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/shortlists/[opportunityId]` | Get shortlist | Manager |
-| `POST` | `/api/shortlists/[opportunityId]/items` | Add to shortlist | Manager |
-| `PATCH` | `/api/shortlists/items/[id]` | Update rank/notes | Manager |
-| `DELETE` | `/api/shortlists/items/[id]` | Remove/reject | Manager |
-
-### 3.6 Projects
-
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/projects` | List projects | Manager, Freelancer* |
-| `POST` | `/api/projects` | Assign from shortlist | Manager |
-| `GET` | `/api/projects/[id]` | Project detail | Manager, Freelancer* |
-| `PATCH` | `/api/projects/[id]` | Update status | Manager |
-| `GET` | `/api/projects/[id]/activity` | Activity log | Manager, Freelancer* |
-
-### 3.7 Milestones
-
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `POST` | `/api/projects/[id]/milestones` | Add milestone | Manager |
-| `PATCH` | `/api/milestones/[id]` | Update milestone | Manager, Freelancer* |
-| `POST` | `/api/milestones/[id]/submit` | Submit deliverable | Freelancer |
-| `POST` | `/api/milestones/[id]/review` | Approve/revision | Manager |
-
-*Freelancer: submit only; cannot approve
-
-### 3.8 Payments
-
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/payments` | List payments | Admin, Manager, Freelancer* |
-| `PATCH` | `/api/payments/[id]/approve` | Approve payment | Admin |
-| `PATCH` | `/api/payments/[id]/pay` | Mark as paid | Admin |
-| `PATCH` | `/api/payments/[id]/dispute` | Dispute payment | Admin, Freelancer |
-| `GET` | `/api/payments/export` | CSV export | Admin |
-
-*Freelancer: own payments only
-
-### 3.9 Analytics
-
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/analytics/dashboard` | Summary metrics | Admin, Manager |
-| `GET` | `/api/analytics/fill-rate` | Fill rate over time | Admin, Manager |
-| `GET` | `/api/analytics/utilization` | Talent utilization | Admin, Manager |
-| `GET` | `/api/analytics/payments` | Payment aging | Admin |
-
-### 3.10 Integrations (Webhooks)
-
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| `POST` | `/api/webhooks/n8n` | n8n callback events | HMAC signature |
-| `POST` | `/api/webhooks/whatsapp` | WhatsApp inbound messages | Meta verify token |
-| `GET` | `/api/webhooks/whatsapp` | WhatsApp webhook verification | Meta challenge |
-| `POST` | `/api/integrations/whatsapp/test` | Send test message | Admin |
-| `PATCH` | `/api/integrations/[provider]` | Save integration config | Admin |
-
-### 3.11 Notifications
-
-| Method | Endpoint | Description | Role |
-|---|---|---|---|
-| `GET` | `/api/notifications` | List notifications | Authenticated |
-| `PATCH` | `/api/notifications/[id]/read` | Mark as read | Authenticated |
-| `POST` | `/api/notifications/read-all` | Mark all read | Authenticated |
+- Tenants, freelancers CRUD, opportunities, shortlists, projects, milestones
+- Payment approve/pay → `app/actions/payments.ts` (admin Server Actions)
+- Analytics sub-routes (fill-rate, utilization, payment aging)
+- Integration config routes, notification REST API
 
 ---
 
@@ -169,31 +119,25 @@
 
 Server Actions handle form-based mutations with automatic revalidation.
 
-```typescript
-// app/actions/freelancers.ts
-'use server'
+**Implemented modules** (`app/actions/`):
 
-export async function createFreelancer(formData: FormData) { ... }
-export async function updateFreelancer(id: string, data: UpdateFreelancerInput) { ... }
-export async function deleteFreelancer(id: string) { ... }
+| File | Domain |
+|------|--------|
+| `auth.ts` | Sign up, login, invite acceptance |
+| `freelancers.ts` | Talent CRUD |
+| `opportunities.ts` | Opportunities + broadcast |
+| `shortlists.ts` | Shortlist management |
+| `projects.ts` | Project assignment + status |
+| `milestones.ts` | Submit + review milestones |
+| `payments.ts` | Approve + mark paid (admin) |
+| `companies.ts` | CRM companies |
+| `portfolio.ts` | Talent portfolio |
+| `approvals.ts` | Workflow approvals |
+| `ai.ts` / `ai-pm.ts` | AI matching + PM |
+| `knowledge.ts` | Knowledge base |
+| `agents.ts` | Agent runs |
 
-// app/actions/opportunities.ts
-export async function createOpportunity(data: CreateOpportunityInput) { ... }
-export async function broadcastOpportunity(id: string, freelancerIds: string[]) { ... }
-export async function respondToOpportunity(recipientId: string, response: 'interested' | 'declined', note?: string) { ... }
-
-// app/actions/projects.ts
-export async function assignProject(data: AssignProjectInput) { ... }
-export async function updateProjectStatus(id: string, status: ProjectStatus) { ... }
-
-// app/actions/milestones.ts
-export async function submitMilestone(id: string, files: File[], note?: string) { ... }
-export async function reviewMilestone(id: string, action: 'approve' | 'revision', note?: string) { ... }
-
-// app/actions/payments.ts
-export async function approvePayment(id: string) { ... }
-export async function markPaymentPaid(id: string, reference: string) { ... }
-```
+Platform patterns (auth modes, rate limits, error codes): see [`docs/Platform/API_STANDARDIZATION.md`](./Platform/API_STANDARDIZATION.md).
 
 ---
 
@@ -223,11 +167,13 @@ export async function markPaymentPaid(id: string, reference: string) { ... }
 | Code | HTTP Status | Description |
 |---|---|---|
 | `UNAUTHORIZED` | 401 | No valid session |
-| `FORBIDDEN` | 403 | Insufficient role |
+| `FORBIDDEN` | 403 | Insufficient role or permission |
 | `NOT_FOUND` | 404 | Resource not found or not in tenant |
-| `VALIDATION_ERROR` | 422 | Invalid input |
-| `CONFLICT` | 409 | Duplicate or state conflict |
+| `VALIDATION_ERROR` | 400 | Invalid input |
+| `DUPLICATE` | 409 | Duplicate resource |
+| `IDEMPOTENCY_CONFLICT` | 409 | Idempotency key reuse with different body |
 | `RATE_LIMITED` | 429 | Too many requests |
+| `WEBHOOK_INVALID_SIGNATURE` | 401 | Webhook HMAC failed |
 | `INTERNAL_ERROR` | 500 | Unexpected server error |
 
 ### 5.3 Pagination

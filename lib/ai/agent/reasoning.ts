@@ -151,8 +151,7 @@ export class AgentReasoningEngine {
             maxTokens: policy.maxTokens,
             tenantId,
             correlationId: context.correlationId,
-            entityType: undefined,
-            entityId: undefined,
+            feature: 'agent_reasoning',
             promptId: context.instructions.promptId,
             promptVersion: context.instructions.version,
             schema: REASONING_RESPONSE_SCHEMA,
@@ -169,6 +168,7 @@ export class AgentReasoningEngine {
             maxTokens: policy.maxTokens,
             tenantId,
             correlationId: context.correlationId,
+            feature: 'agent_reasoning',
             promptId: context.instructions.promptId,
             promptVersion: context.instructions.version,
           })
