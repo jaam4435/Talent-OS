@@ -52,6 +52,19 @@ export class MatchScoreRepository extends BaseRepository {
     return data ?? []
   }
 
+  async listByFreelancer(freelancerId: string, tenantId: string, limit = 10) {
+    const { data } = await this.ctx.supabase
+      .from('talent_match_scores')
+      .select(
+        'id, opportunity_id, score, rationale, skill_overlap, rank, created_at, opportunities(title, status)'
+      )
+      .eq('freelancer_id', freelancerId)
+      .eq('tenant_id', tenantId)
+      .order('score', { ascending: false })
+      .limit(limit)
+    return data ?? []
+  }
+
   async upsertScores(
     rows: Array<{
       tenant_id: string

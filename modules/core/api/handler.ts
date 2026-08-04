@@ -242,7 +242,70 @@ export function withApiHandler<T>(
   }
 }
 
-/** Catch-all error wrapper for routes that cannot use withApiHandler (e.g. redirects). */
+/** Instrumented wrapper for routes that cannot use withApiHandler (redirects, plain-text). */
+export async function runInstrumentedRoute(
+  request: Request,
+  options: { path: string; rateLimit?: RateLimitCategory; method?: string },
+  fn: () => Promise<NextResponse>
+): Promise<NextResponse> {
+  const ctx = createRequestContext(request)
+  const startedAt = Date.now()
+  const traceIds = createTraceIds()
+  const method = options.method ?? request.method
+
+  try {
+    if (options.rateLimit) {
+      const key = rateLimitKey({
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        ip: clientIp(request),
+      })
+      const rl = await checkRateLimit(key, options.rateLimit)
+      if (!rl.allowed) {
+        throw new AppError('RATE_LIMITED', 'Too many requests', 429)
+      }
+    }
+
+    const response = await fn()
+
+    instrumentApiRequest({
+      method,
+      path: options.path,
+      status: response.status,
+      durationMs: Date.now() - startedAt,
+      context: {
+        tenantId: ctx.tenantId,
+        correlationId: ctx.correlationId,
+        requestId: ctx.requestId,
+        traceId: traceIds.traceId,
+        spanId: traceIds.spanId,
+        userId: ctx.userId,
+      },
+    })
+
+    return response
+  } catch (err) {
+    const mapped = mapToAppError(err)
+    instrumentApiRequest({
+      method,
+      path: options.path,
+      status: mapped.status,
+      durationMs: Date.now() - startedAt,
+      context: {
+        tenantId: ctx.tenantId,
+        correlationId: ctx.correlationId,
+        requestId: ctx.requestId,
+        traceId: traceIds.traceId,
+        spanId: traceIds.spanId,
+        userId: ctx.userId,
+      },
+      errorCode: mapped.code,
+    })
+    return handleApiError(err, ctx)
+  }
+}
+
+/** @deprecated Use runInstrumentedRoute */
 export async function runApiRoute(fn: () => Promise<NextResponse>): Promise<NextResponse> {
   const ctx = createRequestContext(new Request('http://localhost'))
   try {
