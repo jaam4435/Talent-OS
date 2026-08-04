@@ -29,7 +29,7 @@ async function legacyDispatch(event: {
   correlation_id: string
   idempotency_key: string
 }): Promise<{ ok: boolean; error?: string }> {
-  const directAiMode = process.env.AI_EXECUTION_MODE === 'direct'
+  const directAiMode = process.env.AI_EXECUTION_MODE !== 'n8n'
 
   if (directAiMode && DIRECT_AI_EVENTS.has(event.event_type)) {
     const aiRequestId = event.payload?.ai_request_id

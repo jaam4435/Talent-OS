@@ -1,4 +1,10 @@
-export type AiProvider = 'openai' | 'claude'
+export type AiProvider =
+  | 'openai'
+  | 'claude'
+  | 'gemini'
+  | 'openrouter'
+  | 'azure_openai'
+  | 'mock'
 export type AiRequestStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export type AiRequestType =
   | 'talent_match'
@@ -7,6 +13,7 @@ export type AiRequestType =
   | 'digest'
   | 'project_summary'
   | 'status_assessment'
+  | 'agent_reasoning'
 
 export interface TalentMatchCandidate {
   id: string
