@@ -47,7 +47,10 @@ async function fetchProjectSummaryContext(projectId: string) {
   return services.project.findSummaryContext(projectId)
 }
 
-export async function generateProjectSummary(projectId: string): Promise<ProjectSummaryResult> {
+export async function generateProjectSummary(
+  projectId: string,
+  options?: { tenantId?: string; aiRequestId?: string }
+): Promise<ProjectSummaryResult> {
   const context = await fetchProjectSummaryContext(projectId)
   if (!context) throw new Error('PROJECT_NOT_FOUND')
 
@@ -72,6 +75,11 @@ export async function generateProjectSummary(projectId: string): Promise<Project
       system,
       user,
       schema: PROJECT_SUMMARY_SCHEMA,
+      tenantId: options?.tenantId,
+      feature: 'project_summary',
+      promptId: 'project_summary',
+      promptVersion: '1.0.0',
+      aiRequestId: options?.aiRequestId,
     })
 
     return {
@@ -109,7 +117,10 @@ export async function executeProjectSummary(aiRequestId: string) {
 
   await updateAiRequest(aiRequestId, { status: 'processing' })
 
-  const result = await generateProjectSummary(projectId)
+  const result = await generateProjectSummary(projectId, {
+    tenantId: aiRequest.tenant_id,
+    aiRequestId,
+  })
 
   await services.project.updateAiSummary(projectId, {
     summary_text: result.summaryText,
@@ -121,7 +132,6 @@ export async function executeProjectSummary(aiRequestId: string) {
 
   await updateAiRequest(aiRequestId, {
     status: 'completed',
-    durationMs: Date.now() - startedAt,
     result: {
       summary_text: result.summaryText,
       highlights: result.highlights,
@@ -228,6 +238,11 @@ export async function executeShortlistSummary(aiRequestId: string) {
         system: SHORTLIST_SUMMARY_SYSTEM,
         user: JSON.stringify(promptInput, null, 2),
         schema: SHORTLIST_SUMMARY_SCHEMA,
+        tenantId: aiRequest.tenant_id,
+        feature: 'shortlist_summary',
+        promptId: 'shortlist_summary',
+        promptVersion: '1.0.0',
+        aiRequestId,
       })
 
       summaryText = data.summary_text
@@ -252,7 +267,6 @@ export async function executeShortlistSummary(aiRequestId: string) {
 
   await updateAiRequest(aiRequestId, {
     status: 'completed',
-    durationMs: Date.now() - startedAt,
     result: {
       summary_text: summaryText,
       comparison_points: comparisonPoints,

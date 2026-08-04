@@ -2,44 +2,63 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  BarChart3,
-  Briefcase,
-  CreditCard,
-  LayoutDashboard,
-  Megaphone,
-  Settings,
-  UserCircle,
-  Users,
-} from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { cn } from '@/modules/core/utils'
 import { APP_NAME } from '@/modules/core/utils/constants'
 import type { UserRole } from '@/modules/core/types/enums'
-
-const navItems: Array<{
-  href: string
-  label: string
-  icon: typeof LayoutDashboard
-  roles: UserRole[]
-}> = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'talent_manager', 'freelancer', 'client'] },
-  { href: '/profile', label: 'My profile', icon: UserCircle, roles: ['freelancer'] },
-  { href: '/talent', label: 'Talent', icon: Users, roles: ['admin', 'talent_manager'] },
-  { href: '/opportunities', label: 'Opportunities', icon: Megaphone, roles: ['admin', 'talent_manager', 'freelancer', 'client'] },
-  { href: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'talent_manager', 'freelancer', 'client'] },
-  { href: '/payments', label: 'Payments', icon: CreditCard, roles: ['admin', 'talent_manager', 'freelancer'] },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin', 'talent_manager'] },
-  { href: '/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
-]
+import {
+  getActiveNavGroupIds,
+  getNavGroupsForRole,
+  isNavItemActive,
+  type NavItemConfig,
+} from '@/modules/core/components/navigation/nav-config'
 
 interface SidebarProps {
   role: UserRole
   tenantName: string
 }
 
+function NavLink({ item, pathname }: { item: NavItemConfig; pathname: string }) {
+  const Icon = item.icon
+  const active = isNavItemActive(pathname, item.href)
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+        active
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {item.label}
+    </Link>
+  )
+}
+
 export function Sidebar({ role, tenantName }: SidebarProps) {
   const pathname = usePathname()
-  const items = navItems.filter((item) => item.roles.includes(role))
+  const groups = useMemo(() => getNavGroupsForRole(role), [role])
+  const activeGroupIds = useMemo(() => getActiveNavGroupIds(pathname, role), [pathname, role])
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  function isGroupExpanded(groupId: string) {
+    if (expanded[groupId] !== undefined) return expanded[groupId]
+    return activeGroupIds.includes(groupId)
+  }
+
+  function toggleGroup(groupId: string) {
+    setExpanded((current) => ({
+      ...current,
+      [groupId]: !isGroupExpanded(groupId),
+    }))
+  }
+
+  const homeGroup = groups.find((group) => group.id === 'home')
+  const sectionGroups = groups.filter((group) => group.id !== 'home')
 
   return (
     <aside className="flex h-full w-64 flex-col border-r bg-card">
@@ -51,24 +70,38 @@ export function Sidebar({ role, tenantName }: SidebarProps) {
           <p className="truncate text-sm font-semibold">{tenantName}</p>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 p-4">
-        {items.map((item) => {
-          const Icon = item.icon
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+      <nav className="flex-1 space-y-4 overflow-y-auto p-4">
+        {homeGroup ? (
+          <div className="space-y-1">
+            {homeGroup.items.map((item) => (
+              <NavLink key={item.id} item={item} pathname={pathname} />
+            ))}
+          </div>
+        ) : null}
+
+        {sectionGroups.map((group) => {
+          const open = isGroupExpanded(group.id)
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
+            <div key={group.id}>
+              <button
+                type="button"
+                onClick={() => toggleGroup(group.id)}
+                className="flex w-full items-center justify-between px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              >
+                {group.label}
+                <ChevronDown
+                  className={cn('h-4 w-4 transition-transform', open && 'rotate-180')}
+                  aria-hidden
+                />
+              </button>
+              {open ? (
+                <div className="mt-1 space-y-1">
+                  {group.items.map((item) => (
+                    <NavLink key={item.id} item={item} pathname={pathname} />
+                  ))}
+                </div>
+              ) : null}
+            </div>
           )
         })}
       </nav>

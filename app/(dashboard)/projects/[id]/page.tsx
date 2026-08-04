@@ -10,7 +10,9 @@ import { runProjectSummary } from '@/app/actions/ai-pm'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
 import { getProjectDetail, mapProjectMilestones } from '@/lib/queries/projects.queries'
+import { listProjectAssignments } from '@/lib/queries/assignment.queries'
 import { getProjectSummaryResult, getStatusAssessmentResult } from '@/lib/queries/ai.queries'
+import { ProjectAssignmentSummary } from '@/modules/assignment/components/project-assignment-summary'
 import type { ProjectStatus } from '@/modules/core/types/enums'
 
 export default async function ProjectDetailPage({
@@ -32,6 +34,7 @@ export default async function ProjectDetailPage({
     ? await Promise.all([
         getProjectSummaryResult(id, tenant.id),
         getStatusAssessmentResult(id, tenant.id),
+        listProjectAssignments(tenant.id, id),
       ])
     : null
 
@@ -52,8 +55,14 @@ export default async function ProjectDetailPage({
       </div>
 
       {manager && pmData ? (
-        <div className="mb-6 grid gap-4 lg:grid-cols-2">
-          <AiSummaryCard
+        <>
+          <ProjectAssignmentSummary
+            projectId={project.id}
+            projectFreelancerId={project.freelancer_id}
+            allocations={pmData[2].data}
+          />
+          <div className="mb-6 grid gap-4 lg:grid-cols-2">
+            <AiSummaryCard
             title="AI project summary"
             description="Auto-generated status narrative from milestones and activity."
             actionLabel="Generate summary"
@@ -103,7 +112,8 @@ export default async function ProjectDetailPage({
             initialAssessment={(pmData[1].assessment as Record<string, unknown> | null) ?? null}
             initialRequest={pmData[1].latestRequest}
           />
-        </div>
+          </div>
+        </>
       ) : null}
 
       <ProjectTracker
