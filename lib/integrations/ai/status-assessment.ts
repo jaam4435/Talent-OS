@@ -57,7 +57,10 @@ async function fetchStatusContext(projectId: string) {
   return services.project.findStatusContext(projectId)
 }
 
-export async function generateStatusAssessment(projectId: string): Promise<StatusAssessmentResult> {
+export async function generateStatusAssessment(
+  projectId: string,
+  options?: { tenantId?: string; aiRequestId?: string }
+): Promise<StatusAssessmentResult> {
   const context = await fetchStatusContext(projectId)
   if (!context) throw new Error('PROJECT_NOT_FOUND')
 
@@ -80,6 +83,11 @@ export async function generateStatusAssessment(projectId: string): Promise<Statu
       system,
       user,
       schema: STATUS_ASSESSMENT_SCHEMA,
+      tenantId: options?.tenantId,
+      feature: 'status_assessment',
+      promptId: 'status_assessment',
+      promptVersion: '1.0.0',
+      aiRequestId: options?.aiRequestId,
     })
 
     return {
@@ -114,7 +122,10 @@ export async function executeStatusAssessment(aiRequestId: string, actorId?: str
 
   await updateAiRequest(aiRequestId, { status: 'processing' })
 
-  const result = await generateStatusAssessment(projectId)
+  const result = await generateStatusAssessment(projectId, {
+    tenantId: aiRequest.tenant_id,
+    aiRequestId,
+  })
 
   await services.project.updateStatusAssessment(projectId, {
     risk_level: result.riskLevel,
@@ -126,7 +137,6 @@ export async function executeStatusAssessment(aiRequestId: string, actorId?: str
 
   await updateAiRequest(aiRequestId, {
     status: 'completed',
-    durationMs: Date.now() - startedAt,
     result: {
       risk_level: result.riskLevel,
       suggested_status: result.suggestedStatus,
