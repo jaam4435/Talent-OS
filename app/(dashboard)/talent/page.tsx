@@ -1,17 +1,74 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { Button } from '@/modules/core/components/ui/button'
 import { Badge } from '@/modules/core/components/ui/badge'
-import { EmptyState, PageHeader } from '@/modules/core/components/shared/page-header'
+import { BreadcrumbNav } from '@/modules/core/components/navigation/breadcrumb-nav'
+import { DataTable, type DataTableColumn } from '@/modules/core/components/shared/data-table'
+import { EmptyState } from '@/modules/core/components/shared/empty-state'
+import { PageHeader } from '@/modules/core/components/shared/page-header'
+import { TalentPagination } from '@/components/talent/talent-pagination'
 import { TalentSearchFilters } from '@/components/talent/talent-search-filters'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
-import { searchTalentRoster } from '@/lib/queries/talent.queries'
+import { searchTalentRoster, type TalentRow } from '@/lib/queries/talent.queries'
 import { formatCurrency } from '@/modules/core/utils/format'
 import { notFound } from 'next/navigation'
 
 export const metadata = { title: 'Talent' }
+
+const talentColumns: DataTableColumn<TalentRow>[] = [
+  {
+    id: 'name',
+    header: 'Name',
+    cell: (freelancer) => (
+      <>
+        <Link href={`/talent/${freelancer.id}`} className="font-medium hover:underline">
+          {freelancer.full_name}
+        </Link>
+        <p className="text-muted-foreground">{freelancer.email}</p>
+      </>
+    ),
+  },
+  {
+    id: 'skills',
+    header: 'Skills',
+    cell: (freelancer) => (
+      <div className="flex max-w-xs flex-wrap gap-1">
+        {(freelancer.skills ?? []).slice(0, 4).map((skill: string) => (
+          <Badge key={skill} variant="outline" className="text-xs">
+            {skill}
+          </Badge>
+        ))}
+      </div>
+    ),
+  },
+  {
+    id: 'discipline',
+    header: 'Discipline',
+    cell: (freelancer) => <span className="capitalize">{freelancer.discipline}</span>,
+  },
+  {
+    id: 'rate',
+    header: 'Rate',
+    cell: (freelancer) =>
+      freelancer.day_rate ? formatCurrency(Number(freelancer.day_rate), freelancer.currency) : '—',
+  },
+  {
+    id: 'availability',
+    header: 'Availability',
+    cell: (freelancer) => (
+      <Badge variant="secondary" className="capitalize">
+        {freelancer.availability}
+      </Badge>
+    ),
+  },
+  {
+    id: 'rating',
+    header: 'Rating',
+    cell: (freelancer) => freelancer.internal_rating ?? '—',
+  },
+]
 
 export default async function TalentPage({
   searchParams,
@@ -35,8 +92,17 @@ export default async function TalentPage({
     offset,
   })
 
+  const hasMore = freelancers.length === limit
+
   return (
     <div>
+      <BreadcrumbNav
+        items={[
+          { label: 'Supply', href: '/talent' },
+          { label: 'Talent roster' },
+        ]}
+      />
+
       <PageHeader title="Talent" description="Manage your freelancer roster">
         <Button asChild>
           <Link href="/talent/new">
@@ -52,6 +118,7 @@ export default async function TalentPage({
 
       {!freelancers.length ? (
         <EmptyState
+          icon={Users}
           title="No freelancers found"
           description="Try adjusting filters or add your first freelancer."
           action={
@@ -61,51 +128,16 @@ export default async function TalentPage({
           }
         />
       ) : (
-        <div className="rounded-lg border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50 text-left">
-                <th className="p-4 font-medium">Name</th>
-                <th className="p-4 font-medium">Skills</th>
-                <th className="p-4 font-medium">Discipline</th>
-                <th className="p-4 font-medium">Rate</th>
-                <th className="p-4 font-medium">Availability</th>
-                <th className="p-4 font-medium">Rating</th>
-              </tr>
-            </thead>
-            <tbody>
-              {freelancers.map((f) => (
-                <tr key={f.id} className="border-b last:border-0">
-                  <td className="p-4">
-                    <Link href={`/talent/${f.id}`} className="font-medium hover:underline">
-                      {f.full_name}
-                    </Link>
-                    <p className="text-muted-foreground">{f.email}</p>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex max-w-xs flex-wrap gap-1">
-                      {(f.skills ?? []).slice(0, 4).map((skill: string) => (
-                        <Badge key={skill} variant="outline" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4 capitalize">{f.discipline}</td>
-                  <td className="p-4">
-                    {f.day_rate ? formatCurrency(Number(f.day_rate), f.currency) : '—'}
-                  </td>
-                  <td className="p-4">
-                    <Badge variant="secondary" className="capitalize">
-                      {f.availability}
-                    </Badge>
-                  </td>
-                  <td className="p-4">{f.internal_rating ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <DataTable
+            columns={talentColumns}
+            data={freelancers}
+            getRowKey={(row) => row.id}
+          />
+          <Suspense fallback={null}>
+            <TalentPagination page={page} hasMore={hasMore} />
+          </Suspense>
+        </>
       )}
     </div>
   )

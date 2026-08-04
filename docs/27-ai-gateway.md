@@ -10,17 +10,23 @@
 ```
 /lib/ai/
 ├── index.ts                 # Public API — import from here
-├── gateway.ts               # AiGateway orchestrator
+├── gateway.ts               # Singleton + callAiStructured
+├── gateway/
+│   └── gateway.ts           # Pipeline-based AiGateway
 ├── types.ts                 # Shared gateway types
 ├── errors.ts                # Gateway error hierarchy
 ├── config.ts                # Provider config from environment
 ├── providers/
 │   ├── interface.ts         # AiProviderInterface
+│   ├── mock.provider.ts     # CI-safe deterministic provider
 │   ├── openai.provider.ts
 │   ├── anthropic.provider.ts
 │   ├── gemini.provider.ts
 │   ├── openrouter.provider.ts
 │   └── index.ts             # Provider registry
+├── security/
+│   ├── guardrails/input.ts  # Injection pattern blocking
+│   └── pii/redactor.ts      # Email/phone/SSN redaction
 ├── prompt/
 │   └── manager.ts           # Prompt Manager + versioning
 ├── logging/
@@ -29,7 +35,8 @@
 ├── middleware/
 │   ├── retry.ts             # Exponential backoff retry
 │   ├── rate-limit.ts        # RPM rate limiting
-│   └── fallback.ts          # Provider fallback chain
+│   ├── fallback.ts          # Provider fallback chain
+│   └── circuit-breaker.ts   # Per-provider outage protection
 ├── features/
 │   └── flags.ts             # Tenant feature flags + env toggles
 └── streaming/
@@ -48,10 +55,13 @@ Caller (action / API / integration)
         │
         ├── Feature flags (tenant settings)
         ├── Rate limiter (RPM)
+        ├── Input guardrails (injection patterns)
+        ├── PII redaction (email, phone, SSN)
+        ├── Circuit breaker (per provider)
         ├── Retry middleware (exponential backoff)
         ├── Primary provider
         │     └── on failure → fallback providers
-        ├── Token usage logger → ai_requests
+        ├── Unified ledger update (aiRequestId when async)
         ├── Cost tracker
         └── Response (structured or text)
 ```
@@ -227,12 +237,33 @@ Legacy wrappers in `lib/integrations/ai/openai-client.ts` and `openai.ts` delega
 
 ## Database Compatibility
 
-The `ai_requests.provider` column accepts `openai | claude`. The gateway maps:
+The `ai_requests.provider` column stores the full provider enum (`openai`, `claude`, `gemini`, `openrouter`, `azure_openai`, `mock`). Legacy `mapProviderToDb()` remains for backward compatibility but new writes use direct provider IDs.
 
-- `openai`, `gemini`, `openrouter` → `openai`
-- `anthropic` → `claude`
+Migration `029_ai_requests_extend.sql` adds `product_id` (default `talent_os`) and `prompt_version`.
 
-The actual provider and model are preserved in the `model` column and `result` JSON.
+---
+
+## Testing (Phase B — T-06)
+
+CI-safe tests use `MockProvider` (`AI_MOCK_PROVIDER=true` or Vitest auto-detect):
+
+```bash
+npm test tests/unit/ai/mock-provider.test.ts
+```
+
+Gateway tests run with `primaryProvider: 'mock'` and no live network calls.
+
+---
+
+## Security controls (Phase B — T-10/T-11)
+
+| Control | Env var | Default (prod) |
+|---------|---------|----------------|
+| Input guardrails | `AI_GUARDRAILS_ENABLED` | `true` |
+| PII redaction | `AI_PII_REDACTION_ENABLED` | `true` |
+| Circuit breaker | `AI_CIRCUIT_BREAKER_ENABLED` | `true` |
+
+Async AI jobs use a single ledger path: pending `ai_requests` row → gateway update via `aiRequestId` (no duplicate token writes in executors).
 
 ---
 
