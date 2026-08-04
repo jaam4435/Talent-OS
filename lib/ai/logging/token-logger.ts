@@ -11,6 +11,7 @@ export interface TokenLogEntry {
   entityType?: string
   entityId?: string
   promptHash?: string
+  promptVersion?: string
   usage: AiUsageMetrics
   latencyMs: number
   status: 'completed' | 'failed'
@@ -48,6 +49,7 @@ export class TokenUsageLogger {
     if (!entry.tenantId) return entry.aiRequestId
 
     const services = await createAdminServices()
+    const dbProvider = mapProviderToDb(entry.provider) as DbAiProvider
 
     if (entry.aiRequestId) {
       await services.ai.updateAiRequest(entry.aiRequestId, {
@@ -57,6 +59,7 @@ export class TokenUsageLogger {
         estimatedCost: entry.usage.estimatedCost,
         durationMs: entry.latencyMs,
         promptHash: entry.promptHash,
+        promptVersion: entry.promptVersion,
         errorMessage: entry.errorMessage ?? null,
         result: entry.result ?? null,
       })
@@ -64,7 +67,6 @@ export class TokenUsageLogger {
       return entry.aiRequestId
     }
 
-    const dbProvider = mapProviderToDb(entry.provider) as DbAiProvider
     const id = await services.ai.createAiRequest({
       tenantId: entry.tenantId,
       correlationId: entry.correlationId,
@@ -74,6 +76,7 @@ export class TokenUsageLogger {
       entityType: entry.entityType,
       entityId: entry.entityId,
       promptHash: entry.promptHash,
+      promptVersion: entry.promptVersion,
     })
 
     await services.ai.updateAiRequest(id, {
