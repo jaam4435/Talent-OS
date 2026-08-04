@@ -109,6 +109,7 @@ export class WhatsappMessageRepository extends BaseRepository {
   async createInbound(input: {
     tenant_id: string
     freelancer_id: string
+    conversation_id: string
     wa_message_id: string
     phone: string
     body: string
@@ -116,6 +117,7 @@ export class WhatsappMessageRepository extends BaseRepository {
     const { error } = await this.ctx.supabase.from('whatsapp_messages').insert({
       tenant_id: input.tenant_id,
       freelancer_id: input.freelancer_id,
+      conversation_id: input.conversation_id,
       direction: 'inbound',
       wa_message_id: input.wa_message_id,
       phone: input.phone,

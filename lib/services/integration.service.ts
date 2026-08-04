@@ -46,6 +46,7 @@ export class IntegrationService {
   async createInboundWhatsApp(input: {
     tenant_id: string
     freelancer_id: string
+    conversation_id: string
     wa_message_id: string
     phone: string
     body: string

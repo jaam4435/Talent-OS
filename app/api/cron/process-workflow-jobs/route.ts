@@ -11,6 +11,7 @@ export const GET = withApiHandler(
 
     const services = await createAdminServices()
     const result = await services.workflowEngine.processJobQueue(limit, queue ?? undefined)
+    const compensation = await services.workflowEngine.processCompensationQueue(limit)
 
     instrumentQueueProcessing({
       queue: queue ?? 'workflow_jobs',
@@ -19,6 +20,6 @@ export const GET = withApiHandler(
       durationMs: Date.now() - startedAt,
     })
 
-    return result
+    return { ...result, compensation }
   }
 )
