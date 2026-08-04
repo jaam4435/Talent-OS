@@ -1,23 +1,5 @@
-import { PageHeader } from '@/modules/core/components/shared/page-header'
-import { TeamInviteForm } from '@/modules/core/components/settings/team-invite-form'
-import { TeamMembersList } from '@/modules/core/components/settings/team-members-list'
-import { requireAdmin } from '@/modules/core/services/guards'
-import { listCompanies } from '@/lib/companies/queries'
+import { redirect } from 'next/navigation'
 
-export const metadata = { title: 'Team' }
-
-export default async function TeamSettingsPage() {
-  const { tenant } = await requireAdmin()
-  const companies = await listCompanies(tenant.id)
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Team"
-        description="Invite talent managers, talent, and client contacts. Admins have full workspace access."
-      />
-      <TeamInviteForm companies={companies.map((c) => ({ id: c.id, name: c.name }))} />
-      <TeamMembersList />
-    </div>
-  )
+export default function TeamSettingsRedirectPage() {
+  redirect('/organization/members')
 }

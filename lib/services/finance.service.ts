@@ -1,19 +1,57 @@
 import type { Repositories } from '@/lib/repositories/factory'
+import type { FinanceModuleService } from '@/lib/services/finance-module.service'
 
 export class FinanceService {
-  constructor(private readonly repos: Repositories) {}
+  constructor(
+    private readonly repos: Repositories,
+    private readonly module: FinanceModuleService
+  ) {}
 
   async getPaymentsForPage(tenantId: string, role: string, userId: string) {
-    let freelancerId: string | undefined
-    if (role === 'freelancer') {
-      freelancerId = (await this.repos.talent.findIdByUserId(userId, tenantId)) ?? undefined
+    const result = await this.module.listPayments(tenantId, role, userId, { limit: 50 })
+    const freelancerMap = new Map(
+      result.data.map((p) => [
+        p.freelancerId,
+        { id: p.freelancerId, full_name: p.freelancerName ?? null },
+      ])
+    )
+    return {
+      payments: result.data.map((p) => ({
+        id: p.id,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        created_at: p.createdAt,
+        freelancer_id: p.freelancerId,
+      })),
+      freelancerMap,
     }
+  }
 
-    const result = await this.repos.invoice.listByTenant(tenantId, { freelancerId })
-    const freelancerIds = [...new Set(result.data.map((p) => p.freelancer_id))]
-    const freelancers = await this.repos.talent.findNamesByIds(freelancerIds)
-    const freelancerMap = new Map(freelancers.map((f) => [f.id, f]))
+  async approvePayment(
+    tenantId: string,
+    paymentId: string,
+    userId: string,
+    notes?: string
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    const result = await this.module.approvePayment(tenantId, paymentId, userId, notes)
+    if (!result.ok) return result
+    return { ok: true }
+  }
 
-    return { payments: result.data, freelancerMap }
+  async markPaymentPaid(
+    tenantId: string,
+    paymentId: string,
+    reference: string,
+    userId?: string
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    const result = await this.module.markPaymentPaid(
+      tenantId,
+      paymentId,
+      userId ?? 'system',
+      reference
+    )
+    if (!result.ok) return result
+    return { ok: true }
   }
 }

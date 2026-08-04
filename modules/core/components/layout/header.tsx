@@ -1,7 +1,8 @@
 'use client'
 
-import { Bell, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { RoleBadge } from '@/modules/core/components/auth/role-badge'
+import { NotificationBell } from '@/modules/notifications/components/notification-bell'
 import { Button } from '@/modules/core/components/ui/button'
 import type { SessionContext } from '@/modules/core/types/enums'
 
@@ -22,9 +23,7 @@ export function Header({ session }: HeaderProps) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationBell />
         <form action="/api/auth/signout" method="post">
           <Button variant="outline" size="sm" type="submit">
             <LogOut className="mr-2 h-4 w-4" />
