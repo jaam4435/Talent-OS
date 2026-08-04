@@ -1,5 +1,8 @@
 import type { ApiErrorBody, ApiResponse, ApiSuccess } from '@/modules/core/types/api'
 import { ApiErrorCodes } from '@/modules/core/api/errors'
+import { getUserMessageForApiError } from '@/lib/api/user-messages'
+
+export { getUserMessageForApiError, getUserMessageForErrorCode } from '@/lib/api/user-messages'
 
 export const API_BASE_PATH = '/api'
 export const DEFAULT_API_VERSION = 'v1'
@@ -146,6 +149,20 @@ export class TalentOsClient {
 
   getObservabilityTrace(correlationId: string) {
     return this.request<unknown>('GET', `/api/observability/traces/${correlationId}`)
+  }
+
+  listTalent(params?: Record<string, string | number | undefined>) {
+    const query = new URLSearchParams()
+    for (const [key, value] of Object.entries(params ?? {})) {
+      if (value !== undefined) query.set(key, String(value))
+    }
+    const suffix = query.size ? `?${query}` : ''
+    return this.request<unknown[]>('GET', `/api/talent${suffix}`)
+  }
+
+  /** Map any thrown API error to a user-facing message. */
+  formatError(error: unknown): string {
+    return getUserMessageForApiError(error)
   }
 }
 

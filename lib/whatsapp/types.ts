@@ -20,9 +20,20 @@ export interface DeliveryStatusUpdate {
 export type WhatsAppIntent =
   | 'opportunity.interested'
   | 'opportunity.declined'
+  | 'opportunity.create'
   | 'milestone.submit'
   | 'milestone.start'
+  | 'milestone.approve'
+  | 'milestone.revision'
   | 'project.status'
+  | 'project.approve'
+  | 'assignment.accept'
+  | 'assignment.reject'
+  | 'deliverable.submit'
+  | 'approval.approve'
+  | 'approval.reject'
+  | 'workflow.trigger'
+  | 'notification.send'
   | 'opt_out'
   | 'help'
   | 'agent.query'
@@ -36,6 +47,7 @@ export interface DetectedIntent {
 }
 
 export interface ConversationContext {
+  id: string
   tenantId: string
   freelancerId: string
   phone: string
