@@ -15,7 +15,8 @@ function mapLegacyProvider(provider: import('@/lib/ai/types').ProviderId): AiMat
 
 export async function rankTalentWithOpenAi(
   opportunity: OpportunityMatchContext,
-  candidates: TalentMatchCandidate[]
+  candidates: TalentMatchCandidate[],
+  aiRequestId?: string
 ): Promise<AiMatchResult & { promptHash: string }> {
   const { system, user, promptHash } = buildTalentMatchPrompt(opportunity, candidates)
 
@@ -44,6 +45,7 @@ export async function rankTalentWithOpenAi(
     feature: 'talent_match',
     promptId: 'talent_match',
     promptVersion: '1.0.0',
+    aiRequestId,
   })
 
   const candidateIds = new Set(candidates.map((c) => c.id))

@@ -9,7 +9,12 @@ export class WorkflowEngineService {
     private readonly repos: Repositories,
     private readonly getServices: () => Promise<Services>
   ) {
-    this.engine = new WorkflowEngine(repos.workflow, getServices)
+    this.engine = new WorkflowEngine(
+      repos.workflow,
+      getServices,
+      repos.workflowExecutionHistory,
+      repos.workflowCompensation
+    )
   }
 
   async triggerFromDomainEvent(event: Parameters<WorkflowEngine['triggerFromDomainEvent']>[0]) {
@@ -18,6 +23,10 @@ export class WorkflowEngineService {
 
   async processJobQueue(limit = 50, queueName?: string) {
     return this.engine.processJobQueue(limit, queueName)
+  }
+
+  async processCompensationQueue(limit = 50) {
+    return this.engine.processCompensationQueue(limit)
   }
 
   async resolveApproval(

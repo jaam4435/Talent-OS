@@ -1,7 +1,13 @@
-export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'openrouter'
+export type ProviderId = 'openai' | 'anthropic' | 'gemini' | 'openrouter' | 'mock'
 
-/** Maps to `ai_requests.provider` column (`openai` | `claude`). */
-export type DbAiProvider = 'openai' | 'claude'
+/** Maps to `ai_requests.provider` enum column. */
+export type DbAiProvider =
+  | 'openai'
+  | 'claude'
+  | 'gemini'
+  | 'openrouter'
+  | 'azure_openai'
+  | 'mock'
 
 export type AiFeature =
   | 'talent_match'
@@ -9,6 +15,7 @@ export type AiFeature =
   | 'project_summary'
   | 'shortlist_summary'
   | 'status_assessment'
+  | 'agent_reasoning'
   | 'digest'
 
 export interface AiMessage {
@@ -35,6 +42,7 @@ export interface AiCompletionRequest {
   promptId?: string
   promptVersion?: string
   provider?: ProviderId
+  aiRequestId?: string
   metadata?: Record<string, unknown>
 }
 

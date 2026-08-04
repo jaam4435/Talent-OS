@@ -25,7 +25,12 @@ export interface Database {
         currency: string
         settings: Json
         subscription_status: string
+        subscription_reference: string | null
         trial_ends_at: string | null
+        primary_color: string | null
+        accent_color: string | null
+        business_hours: Json
+        deleted_at: string | null
         created_at: string
         updated_at: string
       }>
@@ -47,6 +52,7 @@ export interface Database {
         invited_at: string | null
         joined_at: string | null
         company_id: string | null
+        deleted_at: string | null
         created_at: string
       }>
       companies: TableDef<{
@@ -59,6 +65,10 @@ export interface Database {
         contact_name: string | null
         website: string | null
         notes: string | null
+        status: 'prospect' | 'active' | 'client' | 'inactive'
+        industry: string | null
+        ai_context: Json
+        deleted_at: string | null
         created_at: string
         updated_at: string
       }>
@@ -81,6 +91,14 @@ export interface Database {
         tags: string[]
         metadata: Json
         last_active_at: string | null
+        deleted_at: string | null
+        timezone: string | null
+        employment_type: 'freelance' | 'contract' | 'part_time' | 'full_time'
+        languages: Json
+        ai_context: Json
+        ai_summary: string | null
+        profile_completeness: number
+        cv_file_path: string | null
         created_at: string
         updated_at: string
       }>
@@ -96,6 +114,7 @@ export interface Database {
         discipline: string | null
         client_name: string | null
         company_id: string | null
+        crm_deal_id: string | null
         deadline: string | null
         response_deadline: string | null
         status: string
@@ -132,6 +151,13 @@ export interface Database {
         requirements: Record<string, unknown>
         ai_summary: Record<string, unknown> | null
         ai_status_assessment: Record<string, unknown> | null
+        deleted_at: string | null
+        priority: 'low' | 'medium' | 'high' | 'urgent'
+        deadline: string | null
+        template_id: string | null
+        health_score: number
+        health_status: 'on_track' | 'at_risk' | 'blocked' | 'completed'
+        ai_context: Json
         started_at: string | null
         completed_at: string | null
         created_at: string
@@ -153,6 +179,8 @@ export interface Database {
         reviewed_at: string | null
         reviewed_by: string | null
         review_note: string | null
+        deleted_at: string | null
+        priority: 'low' | 'medium' | 'high' | 'urgent'
         created_at: string
         updated_at: string
       }>
@@ -252,6 +280,66 @@ export interface Database {
         decided_at: string | null
         decided_by: string | null
         decision_note: string | null
+        created_at: string
+      }>
+      workflow_definitions: TableDef<{
+        id: string
+        tenant_id: string | null
+        name: string
+        description: string | null
+        category: string
+        trigger_event_type: string
+        conditions: Json
+        steps: Json
+        compensation: Json
+        queue_name: string
+        is_builtin: boolean
+        is_active: boolean
+        version: number
+        created_at: string
+        updated_at: string
+      }>
+      workflow_execution_history: TableDef<{
+        id: string
+        tenant_id: string
+        run_id: string
+        job_id: string | null
+        step_id: string
+        action_type: string
+        status: string
+        input: Json
+        output: Json
+        error: string | null
+        duration_ms: number | null
+        created_at: string
+      }>
+      workflow_compensations: TableDef<{
+        id: string
+        tenant_id: string
+        run_id: string
+        job_id: string | null
+        step_id: string
+        action_type: string
+        config: Json
+        status: string
+        retry_count: number
+        max_retries: number
+        last_error: string | null
+        scheduled_at: string
+        started_at: string | null
+        completed_at: string | null
+        created_at: string
+      }>
+      workflow_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
         created_at: string
       }>
       whatsapp_conversations: TableDef<{
@@ -471,16 +559,461 @@ export interface Database {
         acknowledged_at: string | null
         resolved_at: string | null
       }>
+      platform_feature_flags: TableDef<{
+        id: string
+        tenant_id: string | null
+        flag_key: string
+        enabled: boolean
+        value: Json | null
+        created_at: string
+        updated_at: string
+      }>
+      platform_config: TableDef<{
+        id: string
+        tenant_id: string | null
+        config_key: string
+        config_value: Json
+        created_at: string
+        updated_at: string
+      }>
+      org_departments: TableDef<{
+        id: string
+        tenant_id: string
+        name: string
+        slug: string
+        description: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      org_teams: TableDef<{
+        id: string
+        tenant_id: string
+        department_id: string | null
+        name: string
+        slug: string
+        description: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      org_team_members: TableDef<{
+        id: string
+        tenant_id: string
+        team_id: string
+        member_id: string
+        created_at: string
+      }>
+      organization_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
+      crm_pipeline_stages: TableDef<{
+        id: string
+        tenant_id: string
+        name: string
+        slug: string
+        sort_order: number
+        outcome: 'open' | 'won' | 'lost'
+        color: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_leads: TableDef<{
+        id: string
+        tenant_id: string
+        title: string
+        source: string | null
+        status: 'new' | 'contacted' | 'qualified' | 'unqualified' | 'converted'
+        company_id: string | null
+        contact_id: string | null
+        owner_id: string | null
+        value_estimate: number | null
+        currency: string
+        description: string | null
+        converted_at: string | null
+        converted_company_id: string | null
+        converted_deal_id: string | null
+        ai_context: Json
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_contacts: TableDef<{
+        id: string
+        tenant_id: string
+        company_id: string | null
+        first_name: string
+        last_name: string | null
+        email: string | null
+        phone: string | null
+        job_title: string | null
+        is_primary: boolean
+        ai_context: Json
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_deals: TableDef<{
+        id: string
+        tenant_id: string
+        title: string
+        value: number | null
+        currency: string
+        stage_id: string
+        company_id: string | null
+        lead_id: string | null
+        opportunity_id: string | null
+        owner_id: string | null
+        expected_close_date: string | null
+        probability: number | null
+        ai_context: Json
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_contracts: TableDef<{
+        id: string
+        tenant_id: string
+        deal_id: string | null
+        company_id: string | null
+        title: string
+        status: 'draft' | 'sent' | 'signed' | 'expired' | 'canceled'
+        value: number | null
+        currency: string
+        starts_on: string | null
+        ends_on: string | null
+        signed_at: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_notes: TableDef<{
+        id: string
+        tenant_id: string
+        entity_type: string
+        entity_id: string
+        author_id: string | null
+        body: string
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      crm_attachments: TableDef<{
+        id: string
+        tenant_id: string
+        entity_type: string
+        entity_id: string
+        uploaded_by: string | null
+        file_name: string
+        file_path: string
+        mime_type: string | null
+        size_bytes: number | null
+        deleted_at: string | null
+        created_at: string
+      }>
+      crm_activities: TableDef<{
+        id: string
+        tenant_id: string
+        entity_type: string
+        entity_id: string
+        activity_type: 'call' | 'email' | 'meeting' | 'note' | 'task' | 'other'
+        subject: string
+        description: string | null
+        actor_id: string | null
+        occurred_at: string
+        deleted_at: string | null
+        created_at: string
+      }>
+      crm_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
+      talent_experience: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        company: string
+        title: string
+        description: string | null
+        starts_on: string
+        ends_on: string | null
+        skills: string[]
+        sort_order: number
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      talent_documents: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        doc_type: 'cv' | 'certificate' | 'reference' | 'portfolio' | 'other'
+        file_name: string
+        file_path: string
+        mime_type: string | null
+        size_bytes: number | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      talent_availability_slots: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        starts_at: string
+        ends_at: string
+        status: 'available' | 'busy' | 'unavailable' | 'booked'
+        notes: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      talent_import_batches: TableDef<{
+        id: string
+        tenant_id: string
+        uploaded_by: string | null
+        file_name: string
+        status: 'pending' | 'processing' | 'completed' | 'failed'
+        total_rows: number
+        success_count: number
+        error_count: number
+        errors: Json
+        created_at: string
+        completed_at: string | null
+      }>
+      talent_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
+      project_templates: TableDef<{
+        id: string
+        tenant_id: string
+        name: string
+        description: string | null
+        default_milestones: Json
+        default_tasks: Json
+        is_active: boolean
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_tasks: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        milestone_id: string | null
+        title: string
+        description: string | null
+        status: 'todo' | 'in_progress' | 'done' | 'blocked' | 'canceled'
+        priority: 'low' | 'medium' | 'high' | 'urgent'
+        assignee_id: string | null
+        due_date: string | null
+        sort_order: number
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_deliverables: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        milestone_id: string | null
+        task_id: string | null
+        title: string
+        description: string | null
+        status: 'draft' | 'submitted' | 'approved' | 'rejected'
+        file_path: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_assets: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        asset_type: 'file' | 'link' | 'image' | 'document'
+        name: string
+        file_path: string | null
+        url: string | null
+        mime_type: string | null
+        size_bytes: number | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_comments: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        entity_type: string
+        entity_id: string
+        author_id: string | null
+        body: string
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      project_dependencies: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        predecessor_type: 'project' | 'milestone' | 'task' | 'deliverable'
+        predecessor_id: string
+        successor_type: 'project' | 'milestone' | 'task' | 'deliverable'
+        successor_id: string
+        notes: string | null
+        deleted_at: string | null
+        created_at: string
+      }>
+      project_timeline_events: TableDef<{
+        id: string
+        tenant_id: string
+        project_id: string
+        event_type: string
+        title: string
+        description: string | null
+        actor_id: string | null
+        occurred_at: string
+        metadata: Json
+        created_at: string
+      }>
+      project_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
+      assignment_capacity: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        weekly_hours: number
+        max_concurrent_assignments: number
+        effective_from: string
+        effective_to: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_allocations: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        project_id: string | null
+        opportunity_id: string | null
+        title: string
+        status: 'planned' | 'confirmed' | 'active' | 'completed' | 'canceled'
+        allocation_pct: number
+        starts_at: string
+        ends_at: string
+        notes: string | null
+        created_by: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_schedules: TableDef<{
+        id: string
+        tenant_id: string
+        allocation_id: string
+        starts_at: string
+        ends_at: string
+        hours: number
+        notes: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_requirements: TableDef<{
+        id: string
+        tenant_id: string
+        allocation_id: string
+        required_skills: string[]
+        min_hours: number | null
+        description: string | null
+        deleted_at: string | null
+        created_at: string
+        updated_at: string
+      }>
+      assignment_conflicts: TableDef<{
+        id: string
+        tenant_id: string
+        freelancer_id: string
+        conflict_type: 'double_booking' | 'over_allocation' | 'availability_gap'
+        severity: 'warning' | 'error'
+        allocation_id_a: string
+        allocation_id_b: string | null
+        details: Json
+        resolved_at: string | null
+        deleted_at: string | null
+        created_at: string
+      }>
+      assignment_history: TableDef<{
+        id: string
+        tenant_id: string
+        allocation_id: string
+        action: string
+        actor_id: string | null
+        before_state: Json | null
+        after_state: Json | null
+        created_at: string
+      }>
+      assignment_audit_logs: TableDef<{
+        id: string
+        tenant_id: string
+        actor_id: string | null
+        action: string
+        entity_type: string
+        entity_id: string
+        before_state: Json | null
+        after_state: Json | null
+        metadata: Json
+        created_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
         correlation_id: string | null
-        provider: 'openai' | 'claude'
+        product_id: string
+        provider: 'openai' | 'claude' | 'gemini' | 'openrouter' | 'azure_openai' | 'mock'
         model: string
         request_type: string
         entity_type: string | null
         entity_id: string | null
         prompt_hash: string | null
+        prompt_version: string | null
         input_tokens: number | null
         output_tokens: number | null
         estimated_cost: number | null
@@ -560,6 +1093,9 @@ export interface Database {
         tenant_id: string
         email: string
         role: string
+        invited_by: string
+        token_hash: string
+        company_id: string | null
         expires_at: string
         created_at: string
         accepted_at: string | null
@@ -591,6 +1127,7 @@ export interface Database {
         id: string
         tenant_id: string
         freelancer_id: string
+        conversation_id: string | null
         direction: string
         wa_message_id: string
         phone: string
@@ -667,6 +1204,18 @@ export interface Database {
         Args: { p_tenant_id: string }
         Returns: Record<string, unknown>[]
       }
+      get_workflow_module_summary: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          total_runs: number
+          running_runs: number
+          failed_runs: number
+          pending_jobs: number
+          dead_letter_jobs: number
+          pending_compensations: number
+          avg_duration_ms: number
+        }[]
+      }
       get_observability_queue_depth: {
         Args: { p_tenant_id: string }
         Returns: Record<string, unknown>[]
@@ -707,6 +1256,10 @@ export interface Database {
         Args: { p_invite_id: string; p_actor_id: string }
         Returns: void
       }
+      seed_crm_pipeline_stages: {
+        Args: { p_tenant_id: string }
+        Returns: void
+      }
       create_project_with_milestones: {
         Args: {
           p_tenant_id: string
@@ -738,6 +1291,90 @@ export interface Database {
           p_offset?: number | null
         }
         Returns: Tables<'freelancers'>[]
+      }
+      search_talent_advanced: {
+        Args: {
+          p_tenant_id: string
+          p_query?: string | null
+          p_discipline?: string | null
+          p_availability?: string | null
+          p_min_rate?: number | null
+          p_max_rate?: number | null
+          p_min_rating?: number | null
+          p_skills?: string[] | null
+          p_tags?: string[] | null
+          p_employment_type?: string | null
+          p_timezone?: string | null
+          p_min_completeness?: number | null
+          p_sort?: string | null
+          p_limit?: number | null
+          p_offset?: number | null
+        }
+        Returns: Tables<'freelancers'>[]
+      }
+      match_talent_skills: {
+        Args: {
+          p_tenant_id: string
+          p_required_skills: string[]
+          p_discipline?: string | null
+          p_limit?: number | null
+        }
+        Returns: Array<{
+          freelancer_id: string
+          full_name: string
+          discipline: string
+          day_rate: number | null
+          internal_rating: number | null
+          skill_match_count: number
+          match_ratio: number
+        }>
+      }
+      compute_project_health: {
+        Args: { p_project_id: string }
+        Returns: Array<{
+          health_score: number
+          health_status: string
+          overdue_milestones: number
+          overdue_tasks: number
+          blocked_tasks: number
+          open_deliverables: number
+        }>
+      }
+      detect_assignment_conflicts: {
+        Args: {
+          p_tenant_id: string
+          p_freelancer_id: string
+          p_starts_at: string
+          p_ends_at: string
+          p_allocation_pct?: number | null
+          p_exclude_allocation_id?: string | null
+        }
+        Returns: Array<{
+          conflict_type: string
+          severity: string
+          conflicting_allocation_id: string | null
+          overlapping_pct: number | null
+          message: string
+        }>
+      }
+      suggest_assignment_candidates: {
+        Args: {
+          p_tenant_id: string
+          p_required_skills?: string[] | null
+          p_starts_at?: string | null
+          p_ends_at?: string | null
+          p_limit?: number | null
+        }
+        Returns: Array<{
+          freelancer_id: string
+          full_name: string
+          discipline: string
+          day_rate: number | null
+          internal_rating: number | null
+          skill_match_count: number
+          current_allocation_pct: number
+          availability: string
+        }>
       }
       search_knowledge_entries: {
         Args: {
