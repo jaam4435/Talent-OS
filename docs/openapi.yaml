@@ -13,9 +13,19 @@ tags:
   - name: System
   - name: Auth
   - name: Talent
+  - name: Projects
+  - name: Assignments
+  - name: Workflows
+  - name: WhatsApp
+  - name: Finance
+  - name: Notifications
   - name: AI
+  - name: Agents
+  - name: Knowledge
   - name: Analytics
   - name: Team
+  - name: Organization
+  - name: CRM
   - name: Webhooks
   - name: Cron
   - name: Internal
@@ -152,6 +162,753 @@ paths:
           description: Paginated talent results
         '403':
           description: Managers only
+  /talent:
+    get:
+      tags: [Talent]
+      summary: Advanced talent list/search
+      operationId: listTalent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated talent profiles
+    post:
+      tags: [Talent]
+      summary: Create talent profile
+      operationId: createTalent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created profile
+  /talent/{id}:
+    get:
+      tags: [Talent]
+      summary: Get talent profile
+      operationId: getTalent
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Talent profile
+    patch:
+      tags: [Talent]
+      summary: Update talent profile
+      operationId: updateTalent
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated profile
+    delete:
+      tags: [Talent]
+      summary: Soft delete talent profile
+      operationId: deleteTalent
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Deleted
+  /talent/{id}/experience:
+    get:
+      tags: [Talent]
+      summary: List work experience
+      operationId: listTalentExperience
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Experience entries
+    post:
+      tags: [Talent]
+      summary: Add work experience
+      operationId: addTalentExperience
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created experience
+  /talent/{id}/documents:
+    get:
+      tags: [Talent]
+      summary: List talent documents
+      operationId: listTalentDocuments
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Document list
+    post:
+      tags: [Talent]
+      summary: Add talent document
+      operationId: addTalentDocument
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created document
+  /talent/{id}/availability:
+    get:
+      tags: [Talent]
+      summary: Availability calendar slots
+      operationId: listTalentAvailability
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Calendar slots
+    post:
+      tags: [Talent]
+      summary: Add availability slot
+      operationId: addTalentAvailability
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created slot
+  /talent/{id}/completeness:
+    get:
+      tags: [Talent]
+      summary: Profile completeness score
+      operationId: getTalentCompleteness
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Completeness breakdown
+  /talent/{id}/ai-profile:
+    get:
+      tags: [Talent]
+      summary: AI-ready profile export
+      operationId: getTalentAiProfile
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: AI profile payload
+  /talent/match:
+    post:
+      tags: [Talent]
+      summary: Skill-based talent matching
+      operationId: matchTalentSkills
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Ranked matches
+  /talent/import:
+    post:
+      tags: [Talent]
+      summary: Bulk CSV import
+      operationId: importTalentCsv
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Import batch result
+  /talent/audit-logs:
+    get:
+      tags: [Talent]
+      summary: List talent audit logs
+      operationId: listTalentAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      operationId: listProjects
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated projects
+    post:
+      tags: [Projects]
+      summary: Create project
+      operationId: createProject
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created project
+  /projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get project
+      operationId: getProject
+      description: Tenant-scoped read; freelancers with projects:read may access assigned projects.
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Project detail
+    patch:
+      tags: [Projects]
+      summary: Update project
+      operationId: updateProject
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated project
+  /projects/{id}/status:
+    patch:
+      tags: [Projects]
+      summary: Transition project status
+      operationId: transitionProjectStatus
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated status
+  /projects/{id}/health:
+    get:
+      tags: [Projects]
+      summary: Project health score
+      operationId: getProjectHealth
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Health metrics
+  /projects/{id}/timeline:
+    get:
+      tags: [Projects]
+      summary: Project activity timeline
+      operationId: getProjectTimeline
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Timeline events
+  /projects/{id}/tasks:
+    get:
+      tags: [Projects]
+      summary: List project tasks
+      operationId: listProjectTasks
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Task list
+    post:
+      tags: [Projects]
+      summary: Create project task
+      operationId: createProjectTask
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created task
+  /projects/templates:
+    get:
+      tags: [Projects]
+      summary: List project templates
+      operationId: listProjectTemplates
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Template list
+    post:
+      tags: [Projects]
+      summary: Create project template
+      operationId: createProjectTemplate
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created template
+  /projects/templates/{id}/apply:
+    post:
+      tags: [Projects]
+      summary: Apply template to create project
+      operationId: applyProjectTemplate
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Created project from template
+  /projects/audit-logs:
+    get:
+      tags: [Projects]
+      summary: List project audit logs
+      operationId: listProjectAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /assignments:
+    get:
+      tags: [Assignments]
+      summary: List talent allocations
+      operationId: listAssignments
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated allocations
+    post:
+      tags: [Assignments]
+      summary: Create talent allocation
+      operationId: createAssignment
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created allocation
+  /assignments/{id}:
+    get:
+      tags: [Assignments]
+      summary: Get allocation
+      operationId: getAssignment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Allocation detail
+  /assignments/conflicts/check:
+    post:
+      tags: [Assignments]
+      summary: Check assignment conflicts
+      operationId: checkAssignmentConflicts
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Conflict check results
+  /assignments/suggest:
+    post:
+      tags: [Assignments]
+      summary: Suggest assignment candidates
+      operationId: suggestAssignmentCandidates
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Ranked candidates
+  /assignments/capacity:
+    get:
+      tags: [Assignments]
+      summary: Get freelancer capacity
+      operationId: getAssignmentCapacity
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Capacity records
+    post:
+      tags: [Assignments]
+      summary: Set freelancer capacity
+      operationId: setAssignmentCapacity
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Capacity record
+  /assignments/audit-logs:
+    get:
+      tags: [Assignments]
+      summary: List assignment audit logs
+      operationId: listAssignmentAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /workflows/definitions:
+    get:
+      tags: [Workflows]
+      summary: List workflow definitions
+      operationId: listWorkflowDefinitions
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Registry or stored definitions
+    post:
+      tags: [Workflows]
+      summary: Create custom workflow definition
+      operationId: createWorkflowDefinition
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created definition
+  /workflows/runs:
+    get:
+      tags: [Workflows]
+      summary: List workflow runs
+      operationId: listWorkflowRuns
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated runs
+  /workflows/jobs:
+    get:
+      tags: [Workflows]
+      summary: List workflow jobs
+      operationId: listWorkflowJobs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated jobs
+  /workflows/history:
+    get:
+      tags: [Workflows]
+      summary: List workflow execution history
+      operationId: listWorkflowHistory
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Step-level history
+  /workflows/compensations:
+    get:
+      tags: [Workflows]
+      summary: List workflow compensations
+      operationId: listWorkflowCompensations
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Compensation queue
+  /workflows/trigger:
+    post:
+      tags: [Workflows]
+      summary: Manually trigger a workflow
+      operationId: triggerWorkflow
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Trigger result with run IDs
+  /workflows/observability:
+    get:
+      tags: [Workflows]
+      summary: Workflow engine observability summary
+      operationId: getWorkflowObservability
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Metrics and business workflow catalog
+  /workflows/audit-logs:
+    get:
+      tags: [Workflows]
+      summary: List workflow audit logs
+      operationId: listWorkflowAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /whatsapp/conversations:
+    get:
+      tags: [WhatsApp]
+      summary: List WhatsApp conversations
+      operationId: listWhatsAppConversations
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated conversation summaries
+  /whatsapp/conversations/{freelancerId}:
+    get:
+      tags: [WhatsApp]
+      summary: Get conversation and memory for a freelancer
+      operationId: getWhatsAppConversation
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Conversation context and memory entries
+  /whatsapp/audit-logs:
+    get:
+      tags: [WhatsApp]
+      summary: List WhatsApp platform audit logs
+      operationId: listWhatsAppAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /whatsapp/observability:
+    get:
+      tags: [WhatsApp]
+      summary: WhatsApp platform observability summary
+      operationId: getWhatsAppObservability
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Module metrics
+  /whatsapp/approvals:
+    get:
+      tags: [WhatsApp]
+      summary: List pending WhatsApp and workflow approvals
+      operationId: listWhatsAppApprovals
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Pending approval gates
+  /whatsapp/approvals/{id}:
+    post:
+      tags: [WhatsApp]
+      summary: Resolve a workflow approval via WhatsApp platform
+      operationId: resolveWhatsAppApproval
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Approval resolved
+  /finance/payments:
+    get:
+      tags: [Finance]
+      summary: List payments
+      operationId: listFinancePayments
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated payment records
+  /finance/payments/{id}:
+    get:
+      tags: [Finance]
+      summary: Get payment detail with timeline
+      operationId: getFinancePayment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Payment detail
+        '404':
+          description: Payment not found
+  /finance/payments/{id}/approve:
+    post:
+      tags: [Finance]
+      summary: Approve pending milestone payment
+      operationId: approveFinancePayment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Approved payment
+        '400':
+          description: Invalid state transition
+  /finance/payments/{id}/mark-paid:
+    post:
+      tags: [Finance]
+      summary: Mark approved payment as paid
+      operationId: markFinancePaymentPaid
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Paid payment
+        '400':
+          description: Invalid state transition or missing reference
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications for current user
+      operationId: listNotifications
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated notifications with unread count
+  /notifications/{id}/read:
+    patch:
+      tags: [Notifications]
+      summary: Mark notification read
+      operationId: markNotificationRead
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Notification marked read
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications read
+      operationId: markAllNotificationsRead
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Bulk read result
+  /notifications/preferences:
+    get:
+      tags: [Notifications]
+      summary: List notification preferences
+      operationId: listNotificationPreferences
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Category/channel preferences
+    patch:
+      tags: [Notifications]
+      summary: Update notification preferences
+      operationId: updateNotificationPreferences
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Updated preferences
+  /agents:
+    get:
+      tags: [Agents]
+      summary: List configured agents
+      operationId: listAgents
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Agent summaries
+  /agents/{agentId}/config:
+    get:
+      tags: [Agents]
+      summary: Get agent configuration
+      operationId: getAgentConfig
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Agent config
+    patch:
+      tags: [Agents]
+      summary: Update agent configuration
+      operationId: updateAgentConfig
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Updated config
+  /agents/{agentId}/run:
+    post:
+      tags: [Agents]
+      summary: Execute an agent turn
+      operationId: runAgent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Agent response
+  /knowledge/entries:
+    get:
+      tags: [Knowledge]
+      summary: List knowledge entries
+      operationId: listKnowledgeEntries
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated entries
+    post:
+      tags: [Knowledge]
+      summary: Create knowledge entry
+      operationId: createKnowledgeEntry
+      security: [{ sessionCookie: [] }]
+      responses:
+        '201':
+          description: Created entry
+  /knowledge/search:
+    post:
+      tags: [Knowledge]
+      summary: Search knowledge entries
+      operationId: searchKnowledgeEntries
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Search results
+  /whatsapp/commands:
+    post:
+      tags: [WhatsApp]
+      summary: Execute a WhatsApp business command
+      operationId: executeWhatsAppCommand
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Command result
   /ai/match:
     post:
       tags: [AI]
@@ -217,16 +974,128 @@ paths:
   /analytics/dashboard:
     get:
       tags: [Analytics]
-      summary: Dashboard analytics summary (managers only)
+      summary: Dashboard analytics summary (legacy + module overview)
       operationId: getDashboardAnalytics
       security: [{ sessionCookie: [] }]
       responses:
         '200':
-          description: Dashboard data
+          description: Legacy KPIs and module summary
         '401':
           description: Unauthorized
         '403':
           description: Requires manager role and analytics:read permission
+  /analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: Combined analytics module summary
+      operationId: getAnalyticsSummary
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: All dashboard summaries
+  /analytics/organizations:
+    get:
+      tags: [Analytics]
+      summary: Organization analytics dashboard
+      operationId: getAnalyticsOrganizations
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Organization metrics and charts
+  /analytics/projects:
+    get:
+      tags: [Analytics]
+      summary: Project analytics dashboard
+      operationId: getAnalyticsProjects
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Project metrics and charts
+  /analytics/talent:
+    get:
+      tags: [Analytics]
+      summary: Talent analytics dashboard
+      operationId: getAnalyticsTalent
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Talent metrics and charts
+  /analytics/utilization:
+    get:
+      tags: [Analytics]
+      summary: Utilization analytics dashboard
+      operationId: getAnalyticsUtilization
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Utilization metrics and charts
+  /analytics/revenue:
+    get:
+      tags: [Analytics]
+      summary: Revenue analytics dashboard
+      operationId: getAnalyticsRevenue
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Revenue metrics and charts
+  /analytics/delivery:
+    get:
+      tags: [Analytics]
+      summary: Delivery analytics dashboard
+      operationId: getAnalyticsDelivery
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Delivery metrics and charts
+  /analytics/ai-usage:
+    get:
+      tags: [Analytics]
+      summary: AI usage analytics dashboard
+      operationId: getAnalyticsAiUsage
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: AI usage metrics and charts
+  /analytics/workflows:
+    get:
+      tags: [Analytics]
+      summary: Workflow performance analytics dashboard
+      operationId: getAnalyticsWorkflows
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Workflow performance metrics and charts
+  /analytics/exports:
+    get:
+      tags: [Analytics]
+      summary: List analytics exports
+      operationId: listAnalyticsExports
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated export history
+    post:
+      tags: [Analytics]
+      summary: Create analytics export
+      operationId: createAnalyticsExport
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Export record with content
+  /analytics/exports/{id}:
+    get:
+      tags: [Analytics]
+      summary: Get analytics export by ID
+      operationId: getAnalyticsExport
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Export content
   /openapi:
     get:
       tags: [System]
@@ -324,7 +1193,7 @@ paths:
   /team/members:
     get:
       tags: [Team]
-      summary: List team members
+      summary: List team members (legacy — prefer /organization/members)
       operationId: getTeamMembers
       security: [{ sessionCookie: [] }]
       responses:
@@ -332,6 +1201,343 @@ paths:
           description: Team members
         '403':
           description: Admin only
+  /organization:
+    get:
+      tags: [Organization]
+      summary: Get organization profile
+      operationId: getOrganization
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Organization summary
+    patch:
+      tags: [Organization]
+      summary: Update organization
+      operationId: updateOrganization
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                timezone: { type: string }
+                currency: { type: string, minLength: 3, maxLength: 3 }
+                subscription_reference: { type: string, nullable: true }
+      responses:
+        '200':
+          description: Updated organization
+  /organization/branding:
+    get:
+      tags: [Organization]
+      summary: Get organization branding
+      operationId: getOrganizationBranding
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Branding
+    patch:
+      tags: [Organization]
+      summary: Update organization branding
+      operationId: updateOrganizationBranding
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Updated branding
+  /organization/settings:
+    get:
+      tags: [Organization]
+      summary: Get timezone, currency, business hours
+      operationId: getOrganizationSettings
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Organization settings
+    patch:
+      tags: [Organization]
+      summary: Update business hours
+      operationId: updateOrganizationBusinessHours
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Updated
+  /organization/subscription:
+    get:
+      tags: [Organization]
+      summary: Get subscription reference
+      operationId: getOrganizationSubscription
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Subscription reference
+  /organization/permissions:
+    get:
+      tags: [Organization]
+      summary: Role permission map
+      operationId: getOrganizationPermissions
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Permissions by role
+  /organization/departments:
+    get:
+      tags: [Organization]
+      summary: List departments
+      operationId: listOrganizationDepartments
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated departments
+    post:
+      tags: [Organization]
+      summary: Create department
+      operationId: createOrganizationDepartment
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created department
+  /organization/departments/{id}:
+    get:
+      tags: [Organization]
+      summary: Get department
+      operationId: getOrganizationDepartment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Department
+    patch:
+      tags: [Organization]
+      summary: Update department
+      operationId: updateOrganizationDepartment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated department
+    delete:
+      tags: [Organization]
+      summary: Soft delete department
+      operationId: deleteOrganizationDepartment
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Deleted
+  /organization/teams:
+    get:
+      tags: [Organization]
+      summary: List teams
+      operationId: listOrganizationTeams
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: department_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Paginated teams
+    post:
+      tags: [Organization]
+      summary: Create team
+      operationId: createOrganizationTeam
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created team
+  /organization/members:
+    get:
+      tags: [Organization]
+      summary: List organization members
+      operationId: listOrganizationMembers
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, suspended, invited] }
+        - name: role
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Paginated members
+  /organization/members/{id}:
+    get:
+      tags: [Organization]
+      summary: Get member
+      operationId: getOrganizationMember
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Member
+    patch:
+      tags: [Organization]
+      summary: Update member role or status
+      operationId: updateOrganizationMember
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated member
+    delete:
+      tags: [Organization]
+      summary: Remove member (soft delete)
+      operationId: removeOrganizationMember
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Removed
+  /organization/invitations:
+    get:
+      tags: [Organization]
+      summary: List pending invitations
+      operationId: listOrganizationInvitations
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated invitations
+    post:
+      tags: [Organization]
+      summary: Create invitation
+      operationId: createOrganizationInvitation
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/headers/Idempotency-Key'
+      responses:
+        '200':
+          description: Created invitation
+  /organization/invitations/{id}:
+    delete:
+      tags: [Organization]
+      summary: Revoke invitation
+      operationId: revokeOrganizationInvitation
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Revoked
+  /organization/audit-logs:
+    get:
+      tags: [Organization]
+      summary: List organization audit logs
+      operationId: listOrganizationAuditLogs
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated audit entries
+  /crm/pipeline:
+    get:
+      tags: [CRM]
+      summary: Kanban sales pipeline board
+      operationId: getCrmPipeline
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Deals grouped by stage
+  /crm/leads:
+    get:
+      tags: [CRM]
+      summary: List CRM leads
+      operationId: listCrmLeads
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Paginated leads
+    post:
+      tags: [CRM]
+      summary: Create CRM lead
+      operationId: createCrmLead
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Created lead
+  /crm/leads/{id}/convert:
+    post:
+      tags: [CRM]
+      summary: Convert lead to company/deal/client
+      operationId: convertCrmLead
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Conversion result
+  /crm/deals/{id}/stage:
+    patch:
+      tags: [CRM]
+      summary: Move deal to pipeline stage (Kanban)
+      operationId: moveCrmDealStage
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Updated deal
   /webhooks/n8n:
     post:
       tags: [Webhooks]

@@ -208,6 +208,31 @@ export class KnowledgeRepository extends BaseRepository {
     return toPaginatedResult((data ?? []).map(mapEntryRow), { limit, page }, count ?? undefined)
   }
 
+  async listEntries(
+    tenantId: string,
+    params?: PaginationParams & { category?: KnowledgeCategory; query?: string }
+  ): Promise<PaginatedResult<KnowledgeEntryRow>> {
+    const { limit, offset, page } = this.paginate(params)
+
+    let query = this.ctx.supabase
+      .from('knowledge_entries')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+
+    if (params?.category) query = query.eq('category', params.category)
+    if (params?.query?.trim()) {
+      const term = `%${params.query.trim()}%`
+      query = query.or(`title.ilike.${term},summary.ilike.${term},content.ilike.${term}`)
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    this.throwIfError(error)
+    return toPaginatedResult((data ?? []).map(mapEntryRow), { limit, page }, count ?? undefined)
+  }
+
   async search(tenantId: string, params: KnowledgeSearchParams): Promise<KnowledgeSearchResult[]> {
     const { data, error } = await this.ctx.supabase.rpc('search_knowledge_entries', {
       p_tenant_id: tenantId,
