@@ -267,4 +267,8 @@ export class AssignmentService {
   async listTopMatchScores(opportunityId: string) {
     return this.repos.matchScore.listTopScoresByOpportunity(opportunityId)
   }
+
+  async listMatchScoresByFreelancer(freelancerId: string, tenantId: string) {
+    return this.repos.matchScore.listByFreelancer(freelancerId, tenantId)
+  }
 }

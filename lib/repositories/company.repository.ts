@@ -43,6 +43,7 @@ export class CompanyRepository extends BaseRepository {
       .select('id, name, slug, contact_email, contact_name')
       .eq('id', companyId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
 
     if (!data) return null
@@ -61,6 +62,7 @@ export class CompanyRepository extends BaseRepository {
       .select('name')
       .eq('id', companyId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data?.name ?? null
   }
@@ -72,6 +74,7 @@ export class CompanyRepository extends BaseRepository {
         .from('companies')
         .select('id, name, slug, contact_email, contact_name')
         .eq('tenant_id', tenantId)
+        .is('deleted_at', null)
         .order('name')
 
       this.throwIfError(error)
@@ -90,6 +93,7 @@ export class CompanyRepository extends BaseRepository {
       .from('companies')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
     return count ?? 0
   }
 }

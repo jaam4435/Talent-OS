@@ -60,7 +60,7 @@ async function executeAi(services: Services, ctx: ActionExecutionContext): Promi
     return { ok: false, error: 'Missing ai_request_id in payload' }
   }
 
-  const directMode = process.env.AI_EXECUTION_MODE === 'direct'
+  const directMode = process.env.AI_EXECUTION_MODE !== 'n8n'
   if (!directMode) {
     return executeDispatchN8n(ctx)
   }

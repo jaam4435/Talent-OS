@@ -52,6 +52,7 @@ export class LeadRepository extends BaseRepository {
       .select('*')
       .eq('id', opportunityId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -62,6 +63,7 @@ export class LeadRepository extends BaseRepository {
       .select('id, title, description, budget, currency, status, response_deadline')
       .eq('id', opportunityId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -71,6 +73,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunities')
       .update({ status })
       .eq('id', opportunityId)
+      .is('deleted_at', null)
     this.throwIfError(error)
     this.invalidateTable('opportunities')
   }
@@ -80,6 +83,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunities')
       .update({ requirements: requirements as never })
       .eq('id', opportunityId)
+      .is('deleted_at', null)
     this.throwIfError(error)
     this.invalidateTable('opportunities')
   }
@@ -90,6 +94,7 @@ export class LeadRepository extends BaseRepository {
       .select('requirements')
       .eq('id', opportunityId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data?.requirements ?? null
   }
@@ -99,6 +104,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunities')
       .select('id, tenant_id, title, description, budget, currency')
       .eq('id', opportunityId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -108,6 +114,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunities')
       .select('title, description, required_skills')
       .eq('id', opportunityId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -118,6 +125,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunities')
       .select('id, title, status, budget, currency, client_name, response_deadline', { count: 'exact' })
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -131,6 +139,7 @@ export class LeadRepository extends BaseRepository {
       .select('id')
       .eq('id', opportunityId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
     return Boolean(data)
   }
@@ -140,8 +149,20 @@ export class LeadRepository extends BaseRepository {
       .from('opportunities')
       .select('created_by, title')
       .eq('id', opportunityId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
+  }
+
+  async softDelete(opportunityId: string, tenantId: string): Promise<void> {
+    const { error } = await this.ctx.supabase
+      .from('opportunities')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', opportunityId)
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+    this.throwIfError(error)
+    this.invalidateTable('opportunities')
   }
 
   // --- Recipients ---
@@ -169,6 +190,7 @@ export class LeadRepository extends BaseRepository {
       .select('*')
       .eq('opportunity_id', opportunityId)
       .eq('freelancer_id', freelancerId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -190,6 +212,7 @@ export class LeadRepository extends BaseRepository {
       .select('freelancer_id')
       .eq('opportunity_id', opportunityId)
       .eq('response', 'interested')
+      .is('deleted_at', null)
     return (data ?? []).map((r) => r.freelancer_id)
   }
 
@@ -198,6 +221,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunity_recipients')
       .select('freelancer_id, response')
       .eq('opportunity_id', opportunityId)
+      .is('deleted_at', null)
     return data ?? []
   }
 
@@ -214,6 +238,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunity_recipients')
       .select('id, response, freelancer_id, whatsapp_sent_at, whatsapp_delivered')
       .eq('opportunity_id', opportunityId)
+      .is('deleted_at', null)
     return data ?? []
   }
 
@@ -223,6 +248,7 @@ export class LeadRepository extends BaseRepository {
       .select('id', { count: 'exact', head: true })
       .eq('opportunity_id', opportunityId)
       .eq('response', response)
+      .is('deleted_at', null)
     return count ?? 0
   }
 
@@ -231,6 +257,7 @@ export class LeadRepository extends BaseRepository {
       .from('opportunity_recipients')
       .select('freelancer_id')
       .eq('opportunity_id', opportunityId)
+      .is('deleted_at', null)
     return (data ?? []).map((r) => r.freelancer_id)
   }
 
@@ -241,6 +268,7 @@ export class LeadRepository extends BaseRepository {
         'id, tenant_id, title, description, required_skills, discipline, budget, currency, client_name'
       )
       .eq('id', opportunityId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -251,6 +279,7 @@ export class LeadRepository extends BaseRepository {
       .select('id, title, description, client_name, company_id, budget, currency')
       .eq('id', opportunityId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -261,6 +290,7 @@ export class LeadRepository extends BaseRepository {
       .select('id, title, status, description, budget, client_name')
       .eq('id', opportunityId)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .maybeSingle()
     return data ?? null
   }
@@ -272,6 +302,7 @@ export class LeadRepository extends BaseRepository {
       .eq('tenant_id', tenantId)
       .eq('freelancer_id', freelancerId)
       .eq('response', 'pending')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
