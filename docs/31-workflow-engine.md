@@ -1,5 +1,7 @@
 # Workflow Engine Architecture
 
+> **Platform evolution:** The [Workflow Platform](./Architecture/WORKFLOW_PLATFORM.md) (Wave 0f) adds **declarative business process pipelines** (Lead → Invoice). This document describes the **Execution Engine** layer — async actions, jobs, and approvals — which the Process Platform invokes via `WorkflowBridge`.
+
 Every major business process is modeled as a **workflow**: a domain event trigger, optional conditions, and a sequence of actions (including human approval gates).
 
 ## Concepts

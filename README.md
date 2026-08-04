@@ -70,6 +70,20 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | — | [**Distributed State Architecture**](docs/Platform/DISTRIBUTED_STATE_ARCHITECTURE.md) | Redis + Postgres distributed state |
 | — | [SECURITY.md](SECURITY.md) | Security policy and controls |
 
+### Platform Architecture (design)
+
+| Document | Description |
+|----------|-------------|
+| [AI Platform](docs/Architecture/AI_PLATFORM.md) | Shared AI gateway, prompts, embeddings, cost, observability |
+| [AI Gap Analysis](docs/Architecture/AI_GAP_ANALYSIS.md) | Implementation maturity vs target (~38%) |
+| [AI Implementation Roadmap](docs/Architecture/AI_IMPLEMENTATION_ROADMAP.md) | 83 PRs: Platform Core + 6 platform waves + AI |
+| [Engineering Execution Plan](docs/Architecture/ENGINEERING_EXECUTION_PLAN.md) | 5 sprints × 3 weeks — PR assignment, release, and demo plan |
+| [Billing Platform](docs/Architecture/BILLING_PLATFORM.md) | SaaS billing: org → subscription → plan → seats → usage → invoice → payments |
+| [Feature Flags Platform](docs/Architecture/FEATURE_FLAGS_PLATFORM.md) | Feature → environment → org → rollout → experiment |
+| [Search Platform](docs/Architecture/SEARCH_PLATFORM.md) | Search → keyword → semantic → hybrid → filters → saved search |
+| [Audit Platform](docs/Architecture/AUDIT_PLATFORM.md) | Actor → action → object → before → after → timestamp → source |
+| [Workflow Platform](docs/Architecture/WORKFLOW_PLATFORM.md) | Lead → opportunity → proposal → project → assignment → QA → delivery → invoice |
+
 ## Enterprise Architecture Highlights
 
 The [enterprise architecture document](docs/11-enterprise-system-architecture.md) covers:
