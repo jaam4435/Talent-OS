@@ -70,6 +70,18 @@ A multi-tenant Talent Operating System for creative agencies. Manage freelance t
 | — | [**Distributed State Architecture**](docs/Platform/DISTRIBUTED_STATE_ARCHITECTURE.md) | Redis + Postgres distributed state |
 | — | [SECURITY.md](SECURITY.md) | Security policy and controls |
 
+### Platform Architecture (design)
+
+| Document | Description |
+|----------|-------------|
+| [AI Platform](docs/Architecture/AI_PLATFORM.md) | Shared AI gateway, prompts, embeddings, cost, observability |
+| [AI Gap Analysis](docs/Architecture/AI_GAP_ANALYSIS.md) | Implementation maturity vs target (~38%) |
+| [AI Implementation Roadmap](docs/Architecture/AI_IMPLEMENTATION_ROADMAP.md) | 75 PRs: Platform Core + 4 platform waves + AI |
+| [Billing Platform](docs/Architecture/BILLING_PLATFORM.md) | SaaS billing: org → subscription → plan → seats → usage → invoice → payments |
+| [Feature Flags Platform](docs/Architecture/FEATURE_FLAGS_PLATFORM.md) | Feature → environment → org → rollout → experiment |
+| [Search Platform](docs/Architecture/SEARCH_PLATFORM.md) | Search → keyword → semantic → hybrid → filters → saved search |
+| [Audit Platform](docs/Architecture/AUDIT_PLATFORM.md) | Actor → action → object → before → after → timestamp → source |
+
 ## Enterprise Architecture Highlights
 
 The [enterprise architecture document](docs/11-enterprise-system-architecture.md) covers:
