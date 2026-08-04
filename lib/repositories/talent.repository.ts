@@ -241,7 +241,11 @@ export class TalentRepository extends BaseRepository {
     pagination?: PaginationParams
   ): Promise<PaginatedResult<TalentRow>> {
     const { limit, offset, page } = this.paginate(pagination)
-    let query = this.ctx.supabase.from('freelancers').select('*', { count: 'exact' }).eq('tenant_id', tenantId)
+    let query = this.ctx.supabase
+      .from('freelancers')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
 
     if (filters?.availability) query = query.eq('availability', filters.availability)
     if (filters?.discipline) query = query.eq('discipline', filters.discipline)
@@ -252,5 +256,167 @@ export class TalentRepository extends BaseRepository {
 
     this.throwIfError(error)
     return toPaginatedResult(data ?? [], { limit, page }, count ?? undefined)
+  }
+
+  async createModule(input: Record<string, unknown>): Promise<TalentRow> {
+    const { data, error } = await this.ctx.supabase.from('freelancers').insert(input).select('*').single()
+    this.throwIfError(error)
+    this.invalidateTable('freelancers')
+    if (!data) this.notFound('Talent')
+    return data
+  }
+
+  async updateModule(id: string, tenantId: string, patch: Record<string, unknown>): Promise<TalentRow> {
+    const { data, error } = await this.ctx.supabase
+      .from('freelancers')
+      .update(patch as never)
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .select('*')
+      .single()
+    this.throwIfError(error)
+    this.invalidateTable('freelancers')
+    if (!data) this.notFound('Talent')
+    return data
+  }
+
+  async softDelete(id: string, tenantId: string): Promise<void> {
+    const { error } = await this.ctx.supabase
+      .from('freelancers')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+    this.throwIfError(error)
+    this.invalidateTable('freelancers')
+  }
+
+  async findModuleById(id: string, tenantId: string): Promise<TalentRow | null> {
+    const { data } = await this.ctx.supabase
+      .from('freelancers')
+      .select('*')
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    return data ?? null
+  }
+
+  async searchAdvanced(
+    tenantId: string,
+    params: {
+      query?: string
+      discipline?: string
+      availability?: string
+      minRate?: number
+      maxRate?: number
+      minRating?: number
+      skills?: string[]
+      tags?: string[]
+      employmentType?: string
+      timezone?: string
+      minCompleteness?: number
+      sort?: string
+      limit?: number
+      offset?: number
+    }
+  ): Promise<TalentRow[]> {
+    const { data, error } = await this.ctx.supabase.rpc('search_talent_advanced', {
+      p_tenant_id: tenantId,
+      p_query: params.query ?? null,
+      p_discipline: params.discipline ?? null,
+      p_availability: params.availability ?? null,
+      p_min_rate: params.minRate ?? null,
+      p_max_rate: params.maxRate ?? null,
+      p_min_rating: params.minRating ?? null,
+      p_skills: params.skills ?? null,
+      p_tags: params.tags ?? null,
+      p_employment_type: params.employmentType ?? null,
+      p_timezone: params.timezone ?? null,
+      p_min_completeness: params.minCompleteness ?? null,
+      p_sort: params.sort ?? 'rating',
+      p_limit: params.limit ?? 20,
+      p_offset: params.offset ?? 0,
+    })
+    this.throwIfError(error)
+    return data ?? []
+  }
+
+  async matchSkills(
+    tenantId: string,
+    skills: string[],
+    discipline?: string | null,
+    limit = 20
+  ) {
+    const { data, error } = await this.ctx.supabase.rpc('match_talent_skills', {
+      p_tenant_id: tenantId,
+      p_required_skills: skills,
+      p_discipline: discipline ?? null,
+      p_limit: limit,
+    })
+    this.throwIfError(error)
+    return data ?? []
+  }
+
+  async listMarketplaceProfiles(options: {
+    page?: number
+    limit?: number
+    q?: string
+    discipline?: string
+    availability?: string
+  }): Promise<PaginatedResult<{
+    id: string
+    full_name: string
+    discipline: string
+    skills: string[] | null
+    tags: string[] | null
+    bio: string | null
+    portfolio_url: string | null
+    timezone: string | null
+    employment_type: string | null
+    languages: unknown
+    availability: string
+    profile_completeness: number | null
+    ai_summary: string | null
+    marketplace_published_at: string | null
+    updated_at: string
+  }>> {
+    const { limit, offset, page } = this.paginate(options)
+    let query = this.ctx.supabase
+      .from('freelancers')
+      .select(
+        'id, full_name, discipline, skills, tags, bio, portfolio_url, timezone, employment_type, languages, availability, profile_completeness, ai_summary, marketplace_published_at, updated_at',
+        { count: 'exact' }
+      )
+      .eq('marketplace_visible', true)
+      .is('deleted_at', null)
+      .order('profile_completeness', { ascending: false })
+      .order('updated_at', { ascending: false })
+
+    if (options.discipline) query = query.eq('discipline', options.discipline)
+    if (options.availability) query = query.eq('availability', options.availability)
+    if (options.q?.trim()) {
+      const q = options.q.trim().replace(/,/g, '')
+      query = query.or(`discipline.ilike.%${q}%,bio.ilike.%${q}%`)
+    }
+
+    const { data, count, error } = await query.range(offset, offset + limit - 1)
+    this.throwIfError(error)
+    return toPaginatedResult(data ?? [], { limit, page }, count ?? undefined)
+  }
+
+  async findMarketplaceProfile(id: string) {
+    const { data, error } = await this.ctx.supabase
+      .from('freelancers')
+      .select(
+        'id, full_name, discipline, skills, tags, bio, portfolio_url, timezone, employment_type, languages, availability, profile_completeness, ai_summary, marketplace_published_at, updated_at'
+      )
+      .eq('id', id)
+      .eq('marketplace_visible', true)
+      .is('deleted_at', null)
+      .maybeSingle()
+    this.throwIfError(error)
+    return data ?? null
   }
 }

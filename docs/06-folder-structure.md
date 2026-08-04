@@ -33,6 +33,15 @@ talent-os/
 │       ├── types.ts
 │       ├── validation.ts
 │       └── index.ts
+│   └── platform/                     # Talent OS shared kernel (T-02)
+│       ├── types/
+│       ├── contracts/
+│       ├── context/
+│       ├── features/
+│       ├── config/
+│       ├── events/
+│       ├── sdk/
+│       └── index.ts
 │
 ├── lib/
 │   ├── ai/                           # AI Gateway — all LLM requests go here
@@ -292,7 +301,7 @@ talent-os/
 │   ├── payments/
 │   │   ├── payment-table.tsx
 │   │   ├── payment-status-badge.tsx
-│   │   └── approve-payment-dialog.tsx
+│   │   └── payment-actions.tsx
 │   ├── analytics/
 │   │   ├── dashboard-cards.tsx
 │   │   ├── fill-rate-chart.tsx

@@ -5,6 +5,7 @@ import { Badge } from '@/modules/core/components/ui/badge'
 import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { OpportunityRequirementsCard } from '@/components/opportunities/opportunity-requirements-card'
 import { AiMatchPanel } from '@/components/opportunities/ai-match-panel'
+import { AiFeatureBanner } from '@/components/ai/ai-feature-banner'
 import { BroadcastPanel } from '@/components/opportunities/broadcast-panel'
 import { OpportunityResponseForm } from '@/components/opportunities/opportunity-response-form'
 import { requireTenant } from '@/modules/core/services/session'
@@ -76,6 +77,8 @@ export default async function OpportunityDetailPage({
           />
         </div>
       ) : null}
+
+      {manager ? <AiFeatureBanner tenantId={tenant.id} /> : null}
 
       {matchResults ? (
         <div className="mb-6">

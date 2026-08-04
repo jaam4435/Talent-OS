@@ -3,14 +3,17 @@ import { notFound } from 'next/navigation'
 import { ExternalLink } from 'lucide-react'
 import { PageHeader } from '@/modules/core/components/shared/page-header'
 import { PortfolioGallery } from '@/components/talent/portfolio-gallery'
+import { TalentMatchInsights } from '@/components/talent/talent-match-insights'
 import { Badge } from '@/modules/core/components/ui/badge'
 import { Button } from '@/modules/core/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/core/components/ui/card'
 import { requireTenant } from '@/modules/core/services/session'
 import { isManager } from '@/modules/core/services/permissions'
 import { getPortfolioItems, getRatingHistory } from '@/lib/talent/queries'
-import { getTalentActivity, getTalentName, getTalentProfile } from '@/lib/queries/talent.queries'
+import { getTalentActivity, getTalentModuleProfile, getTalentName, getTalentProfile } from '@/lib/queries/talent.queries'
+import { getFreelancerMatchInsights } from '@/lib/queries/talent-match.queries'
 import { formatCurrency } from '@/modules/core/utils/format'
+import { MarketplaceVisibilityToggle } from '@/modules/talent/components/marketplace-visibility-toggle'
 
 export async function generateMetadata({
   params,
@@ -38,10 +41,12 @@ export default async function TalentDetailPage({
 
   if (!canManage && !isOwnProfile) notFound()
 
-  const [portfolioItems, ratingHistory, activity] = await Promise.all([
+  const [portfolioItems, ratingHistory, activity, matchInsights, moduleProfile] = await Promise.all([
     getPortfolioItems(id),
     canManage ? getRatingHistory(id) : Promise.resolve([]),
     getTalentActivity(id),
+    canManage ? getFreelancerMatchInsights(id, tenant?.id ?? '') : Promise.resolve([]),
+    canManage ? getTalentModuleProfile(id, tenant?.id ?? '') : Promise.resolve(null),
   ])
 
   return (
@@ -63,6 +68,18 @@ export default async function TalentDetailPage({
           <Badge variant="outline">Rating {freelancer.internal_rating}</Badge>
         ) : null}
       </div>
+
+      {canManage ? <TalentMatchInsights matches={matchInsights} /> : null}
+
+      {canManage && moduleProfile ? (
+        <div className="mb-6">
+          <MarketplaceVisibilityToggle
+            talentId={id}
+            visible={moduleProfile.marketplaceVisible}
+            publishedAt={moduleProfile.marketplacePublishedAt}
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">

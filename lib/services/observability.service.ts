@@ -10,6 +10,7 @@ import type {
 export class ObservabilityService {
   constructor(private readonly repos: Repositories) {}
 
+  /** Platform metrics only — bounded-context audit writes use module `*_audit_logs` (Sprint 23). */
   async getDashboard(tenantId: string): Promise<ObservabilityDashboard> {
     const monthStart = new Date()
     monthStart.setUTCDate(1)

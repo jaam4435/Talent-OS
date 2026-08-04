@@ -68,15 +68,17 @@ export class WhatsAppService {
       ? new Date(Number(message.timestamp) * 1000).toISOString()
       : new Date().toISOString()
 
+    const conversation = await this.getConversation(tenantId, freelancer.id, message.phone)
+
     await this.integration.createInboundWhatsApp({
       tenant_id: tenantId,
       freelancer_id: freelancer.id,
+      conversation_id: conversation.id,
       wa_message_id: message.waMessageId,
       phone: message.phone,
       body: message.body,
     })
 
-    const conversation = await this.getConversation(tenantId, freelancer.id, message.phone)
     await this.repos.whatsappConversation.touchMessage(tenantId, freelancer.id, now)
 
     const pending = await this.crm.findPendingRecipient(tenantId, freelancer.id)
@@ -276,6 +278,27 @@ Pending opportunity: ${pending ? pending.opportunity_id : 'none'}`,
       return {
         event: 'whatsapp.task_update',
         idempotencyKey: `wa-task:${message.waMessageId}`,
+        data: {
+          freelancer_id: freelancer.id,
+          intent: handler.intent,
+          ...handler.data,
+        },
+      }
+    }
+
+    if (
+      handler.intent === 'assignment.accept' ||
+      handler.intent === 'assignment.reject' ||
+      handler.intent === 'project.approve' ||
+      handler.intent === 'milestone.approve' ||
+      handler.intent === 'milestone.revision' ||
+      handler.intent === 'deliverable.submit' ||
+      handler.intent === 'approval.approve' ||
+      handler.intent === 'approval.reject'
+    ) {
+      return {
+        event: 'whatsapp.business_action',
+        idempotencyKey: `wa-action:${message.waMessageId}:${handler.intent}`,
         data: {
           freelancer_id: freelancer.id,
           intent: handler.intent,

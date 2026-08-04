@@ -49,6 +49,13 @@ export const knowledgeSearchSchema = z.object({
   offset: z.number().int().min(0).optional(),
 })
 
+export const listKnowledgeQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  category: z.enum(KNOWLEDGE_CATEGORIES).optional(),
+  q: z.string().trim().max(200).optional(),
+})
+
 export const createEmbeddingChunkSchema = z.object({
   entryId: z.string().uuid(),
   chunkIndex: z.number().int().min(0),

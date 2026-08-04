@@ -5,6 +5,11 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'tenant:read',
     'tenant:update',
     'tenant:billing',
+    'org:departments:read',
+    'org:departments:manage',
+    'org:teams:read',
+    'org:teams:manage',
+    'org:audit:read',
     'members:invite',
     'members:manage',
     'integrations:manage',
@@ -29,14 +34,38 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'payments:approve',
     'payments:pay',
     'analytics:read',
+    'analytics:export',
     'companies:create',
     'companies:read',
     'companies:update',
+    'crm:read',
+    'crm:leads:manage',
+    'crm:deals:manage',
+    'crm:audit:read',
+    'talent:read',
+    'talent:manage',
+    'talent:import',
+    'talent:audit:read',
+    'project:read',
+    'project:manage',
+    'project:audit:read',
+    'project:templates:manage',
+    'assignment:read',
+    'assignment:manage',
+    'assignment:audit:read',
+    'workflow:read',
+    'workflow:manage',
+    'workflow:audit:read',
+    'whatsapp:read',
+    'whatsapp:manage',
+    'whatsapp:audit:read',
     'agent:run',
     'agent:configure',
   ],
   talent_manager: [
     'tenant:read',
+    'org:departments:read',
+    'org:teams:read',
     'freelancers:create',
     'freelancers:read',
     'freelancers:update',
@@ -56,7 +85,31 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
     'milestones:review',
     'payments:read',
     'analytics:read',
+    'analytics:export',
+    'companies:create',
     'companies:read',
+    'companies:update',
+    'crm:read',
+    'crm:leads:manage',
+    'crm:deals:manage',
+    'crm:audit:read',
+    'talent:read',
+    'talent:manage',
+    'talent:import',
+    'talent:audit:read',
+    'project:read',
+    'project:manage',
+    'project:audit:read',
+    'project:templates:manage',
+    'assignment:read',
+    'assignment:manage',
+    'assignment:audit:read',
+    'workflow:read',
+    'workflow:manage',
+    'workflow:audit:read',
+    'whatsapp:read',
+    'whatsapp:manage',
+    'whatsapp:audit:read',
     'agent:run',
     'agent:configure',
   ],
@@ -79,8 +132,17 @@ const PERMISSION_MAP: Record<UserRole, string[]> = {
   ],
 }
 
+const PERMISSION_ALIASES: Record<string, string> = {
+  'finance:read': 'payments:read',
+  'finance:approve': 'payments:approve',
+  'finance:mark_paid': 'payments:pay',
+  /** Freelancers have projects:read; managers use project:read in module APIs. */
+  'project:read': 'projects:read',
+}
+
 export function hasPermission(role: UserRole, permission: string) {
-  return PERMISSION_MAP[role]?.includes(permission) ?? false
+  const resolved = PERMISSION_ALIASES[permission] ?? permission
+  return PERMISSION_MAP[role]?.includes(resolved) ?? false
 }
 
 export function getPermissionsForRole(role: UserRole): string[] {
@@ -88,7 +150,8 @@ export function getPermissionsForRole(role: UserRole): string[] {
 }
 
 export function requirePermission(role: UserRole, permission: string) {
-  if (!hasPermission(role, permission)) {
+  const resolved = PERMISSION_ALIASES[permission] ?? permission
+  if (!PERMISSION_MAP[role]?.includes(resolved)) {
     throw new Error(`FORBIDDEN: missing permission ${permission}`)
   }
 }
