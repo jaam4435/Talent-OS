@@ -471,6 +471,23 @@ export interface Database {
         acknowledged_at: string | null
         resolved_at: string | null
       }>
+      platform_feature_flags: TableDef<{
+        id: string
+        tenant_id: string | null
+        flag_key: string
+        enabled: boolean
+        value: Json | null
+        created_at: string
+        updated_at: string
+      }>
+      platform_config: TableDef<{
+        id: string
+        tenant_id: string | null
+        config_key: string
+        config_value: Json
+        created_at: string
+        updated_at: string
+      }>
       ai_requests: TableDef<{
         id: string
         tenant_id: string
