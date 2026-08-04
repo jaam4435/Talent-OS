@@ -9,12 +9,16 @@ import type {
 } from '@/lib/workflows/types'
 import type { Services } from '@/lib/services/factory'
 import type { WorkflowRepository } from '@/lib/repositories/workflow.repository'
+import type { WorkflowExecutionHistoryRepository } from '@/lib/repositories/workflow-execution-history.repository'
+import type { WorkflowCompensationRepository } from '@/lib/repositories/workflow-compensation.repository'
 import { instrumentWorkflowRun } from '@/lib/observability/instrumentation'
 
 export class WorkflowEngine {
   constructor(
     private readonly repos: WorkflowRepository,
-    private readonly getServices: () => Promise<Services>
+    private readonly getServices: () => Promise<Services>,
+    private readonly executionHistory?: WorkflowExecutionHistoryRepository,
+    private readonly compensation?: WorkflowCompensationRepository
   ) {}
 
   /** Match domain events to workflow definitions and enqueue first steps. */
@@ -101,6 +105,17 @@ export class WorkflowEngine {
         continue
       }
 
+      const startedAt = Date.now()
+      await this.recordHistory({
+        tenantId: run.tenant_id,
+        runId: run.id,
+        jobId: job.id,
+        stepId: job.step_id,
+        actionType: job.action_type,
+        status: 'started',
+        input: actionCtx.config,
+      })
+
       const result = await executeWorkflowAction(services, actionCtx)
 
       if (result.waitForApproval) {
@@ -110,18 +125,97 @@ export class WorkflowEngine {
 
       if (result.ok) {
         await this.repos.markJobCompleted(job.id)
+        await this.recordHistory({
+          tenantId: run.tenant_id,
+          runId: run.id,
+          jobId: job.id,
+          stepId: job.step_id,
+          actionType: job.action_type,
+          status: 'completed',
+          input: actionCtx.config,
+          output: result.output ?? {},
+          durationMs: Date.now() - startedAt,
+        })
         await this.advanceRun(run.id, job.step_id)
         results.push({ jobId: job.id, ok: true })
       } else {
-        await this.repos.markJobFailed(job.id, result.error ?? 'Action failed')
+        const jobStatus = await this.repos.markJobFailed(job.id, result.error ?? 'Action failed')
+        await this.recordHistory({
+          tenantId: run.tenant_id,
+          runId: run.id,
+          jobId: job.id,
+          stepId: job.step_id,
+          actionType: job.action_type,
+          status: 'failed',
+          input: actionCtx.config,
+          error: result.error,
+          durationMs: Date.now() - startedAt,
+        })
+        if (jobStatus === 'dead_letter') {
+          await this.triggerCompensation(run, job.step_id, job.id)
+          await this.repos.updateRunStatus(run.id, 'failed', {
+            last_error: result.error ?? 'Action failed',
+          })
+        }
         instrumentWorkflowRun({
           workflowId: run.workflow_id,
-          durationMs: 0,
+          durationMs: Date.now() - startedAt,
           status: 'failed',
           context: { tenantId: run.tenant_id, correlationId: run.correlation_id ?? undefined },
           error: result.error,
         })
         results.push({ jobId: job.id, ok: false, error: result.error })
+      }
+    }
+
+    return { processed: results.length, results }
+  }
+
+  /** Process pending compensation actions (saga rollback). */
+  async processCompensationQueue(limit = 50) {
+    if (!this.compensation) return { processed: 0, results: [] as Array<{ id: string; ok: boolean }> }
+
+    const items = await this.compensation.listPending(limit)
+    const services = await this.getServices()
+    const results: Array<{ id: string; ok: boolean; error?: string }> = []
+
+    for (const item of items) {
+      const claimed = await this.compensation.markProcessing(item.id)
+      if (!claimed) continue
+
+      const run = await this.repos.findRunById(item.runId)
+      if (!run) {
+        await this.compensation.markFailed(item.id, 'Workflow run not found')
+        results.push({ id: item.id, ok: false, error: 'Workflow run not found' })
+        continue
+      }
+
+      const context = run.context as unknown as WorkflowTriggerContext
+      const actionCtx = {
+        ...context,
+        runId: run.id,
+        jobId: item.jobId ?? item.id,
+        stepId: item.stepId,
+        config: { action: item.actionType, ...item.config },
+      }
+
+      const result = await executeWorkflowAction(services, actionCtx)
+      if (result.ok) {
+        await this.compensation.markCompleted(item.id)
+        await this.recordHistory({
+          tenantId: run.tenant_id,
+          runId: run.id,
+          jobId: item.jobId,
+          stepId: item.stepId,
+          actionType: item.actionType,
+          status: 'compensated',
+          input: item.config,
+          output: result.output ?? {},
+        })
+        results.push({ id: item.id, ok: true })
+      } else {
+        await this.compensation.markFailed(item.id, result.error ?? 'Compensation failed')
+        results.push({ id: item.id, ok: false, error: result.error })
       }
     }
 
@@ -282,5 +376,56 @@ export class WorkflowEngine {
       return project?.assigned_by ?? null
     }
     return context.actorId
+  }
+
+  private async recordHistory(input: {
+    tenantId: string
+    runId: string
+    jobId?: string | null
+    stepId: string
+    actionType: string
+    status: 'started' | 'completed' | 'failed' | 'compensated'
+    input?: Record<string, unknown>
+    output?: Record<string, unknown>
+    error?: string
+    durationMs?: number
+  }) {
+    if (!this.executionHistory) return
+    await this.executionHistory.record({
+      tenant_id: input.tenantId,
+      run_id: input.runId,
+      job_id: input.jobId,
+      step_id: input.stepId,
+      action_type: input.actionType,
+      status: input.status,
+      input: input.input,
+      output: input.output,
+      error: input.error,
+      duration_ms: input.durationMs,
+    })
+  }
+
+  private async triggerCompensation(
+    run: NonNullable<Awaited<ReturnType<WorkflowRepository['findRunById']>>>,
+    failedStepId: string,
+    failedJobId: string
+  ) {
+    if (!this.compensation) return
+
+    const { findWorkflowById } = await import('@/lib/workflows/registry')
+    const definition = findWorkflowById(run.workflow_id)
+    const steps = definition?.compensation ?? []
+    if (!steps.length) return
+
+    for (const step of steps as ActionStep[]) {
+      await this.compensation.create({
+        tenant_id: run.tenant_id,
+        run_id: run.id,
+        job_id: failedJobId,
+        step_id: step.id,
+        action_type: step.action,
+        config: { ...step.config, failed_step_id: failedStepId },
+      })
+    }
   }
 }

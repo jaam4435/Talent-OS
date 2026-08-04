@@ -1,5 +1,6 @@
 'use server'
 
+/** @deprecated Use `/crm/companies` UI with `lib/api/crm-api.ts` instead of this Server Action. */
 import { revalidatePath } from 'next/cache'
 import { requireManager } from '@/modules/core/services/guards'
 import { requirePermission } from '@/modules/core/services/permissions'

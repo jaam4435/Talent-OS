@@ -28,6 +28,7 @@ export async function callOpenAiStructured<T>(input: {
   feature?: import('@/lib/ai/types').AiFeature
   promptId?: string
   promptVersion?: string
+  aiRequestId?: string
 }): Promise<{
   data: T
   model: string
@@ -45,6 +46,7 @@ export async function callOpenAiStructured<T>(input: {
     feature: input.feature,
     promptId: input.promptId,
     promptVersion: input.promptVersion,
+    aiRequestId: input.aiRequestId,
   })
 
   return {

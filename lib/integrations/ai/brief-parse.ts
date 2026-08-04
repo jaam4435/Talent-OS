@@ -79,6 +79,8 @@ export async function parseBriefText(input: {
   description?: string | null
   budget?: number | null
   currency?: string
+  tenantId?: string
+  aiRequestId?: string
 }): Promise<BriefParseResult> {
   try {
     if (!getAiGateway().isConfigured()) {
@@ -105,6 +107,11 @@ export async function parseBriefText(input: {
         system,
         user,
         schema: BRIEF_PARSE_SCHEMA,
+        tenantId: input.tenantId,
+        feature: 'brief_parse',
+        promptId: 'brief_parse',
+        promptVersion: '1.0.0',
+        aiRequestId: input.aiRequestId,
       })
 
     void promptHash
@@ -168,16 +175,14 @@ export async function executeBriefParse(aiRequestId: string) {
     description: opportunity.description,
     budget: opportunity.budget ? Number(opportunity.budget) : null,
     currency: opportunity.currency,
+    tenantId: aiRequest.tenant_id,
+    aiRequestId,
   })
 
   await persistOpportunityRequirements(opportunityId, result.requirements)
 
   await updateAiRequest(aiRequestId, {
     status: 'completed',
-    inputTokens: result.inputTokens,
-    outputTokens: result.outputTokens,
-    estimatedCost: result.estimatedCost,
-    durationMs: Date.now() - startedAt,
     result: {
       requirements: result.requirements,
       used_fallback: result.usedFallback,
